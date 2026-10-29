@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9041,
+ "Title": "Nostyra Test psp",
+ "ConsoleId": 41,
+ "ImageIconUrl": "http://server/Images/9041.png",
+ "RichPresenceGameId": 9041,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9041,
+   "GameId": 9041,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9041.png",
+   "Achievements": [
+    {
+     "ID": 90411,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH805f50=20",
+     "Author": "nostyra",
+     "BadgeName": "90411",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90412,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH805f50=10::CAN:0=1::SUB:0xH805f50=30::VAL:0xH805f50",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

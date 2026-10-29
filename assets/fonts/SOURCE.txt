@@ -1,0 +1,16 @@
+Noto Sans Regular + Bold (unhinted TTF), used by the runner overlay text
+(crates/video-renderer/src/overlay_ttf_text.rs, embedded with include_bytes!).
+
+Project:  Noto Sans, notofonts/latin-greek-cyrillic
+Release:  NotoSans-v2.015 (2024-11-20)
+URL:      https://github.com/notofonts/latin-greek-cyrillic/releases/download/NotoSans-v2.015/NotoSans-v2.015.zip
+          (zip sha256 0c34df072a3fa7efbb7cbf34950e1f971a4447cffe365d3a359e2d4089b958f5)
+Files:    NotoSans/unhinted/ttf/NotoSans-Regular.ttf  431364 B
+            sha256 f3961a9cde016d41a4879aecda1474d3a36d6bf54fa0e4643de029cc2248b0e8
+          NotoSans/unhinted/ttf/NotoSans-Bold.ttf     432376 B
+            sha256 87cb2d84472a7d66da659ee47b6cdb9552326e8c128245231f191b6ac72529d9
+          OFL.txt (licence text from the same zip)
+Licence:  SIL Open Font License 1.1 (OFL-1.1), see OFL.txt.
+          Copyright 2022 The Noto Project Authors.
+Changes:  none (files copied unmodified).
+Fetched:  2026-10-28

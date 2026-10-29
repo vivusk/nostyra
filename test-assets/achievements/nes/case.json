@@ -1,0 +1,12 @@
+{
+ "system": "nes",
+ "rom": "nostyra-test.nes",
+ "console_id": 7,
+ "game_id": 9007,
+ "achievement_id": 90071,
+ "leaderboard_id": 90072,
+ "counter_address": 1,
+ "unlock_value": 5,
+ "lb_start_value": 3,
+ "lb_submit_value": 9
+}

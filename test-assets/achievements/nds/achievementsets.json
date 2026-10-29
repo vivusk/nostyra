@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9018,
+ "Title": "Nostyra Test nds",
+ "ConsoleId": 18,
+ "ImageIconUrl": "http://server/Images/9018.png",
+ "RichPresenceGameId": 9018,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9018,
+   "GameId": 9018,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9018.png",
+   "Achievements": [
+    {
+     "ID": 90181,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH3f0008=20",
+     "Author": "nostyra",
+     "BadgeName": "90181",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90182,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH3f0008=10::CAN:0=1::SUB:0xH3f0008=30::VAL:0xH3f0008",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

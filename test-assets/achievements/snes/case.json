@@ -1,0 +1,12 @@
+{
+ "system": "snes",
+ "rom": "nostyra-test.sfc",
+ "console_id": 3,
+ "game_id": 9003,
+ "achievement_id": 90031,
+ "leaderboard_id": 90032,
+ "counter_address": 0,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

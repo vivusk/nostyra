@@ -1,0 +1,30 @@
+Source:  https://github.com/libretro/libretro-database
+Commit:  9a899f5b13ed1c355491e342203be29bc573323b
+Files (one set per system, stored as metadat/<source>/<name> as <name>,
+       metadat/<attribute>/<name> as metadat/<attribute>/<name>):
+         no-intro/Nintendo - Super Nintendo Entertainment System.dat
+         no-intro/Nintendo - Nintendo Entertainment System.dat
+         no-intro/Nintendo - Game Boy.dat
+         no-intro/Nintendo - Game Boy Color.dat
+         no-intro/Nintendo - Game Boy Advance.dat
+         no-intro/Nintendo - Nintendo 64.dat
+         no-intro/Nintendo - Nintendo DS.dat
+         no-intro/Sega - Mega Drive - Genesis.dat
+         no-intro/Sega - Master System - Mark III.dat
+         no-intro/Sega - Game Gear.dat
+         no-intro/Sega - SG-1000.dat
+         redump/Sony - PlayStation.dat
+         redump/Sega - Dreamcast.dat
+         redump/Sony - PlayStation Portable.dat
+         redump/Nintendo - GameCube.dat
+         redump/Nintendo - Wii.dat
+         attributes: developer, publisher, genre, releaseyear, maxusers
+         redump metadat: "description" lines removed; attributes missing
+         upstream are header-only placeholders.
+License: CC-BY-SA-4.0 (see LICENSE). Game data by No-Intro (https://no-intro.org)
+         and Redump (http://redump.org), compiled by the libretro-database
+         contributors.
+Use:     bundled data files (unmodified except as noted above). The DATs identify
+         dumps by hash (discs also by serial); the metadat files give developer,
+         publisher, genre, year and players.
+         Refresh with scripts/update-libretro-dat.sh (or .ps1).

@@ -1,0 +1,12 @@
+{
+ "system": "gb",
+ "rom": "nostyra-test.gb",
+ "console_id": 4,
+ "game_id": 9004,
+ "achievement_id": 90041,
+ "leaderboard_id": 90042,
+ "counter_address": 65408,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

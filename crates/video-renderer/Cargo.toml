@@ -1,0 +1,30 @@
+[package]
+name = "video-renderer"
+description = "Uploads emulator frames to wgpu and presents them with scaling."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+# Overlay TTF text (bundled Noto Sans): rasterizer + NFC normalisation.
+fontdue.workspace = true
+unicode-normalization.workspace = true
+libretro-host.workspace = true
+librashader-common.workspace = true
+librashader-runtime-wgpu.workspace = true
+pollster.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+wgpu.workspace = true
+winit.workspace = true
+
+[dev-dependencies]
+# GPU test renders every preset the config accepts by name.
+config-layers.workspace = true
+# Bundled presets parse in normal (GPU-less) tests.
+librashader-presets.workspace = true
+
+[lints]
+workspace = true

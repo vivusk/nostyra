@@ -1,0 +1,4 @@
+clrmamepro (
+	name "Sony - PlayStation"
+	description "Header only: libretro-database has no genre metadat for this system"
+)

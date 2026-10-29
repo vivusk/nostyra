@@ -1,0 +1,11 @@
+clrmamepro (
+	name "Nintendo - Super Nintendo Entertainment System"
+	description "Nintendo - Super Nintendo Entertainment System"
+)
+
+game (
+	comment "Chrono Trigger (USA)"
+	releaseyear "1995"
+	rom ( crc 2D5CE2BA )
+)
+

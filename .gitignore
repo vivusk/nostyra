@@ -1,0 +1,39 @@
+# Rust build output
+/target/
+
+# Launcher UI: npm deps, Vite output, Tauri-generated schemas
+/apps/launcher/node_modules/
+/apps/launcher/dist/
+/apps/launcher/src-tauri/gen/
+
+# Portable zip output (scripts/build-portable.ps1)
+/dist/
+
+# Downloaded libretro cores (fetched by scripts/fetch-snes9x-core.*)
+/cores/
+
+# ROMs, saves, states — never commit; only test-assets/ is allowed
+*.sfc
+*.smc
+*.srm
+*.state
+*.state.json
+!/test-assets/roms/nostyra-test.sfc
+
+# Internal planning workspace (plans, reviews, reports) — local only
+/plans/
+
+# Local tooling / secrets
+/.claude/
+.env
+.env.*
+*.log
+__pycache__/
+*.py[cod]
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

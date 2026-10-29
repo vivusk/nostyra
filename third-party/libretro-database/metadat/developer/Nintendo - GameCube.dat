@@ -1,0 +1,4 @@
+clrmamepro (
+	name "Nintendo - GameCube"
+	description "Header only: libretro-database has no developer metadat for this system"
+)

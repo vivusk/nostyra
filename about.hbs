@@ -1,0 +1,32 @@
+Nostyra - third-party Rust crates
+=================================
+
+The Nostyra executables (Nostyra.exe, nostyra-runner.exe) contain the open-source
+Rust crates listed below, built from their unmodified crates.io releases (source:
+https://crates.io/crates/<name>/<version>). Each licence text follows the list of
+crates that use it.
+
+Crates under MPL-2.0 are used unmodified; their source code is available from
+crates.io at the versions listed. librashader is dual-licensed "MPL-2.0 OR
+GPL-3.0-only" and is used under MPL-2.0.
+
+Native C/C++ libraries compiled into the executables (SDL3, SQLite, glslang,
+SPIRV-Cross, rcheevos) are listed in THIRD-PARTY-NATIVE.txt.
+
+Overview
+--------
+{{#each overview}}
+{{{name}}} ({{{id}}}): {{count}} crate(s)
+{{/each}}
+
+{{#each licenses}}
+================================================================================
+{{{name}}} ({{{id}}})
+Used by:
+{{#each used_by}}
+  - {{{crate.name}}} {{{crate.version}}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}
+{{/each}}
+--------------------------------------------------------------------------------
+{{{text}}}
+
+{{/each}}

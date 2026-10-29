@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9033,
+ "Title": "Nostyra Test sg1000",
+ "ConsoleId": 33,
+ "ImageIconUrl": "http://server/Images/9033.png",
+ "RichPresenceGameId": 9033,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9033,
+   "GameId": 9033,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9033.png",
+   "Achievements": [
+    {
+     "ID": 90331,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH000000=20",
+     "Author": "nostyra",
+     "BadgeName": "90331",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90332,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH000000=10::CAN:0=1::SUB:0xH000000=30::VAL:0xH000000",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+[package]
+name = "achievements"
+description = "RetroAchievements: vendored rcheevos (C) behind a safe rc_client wrapper, HTTP transports, login, credentials and the offline unlock journal."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+config-layers.workspace = true
+# The cdreader behind rc_hash (CHD / CSO / CDI / Redump GD cue tracks).
+disc-image.workspace = true
+http-download-util.workspace = true
+# `MemoryMapSnapshot` / `RetroMemoryDescriptor` handed to rc_libretro.
+libretro-host.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# Core option rules for hardcore (`CoreSpec`).
+system-catalog.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+# CHD / CDI / DVD builders for the hash parity tests.
+disc-image = { workspace = true, features = ["test-images"] }
+tempfile.workspace = true
+
+[build-dependencies]
+cc.workspace = true
+
+[lints]
+workspace = true

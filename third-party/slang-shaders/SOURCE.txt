@@ -1,0 +1,21 @@
+Source:  https://github.com/libretro/slang-shaders
+Commit:  e1d75632a205c70f14a4cc947c46d5abb7b3f7f1 (2026-10-08)
+Fetched: 2026-10-18
+Files:   copied unmodified, same relative paths as upstream:
+         crt/crt-easymode.slangp, crt/shaders/crt-easymode.slang
+         crt/crt-geom.slangp,     crt/shaders/crt-geom.slang
+         crt/crt-lottes.slangp,   crt/shaders/crt-lottes.slang
+         handheld/zfast-lcd.slangp, handheld/shaders/zfast_lcd.slang (fetched 2026-10-24)
+License: per file (upstream has no top-level licence; see each file's header):
+         crt-easymode.slang  "License: GPL" (EasyMode)
+         crt-geom.slang      GPL-2.0-or-later (cgwg, Themaister, DOLLS)
+         crt-lottes.slang    public domain (Timothy Lottes)
+         zfast_lcd.slang     GPL-2.0-or-later (Greg Hogan, SoltanGris42)
+         (handheld/lcd-grid-v2 was the first choice; its shader carries no licence
+         header, so the GPL zfast-lcd LCD grid is bundled instead.)
+         Distributed with Nostyra under GPL-3.0-or-later (see ../../LICENSE); the
+         .slang files are the shader source.
+Use:     bundled CRT and LCD presets for the runner's `video.shader` setting
+         (`crt-easymode`, `crt-geom`, `crt-lottes`, `zfast-lcd`). The runner looks for this folder via
+         --shaders-dir, NOSTYRA_SHADERS, `shaders/` next to its exe, or (debug builds)
+         this repo path.

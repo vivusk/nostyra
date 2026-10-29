@@ -1,0 +1,12 @@
+{
+ "system": "dreamcast",
+ "rom": "nostyra-test-dc.gdi",
+ "console_id": 40,
+ "game_id": 9040,
+ "achievement_id": 90401,
+ "leaderboard_id": 90402,
+ "counter_address": 983040,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

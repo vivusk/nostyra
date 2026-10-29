@@ -1,0 +1,17 @@
+[package]
+name = "system-catalog"
+description = "Registry of supported systems and libretro cores, and content-based ROM classification."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+# std only: the runner, launcher and library crates all read this registry.
+[dependencies]
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

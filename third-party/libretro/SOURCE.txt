@@ -1,0 +1,4 @@
+libretro.h — vendored reference for Nostyra's hand-written FFI (no bindgen).
+Upstream: https://github.com/libretro/libretro-common/blob/master/include/libretro.h
+Commit:   a3194c18ba65ef89734e1898a2f61403c255d368 (fetched 2026-10-17)
+License:  MIT (statement at top of libretro.h)

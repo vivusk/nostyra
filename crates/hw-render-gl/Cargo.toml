@@ -1,0 +1,22 @@
+[package]
+name = "hw-render-gl"
+description = "OpenGL backend for libretro hardware rendering: hidden SDL3 GL context, FBO, readback."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+libretro-host.workspace = true
+sdl3.workspace = true
+glow.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+# sdl3 0.20 refuses `Sdl::new` off the first thread unless *its* `test-mode` is on
+# (a dependent crate's cfg(test) does not count); test threads are not the main one.
+sdl3 = { workspace = true, features = ["test-mode"] }
+
+[lints]
+workspace = true

@@ -1,0 +1,4 @@
+clrmamepro (
+	name "Sega - Dreamcast"
+	description "Header only: libretro-database has no releaseyear metadat for this system"
+)

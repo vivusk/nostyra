@@ -1,0 +1,17 @@
+[package]
+name = "audio-output"
+description = "SDL3 audio stream with dynamic rate control for emulator audio."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+libretro-host.workspace = true
+sdl3.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

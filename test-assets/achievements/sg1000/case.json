@@ -1,0 +1,12 @@
+{
+ "system": "sg1000",
+ "rom": "nostyra-test.sg",
+ "console_id": 33,
+ "game_id": 9033,
+ "achievement_id": 90331,
+ "leaderboard_id": 90332,
+ "counter_address": 0,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

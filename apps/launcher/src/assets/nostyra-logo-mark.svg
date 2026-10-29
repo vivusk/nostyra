@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+  <!-- Nostyra mark: a gamepad outline with a D-pad (left) and the face-button X (right). -->
+  <rect x="2" y="7" width="24" height="14" rx="7" fill="none" stroke="#8C7DFF" stroke-width="2.2"/>
+  <path d="M7.9 11.25H9.7V13.1H11.55V14.9H9.7V16.75H7.9V14.9H6.05V13.1H7.9Z" fill="#EDEAFF" stroke="#8C7DFF" stroke-width="0.6" stroke-linejoin="round"/>
+  <path d="M17.6 12.1l3.8 3.8M21.4 12.1l-3.8 3.8" stroke="#8C7DFF" stroke-width="1.7" stroke-linecap="round"/>
+</svg>

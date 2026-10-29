@@ -1,0 +1,12 @@
+{
+ "system": "sms",
+ "rom": "nostyra-test.sms",
+ "console_id": 11,
+ "game_id": 9011,
+ "achievement_id": 90111,
+ "leaderboard_id": 90112,
+ "counter_address": 0,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

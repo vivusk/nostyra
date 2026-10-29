@@ -1,0 +1,12 @@
+{
+ "system": "nds",
+ "rom": "nostyra-test.nds",
+ "console_id": 18,
+ "game_id": 9018,
+ "achievement_id": 90181,
+ "leaderboard_id": 90182,
+ "counter_address": 4128776,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

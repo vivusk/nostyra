@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9003,
+ "Title": "Nostyra Test snes",
+ "ConsoleId": 3,
+ "ImageIconUrl": "http://server/Images/9003.png",
+ "RichPresenceGameId": 9003,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9003,
+   "GameId": 9003,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9003.png",
+   "Achievements": [
+    {
+     "ID": 90031,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH000000=20",
+     "Author": "nostyra",
+     "BadgeName": "90031",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90032,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH000000=10::CAN:0=1::SUB:0xH000000=30::VAL:0xH000000",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

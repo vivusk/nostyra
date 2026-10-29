@@ -1,0 +1,26 @@
+[package]
+name = "game-library"
+description = "ROM folder scanning, header-aware hashing and No-Intro DAT matching."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+crc32fast.workspace = true
+rayon.workspace = true
+sha1.workspace = true
+storage-db.workspace = true
+system-catalog.workspace = true
+disc-image.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+walkdir.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+disc-image = { workspace = true, features = ["test-images"] }
+
+[lints]
+workspace = true

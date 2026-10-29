@@ -1,0 +1,4 @@
+clrmamepro (
+	name "Sony - PlayStation"
+	description "Header only: libretro-database has no maxusers metadat for this system"
+)

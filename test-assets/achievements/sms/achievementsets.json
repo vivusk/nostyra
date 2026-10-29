@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9011,
+ "Title": "Nostyra Test sms",
+ "ConsoleId": 11,
+ "ImageIconUrl": "http://server/Images/9011.png",
+ "RichPresenceGameId": 9011,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9011,
+   "GameId": 9011,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9011.png",
+   "Achievements": [
+    {
+     "ID": 90111,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH000000=20",
+     "Author": "nostyra",
+     "BadgeName": "90111",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90112,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH000000=10::CAN:0=1::SUB:0xH000000=30::VAL:0xH000000",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

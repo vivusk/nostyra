@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9007,
+ "Title": "Nostyra Test nes",
+ "ConsoleId": 7,
+ "ImageIconUrl": "http://server/Images/9007.png",
+ "RichPresenceGameId": 9007,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9007,
+   "GameId": 9007,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9007.png",
+   "Achievements": [
+    {
+     "ID": 90071,
+     "Title": "Frame 5",
+     "Description": "Counter reaches 5",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH000001=5",
+     "Author": "nostyra",
+     "BadgeName": "90071",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90072,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH000001=3::CAN:0=1::SUB:0xH000001=9::VAL:0xH000001",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

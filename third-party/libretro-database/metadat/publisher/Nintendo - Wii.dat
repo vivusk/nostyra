@@ -1,0 +1,4 @@
+clrmamepro (
+	name "Nintendo - Wii"
+	description "Header only: libretro-database has no publisher metadat for this system"
+)

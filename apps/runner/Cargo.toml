@@ -1,0 +1,52 @@
+[package]
+name = "nostyra-runner"
+description = "Standalone runner: plays one game with one libretro core."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+# RetroAchievements session (rc_client, memory regions, journal, snapshot).
+achievements.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+clap.workspace = true
+# Sidecar CRCs of SRAM and the soft-patch file (resume-point warnings).
+crc32fast.workspace = true
+config-layers.workspace = true
+ipc-protocol.workspace = true
+audio-output.workspace = true
+image.workspace = true
+input-mapping.workspace = true
+rom-patch.workspace = true
+libretro-host.workspace = true
+# OpenGL contexts for cores that render on the GPU (N64).
+hw-render-gl.workspace = true
+lz4_flex.workspace = true
+# Dreamcast BIOS check before Flycast boots it (CoreSpec.bios_switch).
+md-5.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+sdl3.workspace = true
+tracing.workspace = true
+video-renderer.workspace = true
+winit.workspace = true
+# Systems: size limits, saves folder and classification (same registry as the scanner).
+system-catalog.workspace = true
+disc-image.workspace = true
+# Content sha1 of the game (save-folder id) when the launcher did not pass it.
+game-library.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+# Synthetic Dreamcast images (GDI fixtures) for the runner's process tests.
+disc-image = { workspace = true, features = ["test-images"] }
+# sdl3 0.20 refuses `Sdl::new` off the first thread unless its `test-mode` is on (GL
+# tests init SDL on test threads). Dev only: release builds keep the main-thread rule.
+sdl3 = { workspace = true, features = ["test-mode"] }
+
+[lints]
+workspace = true

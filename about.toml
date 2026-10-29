@@ -1,0 +1,33 @@
+# cargo-about config: licence notices for the Rust crates linked into the shipped
+# binaries (nostyra-launcher, nostyra-runner). Used by scripts/build-portable.ps1:
+#   cargo about generate --locked about.hbs -o THIRD-PARTY-RUST.html
+# Tool: cargo-about 0.9.2 (`cargo install cargo-about --version 0.9.2 --locked --features cli`).
+
+# Windows x64 is the only release target for now; add triples when other builds ship.
+targets = ["x86_64-pc-windows-msvc"]
+# Build scripts, proc-macro helpers used only at build time and dev/test crates are not
+# shipped (build-only crates such as cc, bindgen or tauri-build do not end up in the exes).
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+# Our own workspace crates (publish = false) are Nostyra itself: GPL-3.0-or-later,
+# shipped as licenses\Nostyra-GPL-3.0.txt.
+private = { ignore = true }
+
+# Licences the dependency graph actually needs, in order of preference: for an
+# "A OR B" expression the first accepted licence in this list is used.
+# Not accepted on purpose: GPL-3.0-only, so librashader ("MPL-2.0 OR GPL-3.0-only")
+# is used under MPL-2.0 (as README Legal states).
+# Every one only asks for the licence text / notice to travel with the binaries, except
+# MPL-2.0 (file-level copyleft): the MPL crates (librashader-*, cssparser, selectors,
+# dtoa-short, option-ext, persy, smartstring) are used unmodified from crates.io, whose
+# source is public; the notice file says where to get it.
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "MPL-2.0",
+    "CDLA-Permissive-2.0",
+]

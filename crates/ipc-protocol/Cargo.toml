@@ -1,0 +1,24 @@
+[package]
+name = "ipc-protocol"
+description = "Launcher <-> runner contract: JSON-line events, exit codes, shared data paths, log files."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+# Log file names and timestamps in local time (log_files).
+chrono.workspace = true
+directories.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# Shared log setup (stderr + size-capped file) for launcher and runner.
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

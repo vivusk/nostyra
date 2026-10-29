@@ -1,0 +1,192 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      # SDL3 (built from source) + winit system deps + Tauri/WebKitGTK (launcher)
+      # + Mesa EGL/GL runtime (llvmpipe) for the OpenGL tests.
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake libudev-dev \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev libxkbcommon-dev \
+            libwayland-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-x11-dev \
+            libwebkit2gtk-4.1-dev librsvg2-dev libxdo-dev libssl-dev \
+            libegl1 libgl1 libgl1-mesa-dri
+
+      - name: Check CMake
+        run: cmake --version
+
+      # Reads rust-toolchain.toml (pinned version + rustfmt/clippy).
+      - name: Install Rust toolchain
+        run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: '. -> target'
+
+      # Launcher UI must be built before cargo: tauri embeds ../dist.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: apps/launcher/package-lock.json
+      - name: Launcher UI (install, build, typecheck)
+        working-directory: apps/launcher
+        run: |
+          npm ci
+          npm run build
+          npx tsc --noEmit
+
+      - name: Fetch snes9x core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-snes9x-core.sh
+      - name: Fetch snes9x core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-snes9x-core.ps1
+      - name: Fetch mesen core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-mesen-core.sh
+      - name: Fetch mesen core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-mesen-core.ps1
+      - name: Fetch mgba core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-mgba-core.sh
+      - name: Fetch mgba core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-mgba-core.ps1
+      - name: Fetch pcsx_rearmed core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-pcsx-rearmed-core.sh
+      - name: Fetch pcsx_rearmed core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-pcsx-rearmed-core.ps1
+      - name: Fetch genesis_plus_gx core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-genesis-plus-gx-core.sh
+      - name: Fetch genesis_plus_gx core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-genesis-plus-gx-core.ps1
+      - name: Fetch mupen64plus_next core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-mupen64plus-next-core.sh
+      - name: Fetch mupen64plus_next core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-mupen64plus-next-core.ps1
+      - name: Fetch flycast core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-flycast-core.sh
+      - name: Fetch flycast core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-flycast-core.ps1
+      - name: Fetch ppsspp core and system files (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-ppsspp-core.sh
+      - name: Fetch ppsspp core and system files (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-ppsspp-core.ps1
+      - name: Fetch melonds_ds core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-melondsds-core.sh
+      - name: Fetch melonds_ds core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-melondsds-core.ps1
+      - name: Fetch dolphin core and system files (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-dolphin-core.sh
+      - name: Fetch dolphin core and system files (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-dolphin-core.ps1
+
+      - name: Test ROMs are reproducible from source
+        if: runner.os == 'Linux'
+        run: |
+          python3 test-assets/roms/src/build-nostyra-test-rom.py
+          python3 test-assets/roms/src/build-nostyra-test-nes-rom.py
+          python3 test-assets/roms/src/build-nostyra-test-gb-rom.py
+          python3 test-assets/roms/src/build-nostyra-test-gba-rom.py
+          python3 test-assets/roms/src/build-nostyra-test-mega-drive-rom.py
+          python3 test-assets/roms/src/build-nostyra-test-sega-8bit-rom.py
+          python3 test-assets/roms/src/build-nostyra-test-psx-disc.py
+          python3 test-assets/roms/src/build-nostyra-test-n64-rom.py
+          python3 test-assets/roms/src/build-nostyra-test-dreamcast.py
+          python3 test-assets/roms/src/build-nostyra-test-psp.py
+          python3 test-assets/roms/src/build-nostyra-test-nds.py
+          python3 test-assets/roms/src/build-nostyra-test-gc.py
+          git diff --exit-code -- test-assets/roms/
+
+      # Canned RetroAchievements sets of the test ROMs (hash + RA counter address per
+      # system; the runner's achievement suites read them).
+      - name: Fake achievement sets are reproducible
+        if: runner.os == 'Linux'
+        run: |
+          python3 test-assets/achievements/generate-fake-sets.py
+          git diff --exit-code -- test-assets/achievements/
+          test -z "$(git status --porcelain -- test-assets/achievements/)"
+
+      - name: No system/core literals outside system-catalog
+        if: runner.os == 'Linux'
+        run: bash scripts/check-system-literals.sh
+
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      # Dolphin's Null-renderer suites (boot, MEM1, pad, audio, clean state refusal)
+      # run here too; its GL and state suites skip (no OpenGL 3.3 on these runners;
+      # macOS test threads cannot open SDL windows). Step timeouts: a hang inside
+      # `cargo test` (e.g. Dolphin's unload hang, #520) has no runner watchdog.
+      - name: Test
+        if: runner.os != 'Linux'
+        timeout-minutes: 30
+        run: cargo test --workspace
+      # OpenGL tests (Nintendo 64 on GLideN64, Dreamcast on Flycast, the PSP smoke on
+      # PPSSPP, Dolphin's pixel + save-state suites and its resume process test) on
+      # Mesa llvmpipe: SDL's offscreen video driver makes the hidden GL window through
+      # EGL, no X server. NOSTYRA_REQUIRE_GL=1 turns a missing GL context into a test
+      # failure instead of a skip.
+      - name: Test (Linux, OpenGL on Mesa llvmpipe)
+        if: runner.os == 'Linux'
+        timeout-minutes: 30
+        env:
+          SDL_VIDEO_DRIVER: offscreen
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          NOSTYRA_REQUIRE_GL: '1'
+        run: cargo test --workspace

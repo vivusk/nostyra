@@ -1,0 +1,162 @@
+[workspace]
+resolver = "2"
+members = [
+    "apps/runner",
+    "apps/launcher/src-tauri",
+    "crates/libretro-host",
+    "crates/video-renderer",
+    "crates/audio-output",
+    "crates/input-mapping",
+    "crates/storage-db",
+    "crates/game-library",
+    "crates/core-manager",
+    "crates/ipc-protocol",
+    "crates/runner-session",
+    "crates/http-download-util",
+    "crates/artwork-cache",
+    "crates/rom-patch",
+    "crates/config-layers",
+    "crates/system-catalog",
+    "crates/disc-image",
+    "crates/hw-render-gl",
+    "crates/achievements",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.99"
+license = "GPL-3.0-or-later"
+
+# Shared versions; crates opt in with `dep.workspace = true`.
+[workspace.dependencies]
+libretro-host = { path = "crates/libretro-host" }
+video-renderer = { path = "crates/video-renderer" }
+audio-output = { path = "crates/audio-output" }
+input-mapping = { path = "crates/input-mapping" }
+storage-db = { path = "crates/storage-db" }
+game-library = { path = "crates/game-library" }
+core-manager = { path = "crates/core-manager" }
+ipc-protocol = { path = "crates/ipc-protocol" }
+runner-session = { path = "crates/runner-session" }
+http-download-util = { path = "crates/http-download-util" }
+artwork-cache = { path = "crates/artwork-cache" }
+rom-patch = { path = "crates/rom-patch" }
+config-layers = { path = "crates/config-layers" }
+system-catalog = { path = "crates/system-catalog" }
+disc-image = { path = "crates/disc-image" }
+hw-render-gl = { path = "crates/hw-render-gl" }
+achievements = { path = "crates/achievements" }
+
+libloading = "0.9.0"
+winit = "0.30.13"
+wgpu = "30.0.1"
+# Built from source so every OS links the same SDL3, independent of system libs.
+sdl3 = { version = "0.20.0", features = ["build-from-source-static"] }
+# OpenGL loader for the hardware-render backend (already in the lock via wgpu-hal).
+glow = "0.17.0"
+# Launcher start-failure MessageBox (already in the lock via tauri/wry).
+windows-sys = { version = "0.60.2", features = ["Win32_UI_WindowsAndMessaging"] }
+clap = { version = "4.6.7", features = ["derive"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+anyhow = "1.0.104"
+thiserror = "2.0.21"
+directories = "6.0.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.11.1"
+# Layered config files (plain `toml`: comments are not preserved on write).
+toml = "1.1.8"
+pollster = "1.0.1"
+# Slang shader presets (CRT filters) on our wgpu device. Only the wgpu runtime: the
+# top-level `librashader` crate with defaults would pull all six graphics runtimes.
+# Builds glslang + SPIRV-Cross (C++) via `cc`.
+librashader-runtime-wgpu = "0.12.1"
+librashader-common = "0.12.1"
+# Preset parsing only (tests: bundled presets parse without a GPU).
+librashader-presets = "0.12.1"
+cc = "1.8.0"
+# Rewind history: pure-Rust LZ4 block compression of state deltas.
+# Pause-menu save-state times in local time ("2026-10-18 14:02").
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+lz4_flex = { version = "0.14.0", default-features = false, features = ["std", "safe-encode", "safe-decode", "checked-decode"] }
+
+# Self-deleting temp dirs in tests (removed on drop, even on panic).
+tempfile = "3.27.0"
+
+# Launcher storage (SQLite compiled in: no system library needed).
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+rusqlite_migration = "2.6.0"
+
+# ROM scanning and identification.
+crc32fast = "1.5.2"
+sha1 = "0.11.0"
+# BIOS identification by md5 (launcher import, runner BIOS switch).
+md-5 = "0.11.0"
+walkdir = "2.5.0"
+rayon = "1.12.0"
+# CHD disc images (pure Rust, BSD-3-Clause), read by disc-image only. 0.3.4 = newest
+# release at least 14 days old on 2026-10-25 (0.3.5 / 0.4.0 too new).
+chd = "=0.3.4"
+# CSO (compressed ISO) raw-deflate blocks; same version and zlib-rs backend zip uses.
+flate2 = { version = "1.1.10", default-features = false, features = ["zlib-rs"] }
+
+# Core download (blocking HTTPS, no async runtime; zip: deflate decode only).
+ureq = "3.4.2"
+zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
+# Artwork cache (pure-Rust decoders/encoder only: no avif/C deps).
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "webp"] }
+percent-encoding = "2.3.2"
+
+# Overlay text (M15 achievements): pure-Rust TTF rasterizer (MIT OR Apache-2.0 OR Zlib).
+# 0.9.4 = newest release at least 14 days old on 2026-10-28 (0.9.5 too new).
+fontdue = "=0.9.4"
+# NFC before drawing (fontdue has no mark positioning). 0.1.25 (MIT OR Apache-2.0) = newest
+# release at least 14 days old on 2026-10-28 (0.1.26 of 2026-10-16 too new).
+unicode-normalization = "=0.1.25"
+
+# Launcher (Tauri 2).
+tauri = "2.12.4"
+tauri-build = "2.7.3"
+tauri-plugin-dialog = "2.8.3"
+# Reveal a ROM in the OS file manager (Rust-side call only; no JS package/capability).
+tauri-plugin-opener = "2.7.2"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+undocumented_unsafe_blocks = "warn"
+
+# Build SDL3 optimized even in dev: avoids the MSVC debug-CRT (MSVCRTD) clash
+# with Rust's release CRT, and keeps audio resampling fast in debug builds.
+[profile.dev.package.sdl3-sys]
+opt-level = 2
+debug = false
+
+# Bundled SQLite (C) optimized in dev so list queries and tests run at realistic speed.
+[profile.dev.package.libsqlite3-sys]
+opt-level = 2
+
+# ROM hashing at near-release speed in dev/tests (scan perf test).
+[profile.dev.package.sha1]
+opt-level = 3
+
+[profile.dev.package.crc32fast]
+opt-level = 3
+
+# Per-frame hot path of the runner (callback bridge, pixel conversion, audio DRC)
+# optimized in dev: the launcher's dev build runs the debug runner, and unoptimized
+# conversion caps fast-forward at a fraction of release speed.
+[profile.dev.package.libretro-host]
+opt-level = 3
+
+[profile.dev.package.video-renderer]
+opt-level = 3
+
+[profile.dev.package.audio-output]
+opt-level = 3

@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9005,
+ "Title": "Nostyra Test gba",
+ "ConsoleId": 5,
+ "ImageIconUrl": "http://server/Images/9005.png",
+ "RichPresenceGameId": 9005,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9005,
+   "GameId": 9005,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9005.png",
+   "Achievements": [
+    {
+     "ID": 90051,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH000000=20",
+     "Author": "nostyra",
+     "BadgeName": "90051",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90052,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH000000=10::CAN:0=1::SUB:0xH000000=30::VAL:0xH000000",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

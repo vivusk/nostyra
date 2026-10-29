@@ -1,0 +1,34 @@
+/* Design tokens from the approved Library mockup (project/Library.dc.html).
+   Tailwind v4 turns each token into utilities: bg-surface, text-muted, font-display… */
+@theme {
+  --color-app-bg: #0f0f12;
+  --color-sidebar: #121216;
+  --color-sidebar-border: #1f1f26;
+  --color-surface: #16161c;
+  --color-surface-raised: #1a1a20;
+  --color-nav-hover: #1c1c22;
+  --color-nav-active: #1f1f27;
+  --color-border: #23232b;
+  --color-border-strong: #2a2a33;
+  --color-text: #f4f4f6;
+  --color-text-nav: #b4b4be;
+  --color-text-soft: #c9c9d2;
+  --color-muted: #9c9ca8;
+  --color-muted-dim: #8e8e9a;
+  --color-disabled: #6e6e7a;
+  --color-accent: #8c7dff;
+  --color-accent-strong: #6a55e8;
+  --color-link: #b9b0ff;
+  --color-warning: #fbbf24;
+  /* Destructive actions that cannot be undone: text/border on dark (danger),
+     filled confirm button with white text (danger-strong, hover danger-hover). */
+  --color-danger: #f87171;
+  --color-danger-strong: #dc2626;
+  --color-danger-hover: #ef4444;
+
+  --font-display: "Sora", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+
+  --radius-control: 10px;
+  --radius-card: 12px;
+}

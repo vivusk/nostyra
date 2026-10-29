@@ -1,0 +1,18 @@
+{
+  "sha": "0000000000000000000000000000000000000000",
+  "url": "https://api.github.com/repos/libretro-thumbnails/Nintendo_-_Super_Nintendo_Entertainment_System/git/trees/master",
+  "tree": [
+    { "path": "README.md", "mode": "100644", "type": "blob", "sha": "a1" },
+    { "path": "Named_Boxarts", "mode": "040000", "type": "tree", "sha": "a2" },
+    { "path": "Named_Boxarts/Chrono Trigger (USA).png", "mode": "100644", "type": "blob", "sha": "a3" },
+    { "path": "Named_Boxarts/Q_bert's Qubes (USA).png", "mode": "100644", "type": "blob", "sha": "a4" },
+    { "path": "Named_Boxarts/Super Mario World (USA).png", "mode": "100644", "type": "blob", "sha": "a5" },
+    { "path": "Named_Boxarts/Named_Boxarts/Clock Tower (USA).png", "mode": "100644", "type": "blob", "sha": "a6" },
+    { "path": "Named_Boxarts/Notes.txt", "mode": "100644", "type": "blob", "sha": "a7" },
+    { "path": "Named_Snaps/Chrono Trigger (USA).png", "mode": "100644", "type": "blob", "sha": "a8" },
+    { "path": "Named_Titles/Chrono Trigger (USA).png", "mode": "100644", "type": "blob", "sha": "a9" },
+    { "path": "Named_Titles/Super Mario World (USA).png", "mode": "100644", "type": "blob", "sha": "b1" },
+    { "path": "Named_Logos/Chrono Trigger (USA).png", "mode": "100644", "type": "blob", "sha": "b2" }
+  ],
+  "truncated": false
+}

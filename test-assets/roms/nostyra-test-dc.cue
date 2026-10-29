@@ -1,0 +1,11 @@
+REM SINGLE-DENSITY AREA
+FILE "nostyra-test-dc (Track 1).bin" BINARY
+  TRACK 01 MODE1/2048
+    INDEX 01 00:00:00
+FILE "nostyra-test-dc (Track 2).raw" BINARY
+  TRACK 02 AUDIO
+    INDEX 01 00:00:00
+REM HIGH-DENSITY AREA
+FILE "nostyra-test-dc (Track 3).bin" BINARY
+  TRACK 03 MODE1/2048
+    INDEX 01 00:00:00

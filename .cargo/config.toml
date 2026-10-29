@@ -1,0 +1,6 @@
+# Test and dev environment for every cargo command in this workspace.
+[env]
+# PPSSPP checks only that CI is set: a release assert then logs instead of opening
+# a modal MessageBox (the runner sets it itself; in-binary tests load the core
+# without the runner and must never call set_var). CI jobs set CI=true already.
+CI = "1"

@@ -1,0 +1,16 @@
+[package]
+name = "http-download-util"
+description = "Shared blocking HTTPS client, size-capped copy and download error classes."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+thiserror.workspace = true
+tracing.workspace = true
+ureq.workspace = true
+
+[lints]
+workspace = true

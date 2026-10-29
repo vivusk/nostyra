@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9002,
+ "Title": "Nostyra Test n64",
+ "ConsoleId": 2,
+ "ImageIconUrl": "http://server/Images/9002.png",
+ "RichPresenceGameId": 9002,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9002,
+   "GameId": 9002,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9002.png",
+   "Achievements": [
+    {
+     "ID": 90021,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH0f0000=20",
+     "Author": "nostyra",
+     "BadgeName": "90021",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90022,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH0f0000=10::CAN:0=1::SUB:0xH0f0000=30::VAL:0xH0f0000",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

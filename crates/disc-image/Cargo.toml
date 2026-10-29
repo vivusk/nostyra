@@ -1,0 +1,25 @@
+[package]
+name = "disc-image"
+description = "Reads CD, GD-ROM, UMD and GameCube/Wii disc images without loading them: cue/gdi/m3u sheets, CHD (CD/GD/DVD), CSO, DiscJuggler CDI, sector reader, ISO9660 lookup, PARAM.SFO/PBP, PlayStation, Dreamcast and PSP disc ids and serials, GameCube/Wii disc headers (ISO/CISO/WIA/RVZ/WBFS/GCZ) and DOL/ELF executables."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+chd.workspace = true
+flate2.workspace = true
+# std-only registry: the `DiscProbe` trait this crate implements.
+system-catalog.workspace = true
+thiserror.workspace = true
+
+[features]
+# Exposes `test_images` (synthetic PS1 images) to other crates' tests.
+test-images = []
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

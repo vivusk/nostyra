@@ -1,0 +1,25 @@
+[package]
+name = "libretro-host"
+description = "Loads libretro cores and bridges their C callbacks to safe Rust."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+libloading.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+tracing-subscriber.workspace = true
+
+
+[build-dependencies]
+cc.workspace = true
+
+[lints]
+workspace = true

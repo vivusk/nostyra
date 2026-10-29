@@ -1,0 +1,17 @@
+clrmamepro (
+	name "Nintendo - Super Nintendo Entertainment System"
+	description "Nintendo - Super Nintendo Entertainment System"
+)
+
+game (
+	comment "Chrono Trigger (USA)"
+	genre "Role-playing (RPG)"
+	rom ( crc 2D5CE2BA )
+)
+
+game (
+	comment "Super Mario World (USA)"
+	genre "Platform"
+	rom ( crc b19ed489 )
+)
+

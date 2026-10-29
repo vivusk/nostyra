@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9006,
+ "Title": "Nostyra Test gbc",
+ "ConsoleId": 6,
+ "ImageIconUrl": "http://server/Images/9006.png",
+ "RichPresenceGameId": 9006,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9006,
+   "GameId": 9006,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9006.png",
+   "Achievements": [
+    {
+     "ID": 90061,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH00ff80=20",
+     "Author": "nostyra",
+     "BadgeName": "90061",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90062,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH00ff80=10::CAN:0=1::SUB:0xH00ff80=30::VAL:0xH00ff80",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

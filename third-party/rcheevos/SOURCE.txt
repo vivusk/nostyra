@@ -1,0 +1,6 @@
+rcheevos — RetroAchievements runtime, client, API and hashing library (C89).
+Upstream: https://github.com/RetroAchievements/rcheevos
+Tag:      v12.5.0
+Commit:   1433173220a7eaede6a9ed7a18e94117be1821e0 (fetched 2026-10-28)
+License:  MIT (LICENSE in this folder)
+Copied:   include/, src/, LICENSE from the tag, unmodified (test/ and validator/ left out).
