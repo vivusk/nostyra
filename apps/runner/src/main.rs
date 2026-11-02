@@ -23,6 +23,7 @@ mod achievements_real_core_checks;
 mod achievements_real_core_loader;
 #[cfg(test)]
 mod achievements_real_core_suite_tests;
+mod archived_content;
 mod auto_save_on_exit;
 mod bios_option_switch;
 mod core_probe_command;
@@ -104,6 +105,7 @@ use std::cell::Cell;
 use std::path::Path;
 use std::process::ExitCode;
 
+use anyhow::Context;
 use clap::Parser;
 use system_catalog::Media;
 
@@ -111,7 +113,7 @@ use crate::loaded_session_run::{code_of, PreparedLaunch};
 use crate::process_hard_exit::teardown_watchdog::TeardownWatchdog;
 use crate::runner_cli_args::RunnerCliArgs;
 use crate::runner_data_paths::RunnerDataPaths;
-use crate::runner_exit_codes::{validate_rom, EXIT_GRAPHICS};
+use crate::runner_exit_codes::EXIT_GRAPHICS;
 use crate::sdl_runtime::set_process_hints;
 use crate::session_reporter::SessionReporter;
 
@@ -158,23 +160,35 @@ fn run(
 ) -> anyhow::Result<()> {
     // Before any SDL init: an OpenGL core initialises SDL video inside `load`.
     set_process_hints();
-    let system = validate_rom(rom, args.system.as_deref())?;
+    let data_root = match &args.data_dir {
+        Some(root) => root.clone(),
+        None => ipc_protocol::data_root().context("cannot determine the user data directory")?,
+    };
+    let staging_dir =
+        ipc_protocol::staged_content_dir(&data_root).join(std::process::id().to_string());
+    staged_content_cleanup::remove_stale(
+        &ipc_protocol::staged_content_dir(&data_root),
+        &staging_dir,
+        staged_content_cleanup::STALE_AGE,
+    );
+    let content =
+        archived_content::PreparedContent::prepare(rom, args.system.as_deref(), &staging_dir)?;
+    let system = content.system;
     let paths = RunnerDataPaths::resolve(
-        args.data_dir.as_deref(),
+        Some(&data_root),
         rom,
         system,
-        args.content_sha1.as_deref(),
+        content
+            .content_sha1
+            .as_deref()
+            .or(args.content_sha1.as_deref()),
     )?;
     // Disc images are never soft-patched nor preloaded (multi-file, hundreds of MB).
     let patched = match system.media {
-        Media::Cartridge => rom_soft_patching::load_soft_patched_rom(rom),
+        Media::Cartridge if content.path == rom => rom_soft_patching::load_soft_patched_rom(rom),
+        Media::Cartridge => rom_soft_patching::load_soft_patched_rom_from(rom, &content.path),
         Media::Disc => rom_soft_patching::SoftPatchedRom::default(),
     };
-    staged_content_cleanup::remove_stale(
-        &ipc_protocol::staged_content_dir(&paths.data_root),
-        &paths.staging_dir,
-        staged_content_cleanup::STALE_AGE,
-    );
     if system.media == Media::Disc {
         disc_bios_log::log_bios_choice(system, &paths.system_dir, rom);
     }
@@ -183,6 +197,7 @@ fn run(
     let overrides = [bios.into_iter().collect(), args.core_options.clone()].concat();
     let core_options = runner_core_options::resolve(system, &overrides);
     let launch = PreparedLaunch {
+        content_rom: content.path.clone(),
         paths,
         patched,
         core_options,

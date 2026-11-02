@@ -8,7 +8,8 @@ use crate::dat_index::{display_region, display_title};
 use crate::disc_game_identity::read_disc_identity;
 use crate::folder_scanner::{DiscoveredFile, ScanFailure};
 use crate::nds_game_code::cartridge_serial;
-use crate::rom_file_hasher::{hash_headerless, hash_rom_file, RomHashes};
+use crate::rom_archive::{is_rom_archive, read_rom_archive};
+use crate::rom_file_hasher::{hash_headerless, hash_rom_bytes, hash_rom_file, RomHashes};
 use crate::serial_match_keys::serial_rule;
 use crate::system_catalogs::SystemCatalog;
 use crate::DatEntry;
@@ -30,6 +31,28 @@ pub fn build_scanned_game(
         path: path.to_path_buf(),
         reason,
     };
+    if is_rom_archive(path) {
+        let rom = read_rom_archive(path).map_err(|err| failure(err.to_string()))?;
+        if rom.system != file.system {
+            return Err(failure(
+                "ROM system in ZIP changed since discovery; rescan the library".into(),
+            ));
+        }
+        let hashes = hash_rom_bytes(&rom.bytes, rom.system);
+        let matched = catalog.dat.lookup(&hashes).or_else(|| {
+            hash_headerless(&rom.bytes, rom.system).and_then(|bare| catalog.dat.lookup(&bare))
+        });
+        let mut game = scanned_game_from_match(file, folder_id, catalog, hashes, matched, None);
+        if matched.is_none() {
+            game.title = display_title(
+                Path::new(&rom.name)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or(&rom.name),
+            );
+        }
+        return Ok(game);
+    }
     if let Some(signature) = serial_rule(file.system) {
         let identity =
             read_disc_identity(path, signature).map_err(|err| failure(err.to_string()))?;

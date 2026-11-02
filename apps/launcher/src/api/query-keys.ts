@@ -16,6 +16,7 @@ export const queryKeys = {
   coreStatus: ["core-status"] as const,
   /** Live scan progress (null = idle), seeded by get_scan_progress, updated by events. */
   scanProgress: ["scan-progress"] as const,
+  scanZipArchives: ["scan-zip-archives"] as const,
   /** Live core download progress (null = idle), event-driven only. */
   coreDownload: ["core-download"] as const,
   /** Current game session (null = none). */

@@ -15,6 +15,7 @@ use crate::dat_rematch::rematch_unidentified;
 use crate::folder_scanner::{DiscoveredFile, ScanFailure};
 use crate::library_error::LibraryError;
 use crate::library_scan_discovery::{discover_folder, FolderDiscovery};
+use crate::library_scan_options::ScanOptions;
 use crate::scanned_game_builder::build_scanned_game;
 use crate::system_catalogs::SystemCatalogs;
 
@@ -66,6 +67,28 @@ pub fn scan_library(
     progress: &(dyn Fn(&ScanProgress) + Sync),
     cancel: &AtomicBool,
 ) -> Result<ScanSummary, LibraryError> {
+    scan_library_with_options(
+        db,
+        folders,
+        catalogs,
+        now,
+        progress,
+        cancel,
+        ScanOptions::default(),
+    )
+}
+
+/// [`scan_library`] with opt-in single-ROM archive discovery.
+#[allow(clippy::too_many_arguments)]
+pub fn scan_library_with_options(
+    db: &Mutex<Connection>,
+    folders: &[LibraryFolder],
+    catalogs: &SystemCatalogs,
+    now: i64,
+    progress: &(dyn Fn(&ScanProgress) + Sync),
+    cancel: &AtomicBool,
+    options: ScanOptions,
+) -> Result<ScanSummary, LibraryError> {
     let mut summary = ScanSummary::default();
     let mut discoveries = Vec::with_capacity(folders.len());
     for folder in folders {
@@ -78,7 +101,7 @@ pub fn scan_library(
             folder_path: folder.path.clone(),
             ..ScanProgress::default()
         });
-        match discover_folder(db, folder, &ALL_SYSTEMS) {
+        match discover_folder(db, folder, &ALL_SYSTEMS, options) {
             Ok(found) => discoveries.push(found),
             Err(err) => summary
                 .folder_errors

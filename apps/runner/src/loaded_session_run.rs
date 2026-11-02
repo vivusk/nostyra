@@ -7,7 +7,7 @@
 //! `headless_runner::run` (declared after its `session` parameter).
 
 use std::cell::Cell;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use libretro_host::{CoreSession, SessionConfig};
@@ -32,6 +32,8 @@ use crate::session_reporter::SessionReporter;
 
 /// Everything `main` resolved before the core is loaded.
 pub struct PreparedLaunch {
+    /// Actual ROM for core/achievement I/O (ZIP: owned extraction held by main).
+    pub content_rom: PathBuf,
     pub paths: RunnerDataPaths,
     /// Soft patch of a cartridge (discs: none).
     pub patched: SoftPatchedRom,
@@ -50,6 +52,7 @@ pub fn run(
     launch: PreparedLaunch,
 ) -> anyhow::Result<()> {
     let PreparedLaunch {
+        content_rom,
         paths,
         patched,
         core_options,
@@ -58,7 +61,7 @@ pub fn run(
     let system = paths.system;
     // Disc images are never preloaded (multi-file, hundreds of MB).
     let content = match system.media {
-        Media::Cartridge => rom_soft_patching::content_bytes_for_core(rom, &patched),
+        Media::Cartridge => rom_soft_patching::content_bytes_for_core(&content_rom, &patched),
         Media::Disc => None,
     };
     // Outlives `session` (declared first; moved into `EmulationApp` after it).
@@ -67,7 +70,7 @@ pub fn run(
     core_kept_loaded.set(keep_library_loaded); // even a failed load leaves it mapped
     let mut session = CoreSession::load(SessionConfig {
         core_path: core,
-        rom_path: rom,
+        rom_path: &content_rom,
         system_dir: &paths.system_dir,
         save_dir: &paths.saves_dir,
         rom_data: content.as_deref(),
@@ -94,7 +97,7 @@ pub fn run(
         data_root: &paths.data_root,
         content_id: &paths.content_sha1,
         system,
-        rom,
+        rom: &content_rom,
         patched: patched.data.clone(),
         core_stem: &core
             .file_stem()

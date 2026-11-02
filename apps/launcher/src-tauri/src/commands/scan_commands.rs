@@ -3,7 +3,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use game_library::{scan_library, ScanProgress, ScanSummary};
+use game_library::{read_scan_options, scan_library_with_options, ScanProgress, ScanSummary};
 use tauri::{AppHandle, Manager, State};
 
 use crate::app_events::{
@@ -14,6 +14,22 @@ use crate::app_state::{lock, unix_now, AppState};
 use crate::command_error::CommandResult;
 use crate::commands::artwork_auto_fetch_hook::maybe_start_artwork_fetch;
 use crate::relinked_game_files::migrate_relinked_game_files;
+
+#[tauri::command]
+pub fn get_scan_zip_archives(state: State<'_, AppState>) -> CommandResult<bool> {
+    Ok(read_scan_options(&state.db())?.scan_zip_archives)
+}
+
+/// Persist the choice and immediately scan (or queue a rerun of an active scan).
+#[tauri::command]
+pub fn set_scan_zip_archives(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    enabled: bool,
+) -> CommandResult<()> {
+    game_library::set_zip_scanning(&state.db(), enabled)?;
+    start_scan(app, state)
+}
 
 /// Starts scanning every library folder; returns at once. While a scan runs, a new
 /// request (e.g. a folder was just added) is queued: the scan runs once more at the end.
@@ -104,13 +120,21 @@ fn scan_all_folders(
         *lock(&state.scan_progress) = Some(payload.clone());
         emit(app, SCAN_PROGRESS, payload);
     };
-    let summary = match scan_library(
+    let options = match read_scan_options(&state.db()) {
+        Ok(options) => options,
+        Err(err) => {
+            errors.push(err.to_string());
+            return;
+        }
+    };
+    let summary = match scan_library_with_options(
         &state.db,
         &folders,
         &state.catalogs,
         unix_now(),
         &report,
         cancel,
+        options,
     ) {
         Ok(summary) => summary,
         Err(err) => {

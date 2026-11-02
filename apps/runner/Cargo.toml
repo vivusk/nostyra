@@ -39,9 +39,10 @@ system-catalog.workspace = true
 disc-image.workspace = true
 # Content sha1 of the game (save-folder id) when the launcher did not pass it.
 game-library.workspace = true
+tempfile.workspace = true
 
 [dev-dependencies]
-tempfile.workspace = true
+zip.workspace = true
 # Synthetic Dreamcast images (GDI fixtures) for the runner's process tests.
 disc-image = { workspace = true, features = ["test-images"] }
 # sdl3 0.20 refuses `Sdl::new` off the first thread unless its `test-mode` is on (GL

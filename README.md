@@ -38,6 +38,22 @@ to report bugs.
 
 ## Build
 
+### ROM ZIP archives
+
+Enable **Settings → ROM folders → Scan ZIP archives** to scan ZIPs containing one
+NES, SNES, Mega Drive/Genesis, Master System, Game Gear, SG-1000 or GBA ROM.
+The ROM may be in a subfolder alongside documents. Multiple ROMs, other systems,
+nested archives and encrypted ZIPs are not supported. The option is off by default;
+changing it rescans the library. Turning it off keeps already scanned ZIP games
+playable and still detects archives that were deleted.
+
+Play extracts only the ROM to temporary storage and cleans it up when the session
+ends. Saves, game settings and play history use the original archive identity;
+the source ZIP is never modified. Soft patches go beside the ZIP with the same
+basename (for example, `Game.zip` and `Game.ips`).
+
+### Build requirements
+
 Requirements: Rust (version pinned in `rust-toolchain.toml`, installed
 automatically by rustup), CMake on PATH (SDL3 is built from source; on Windows the
 cmake bundled with Visual Studio works via the `CMAKE` env var), Python 3 (only to

@@ -124,6 +124,9 @@ export const commands = {
   startScan: () => invoke<void>("start_scan"),
   cancelScan: () => invoke<void>("cancel_scan"),
   getScanProgress: () => invoke<ScanProgress | null>("get_scan_progress"),
+  getScanZipArchives: () => invoke<boolean>("get_scan_zip_archives"),
+  /** Persists the setting and starts or queues a library rescan. */
+  setScanZipArchives: (enabled: boolean) => invoke<void>("set_scan_zip_archives", { enabled }),
   getCoreStatus: (coreId: string) => invoke<CoreStatus>("get_core_status", { coreId }),
   downloadCore: (coreId: string) => invoke<void>("download_core", { coreId }),
   /** Starts the game; `loadState` (0–9, or "auto" = Continue from the resume point)

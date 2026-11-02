@@ -28,6 +28,11 @@ pub struct SoftPatchedRom {
 
 /// Looks for patches next to `rom` and applies them in order.
 pub fn load_soft_patched_rom(rom: &Path) -> SoftPatchedRom {
+    load_soft_patched_rom_from(rom, rom)
+}
+
+/// ZIPs look up patches next to the original archive but patch extracted bytes.
+pub fn load_soft_patched_rom_from(rom: &Path, content: &Path) -> SoftPatchedRom {
     let paths = rom_patch::find_patches_for_rom(rom);
     if paths.is_empty() {
         return SoftPatchedRom::default();
@@ -38,7 +43,8 @@ pub fn load_soft_patched_rom(rom: &Path) -> SoftPatchedRom {
         .ok()
         .and_then(|patches| rom_patch::patch_chain_crc32(patches));
     let result = patches.and_then(|patches| {
-        let bytes = std::fs::read(rom).map_err(|err| format!("{}: {err}", rom.display()))?;
+        let bytes =
+            std::fs::read(content).map_err(|err| format!("{}: {err}", content.display()))?;
         rom_patch::apply_patch_chain(&bytes, &patches)
             .map_err(|(index, err)| format!("{}: {err}", paths[index].display()))
     });

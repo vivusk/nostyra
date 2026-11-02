@@ -20,8 +20,10 @@ mod gamecube_wii_identity;
 mod library_error;
 mod library_scan_discovery;
 mod library_scan_job;
+mod library_scan_options;
 mod metadata_dat_index;
 mod nds_game_code;
+mod rom_archive;
 mod rom_file_hasher;
 mod scanned_game_builder;
 mod serial_match_keys;
@@ -32,11 +34,16 @@ pub use clrmamepro_dat_parser::{
     parse_clrmamepro_dat, parse_clrmamepro_games, DatEntry, DatGame, DatRom,
 };
 pub use dat_index::{display_region, display_title, DatIndex};
-pub use folder_scanner::{discover_rom_files, DiscoveredFile, DiscoveredFiles, ScanFailure};
+pub use folder_scanner::{
+    discover_rom_files, discover_rom_files_with_options, DiscoveredFile, DiscoveredFiles,
+    ScanFailure,
+};
 pub use game_content_sha1::game_content_sha1;
 pub use library_error::LibraryError;
-pub use library_scan_job::{scan_library, ScanProgress, ScanSummary};
+pub use library_scan_job::{scan_library, scan_library_with_options, ScanProgress, ScanSummary};
+pub use library_scan_options::{read_scan_options, set_zip_scanning, ScanOptions};
 pub use metadata_dat_index::{MetadataIndex, METADATA_PARTIAL_VERSION, METADATA_SOURCE_VERSION};
+pub use rom_archive::{is_rom_archive, read_rom_archive, ArchivedRom};
 pub use rom_file_hasher::{
     hash_bytes, hash_file_streaming, hash_headerless, hash_rom_bytes, hash_rom_file, read_rom_file,
     RomHashes,

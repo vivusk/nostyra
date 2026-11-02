@@ -5,6 +5,7 @@ import { SettingsBiosSection } from "../components/settings/settings-bios-sectio
 import { SettingsCoresSection } from "../components/settings/settings-cores-section";
 import { SettingsDataFolderSection } from "../components/settings/settings-data-folder-section";
 import { SettingsLogsRow } from "../components/settings/settings-logs-row";
+import { SettingsZipScan } from "../components/settings/settings-zip-scan";
 import { SettingsArtworkSection } from "../components/settings-artwork-section";
 import { ControlsSection } from "../components/settings/controls-section";
 import { GameplayDefaultsSection } from "../components/settings/gameplay-defaults-section";
@@ -41,6 +42,7 @@ export function SettingsPage() {
           ))}
         </ul>
         <p className="m-0 text-xs text-muted">Removing a folder hides its games; play history comes back if you add it again.</p>
+        <SettingsZipScan />
         <LastScanProblemsLink />
         <div className="flex flex-wrap gap-3">
           <AddFolderButton />
