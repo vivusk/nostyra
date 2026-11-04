@@ -7,7 +7,7 @@ use super::menu_labels::footer_hint;
 use super::menu_option_values::OptionValues;
 use super::menu_types::{NavEvent, Screen, SlotSummary, SLOT_COUNT};
 use super::pause_menu_state::PauseMenuState;
-use super::pause_menu_view::{fit_text, paint_menu};
+use super::pause_menu_view::paint_menu;
 use super::slot_thumbnail_cache::SlotThumbnailCache;
 use crate::state_thumbnail_writer::Thumbnail;
 use NavEvent::{Back, Confirm, Down, Right, Up};
@@ -154,12 +154,4 @@ fn footer_shows_the_reason_of_the_disabled_row_under_the_cursor() {
         usable.handle(nav); // cursor on Rewind
     }
     assert_eq!(footer_hint(&usable), hint);
-}
-
-#[test]
-fn long_text_is_cut_to_fit() {
-    assert_eq!(fit_text("Resume", 100, 1), "Resume");
-    let cut = fit_text("A very long ROM name that does not fit", 60, 2);
-    assert!(cut.ends_with("..") && cut.chars().count() == 5, "{cut}");
-    assert_eq!(fit_text("abc", 0, 2), "", "no room at all");
 }

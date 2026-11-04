@@ -9,7 +9,7 @@ use std::cell::Cell;
 use std::fmt;
 use std::rc::Rc;
 
-/// Status of every refused state load (F4, menu, `--load-state`, resume point).
+/// Status of every refused state load (F3, menu, `--load-state`, resume point).
 pub const STATE_LOAD_REFUSED: &str = "Loading states is disabled in hardcore mode";
 /// Pause-menu reason on the Rewind row while hardcore is active.
 pub const REWIND_REFUSED: &str = "Disabled in hardcore";

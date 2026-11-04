@@ -1,5 +1,5 @@
 //! L6: PPSSPP boots on its own thread after `retro_load_game` and accepts any state
-//! before that, only to drop it at boot. For re-query cores a slot load (F4, pause
+//! before that, only to drop it at boot. For re-query cores a slot load (F3, pause
 //! menu) is refused with "Core not ready" until the core booted (its state size
 //! changed, or [`BOOT_WAIT`](crate::startup_boot_gate::BOOT_WAIT) passed).
 

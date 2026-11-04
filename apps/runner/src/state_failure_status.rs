@@ -1,14 +1,14 @@
-//! Status text for a failed slot save/load (F1/F4, pause menu, `--load-state`).
+//! Status text for a failed slot save/load (F1/F3, pause menu, `--load-state`).
 
 use libretro_host::HostError;
 
 use crate::hardcore_gate::{HardcoreLoadRefused, STATE_LOAD_REFUSED};
 
-/// F1/F4 status when the game has no save states (the core's state size is 0, e.g.
+/// F1/F3 status when the game has no save states (the core's state size is 0, e.g.
 /// melonDS DS on a DSi title).
 pub const STATES_UNAVAILABLE: &str = "Save states are not available for this game";
 
-/// F1/F4 status when the core's states need its hardware context and the session
+/// F1/F3 status when the core's states need its hardware context and the session
 /// has none (Dolphin on a Null renderer: its state calls crash).
 pub const STATES_NEED_HW_CONTEXT: &str = "Save states unavailable without hardware rendering";
 

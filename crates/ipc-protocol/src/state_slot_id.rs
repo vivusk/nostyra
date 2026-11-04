@@ -14,7 +14,7 @@ use crate::save_state_files::MAX_STATE_SLOT;
 /// File stem and CLI / JSON spelling of the resume point.
 pub const AUTO_STATE_STEM: &str = "auto";
 
-/// A save-state slot: numbered (user, F1/F4 and the slot grid) or the resume point.
+/// A save-state slot: numbered (user, F1/F3 and the slot grid) or the resume point.
 /// Serialises as the bare number or the string `"auto"`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(try_from = "SlotRepr", into = "SlotRepr")]

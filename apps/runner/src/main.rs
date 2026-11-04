@@ -49,6 +49,7 @@ mod loop_timing;
 mod n64_real_core_suite_tests;
 mod on_screen_status;
 mod pause_menu;
+mod periodic_resume_save;
 mod pre_boot_load_guard;
 mod process_hard_exit;
 #[cfg(test)]

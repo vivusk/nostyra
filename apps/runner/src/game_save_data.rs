@@ -1,7 +1,7 @@
 //! Bundles a game's persistent data (windowed loop and headless runs): SRAM and the
 //! cartridge clock (when the core exposes one), state
 //! slots with their thumbnails (numbered slots and the `auto` resume point), plus the
-//! active slot (F2/F3, numbered only), the real frames run this session (auto-save
+//! active slot (F2 slot picker, numbered only), the real frames run this session (auto-save
 //! rule) and the status shown in the window title (the runner also flashes it on
 //! screen, see `on_screen_status`).
 
@@ -115,7 +115,31 @@ impl GameSaveData {
         Ok(())
     }
 
-    /// F4: (status, the state's achievement progress). The progress is meaningful
+    /// Periodic resume point: SRAM + clock flushed first (the sidecar's `sram_crc32`
+    /// then matches the `.srm` on disk), the core serialized here, the files and the
+    /// thumbnail written by the background worker (no disk wait on the frame thread).
+    pub fn save_resume_point_in_background(
+        &mut self,
+        session: &mut CoreSession,
+        frame: &RgbaFrameBuffer,
+        progress: Option<String>,
+    ) -> anyhow::Result<()> {
+        self.flush(session);
+        let id = StateSlotId::Auto;
+        let files = self.states.prepare(session, id, progress)?;
+        tracing::info!(bytes = files.state_len(), "periodic resume point queued");
+        self.thumbnails.queue_files(files)?;
+        let path = self.states.thumbnail_path(id);
+        self.thumbnails.queue(path, Thumbnail::from_frame(frame));
+        Ok(())
+    }
+
+    /// Waits for queued background writes (before the exit save overwrites them).
+    pub fn wait_background_writes(&self) {
+        self.thumbnails.wait_idle();
+    }
+
+    /// F3: (status, the state's achievement progress). The progress is meaningful
     /// only when the status is [`STATE_LOADED`].
     pub fn load_state(&self, session: &mut CoreSession) -> (String, Option<String>) {
         if let Some(refused) = self.hardcore_refusal() {
@@ -168,19 +192,8 @@ impl GameSaveData {
         &self.rom_name
     }
 
-    /// F2 (-1) / F3 (+1), clamped to 0..=MAX_STATE_SLOT.
-    pub fn change_slot(&mut self, delta: i8) -> String {
-        self.slot = self.slot.saturating_add_signed(delta).min(MAX_STATE_SLOT);
-        tracing::info!(slot = self.slot, "state slot selected");
-        (if self.has_state(StateSlotId::Numbered(self.slot)) {
-            "Has state"
-        } else {
-            "Empty"
-        })
-        .to_string()
-    }
-
-    /// Makes `slot` the active one (clamped), e.g. `--headless-save-slot`.
+    /// Makes `slot` the active one (clamped): slot picker, menu save / load,
+    /// `--headless-save-slot`.
     pub fn select_slot(&mut self, slot: u8) {
         self.slot = slot.min(MAX_STATE_SLOT);
     }

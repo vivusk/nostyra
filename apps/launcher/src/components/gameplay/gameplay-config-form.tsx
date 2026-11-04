@@ -25,7 +25,7 @@ const ROWS: { key: GameplayConfigKey; label: string; help?: string; control: "se
   { key: "rewind.enabled", label: "Rewind", help: "Hold the Rewind shortcut in game (Backspace or LT / L2 by default)", control: "toggle" },
   { key: "rewind.buffer_mb", label: "Rewind memory", control: "select" },
   { key: "resume.mode", label: "Resume", help: "On Play: ask to continue, always continue, or always start fresh", control: "segmented" },
-  { key: "resume.auto_save", label: "Save resume point on exit", help: "Remembers where you quit, for Continue", control: "toggle" },
+  { key: "resume.auto_save", label: "Save resume point", help: "On exit and every minute of play (3 min on PSP, Dreamcast, GameCube, Wii), for Continue", control: "toggle" },
 ];
 
 /** The gameplay settings (video, latency, rewind, resume) for one config layer, shared by Settings → Gameplay

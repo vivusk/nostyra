@@ -23,6 +23,8 @@ impl EmulationApp<'_> {
             loop_failed: self.error.is_some(),
             real_frames: self.saves.real_frames(),
         };
+        // A periodic resume point still being written must not land after this one.
+        self.saves.wait_background_writes();
         let progress = self.achievement_progress();
         let (saves, session, frame) = (&self.saves, &mut self.session, &self.frame);
         // `frame` = clean last core frame (no OSD/shader/menu) for the thumbnail.

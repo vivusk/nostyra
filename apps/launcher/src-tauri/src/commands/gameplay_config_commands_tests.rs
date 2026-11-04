@@ -135,8 +135,8 @@ fn view_keeps_controls_out_of_the_gameplay_maps() {
     );
     assert_eq!(
         no_game.input.resolved.len(),
-        66,
-        "2 × 24 actions + 2 × 9 hotkeys"
+        64,
+        "2 × 24 actions + 2 × 8 hotkeys"
     );
 
     let with_game = build_view(

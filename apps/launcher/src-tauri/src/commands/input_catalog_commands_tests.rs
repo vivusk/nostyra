@@ -21,7 +21,7 @@ fn arr(names: &[&str]) -> Value {
 fn catalog_comes_from_config_layers() {
     let catalog = get_input_catalog();
     assert_eq!(catalog.pad_actions.len(), 24);
-    assert_eq!(catalog.hotkeys.len(), 9);
+    assert_eq!(catalog.hotkeys.len(), 8);
     assert_eq!(catalog.gamepad_inputs.len(), GAMEPAD_INPUT_NAMES.len());
     assert_eq!(catalog.defaults["input_keyboard"]["b"], arr(&["KeyZ"]));
     let json = serde_json::to_value(&catalog).unwrap();

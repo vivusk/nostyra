@@ -75,9 +75,8 @@ fn default_config_equals_the_old_hard_coded_tables() {
     assert_eq!(b.gamepad.len(), old_gamepad.len() + clicks.len());
     let old_hotkeys = [
         (KeyCode::F1, RunnerHotkey::SaveState),
-        (KeyCode::F2, RunnerHotkey::PrevSlot),
-        (KeyCode::F3, RunnerHotkey::NextSlot),
-        (KeyCode::F4, RunnerHotkey::LoadState),
+        (KeyCode::F2, RunnerHotkey::SelectSlot),
+        (KeyCode::F3, RunnerHotkey::LoadState),
         (KeyCode::F11, RunnerHotkey::ToggleFullscreen),
         (KeyCode::Escape, RunnerHotkey::PauseMenu),
         (KeyCode::F10, RunnerHotkey::PauseMenu),

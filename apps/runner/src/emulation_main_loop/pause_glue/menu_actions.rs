@@ -24,6 +24,7 @@ impl EmulationApp<'_> {
             MenuAction::Quit => return event_loop.exit(),
             MenuAction::SaveSlot(slot) => return self.menu_save_slot(slot),
             MenuAction::LoadSlot(slot) => return self.menu_load_slot(slot),
+            MenuAction::SelectSlot(slot) => return self.menu_select_slot(slot),
             MenuAction::SaveForGame => return self.save_config(SaveTarget::Game),
             MenuAction::SaveAsDefault => return self.save_config(SaveTarget::Global),
             MenuAction::ResetGameSettings => return self.reset_game_config(),
@@ -37,7 +38,19 @@ impl EmulationApp<'_> {
         self.apply_live_config(live);
     }
 
-    /// Saves into `slot` (it becomes the active slot, like F2/F3 + F1). The grid
+    /// Slot picker choice: `slot` becomes the one F1 / F3 use; the game resumes with
+    /// "Slot N · Has state / Empty" on screen.
+    fn menu_select_slot(&mut self, slot: u8) {
+        self.saves.select_slot(slot);
+        tracing::info!(slot, "state slot selected");
+        self.close_menu();
+        let used = self
+            .saves
+            .has_state(ipc_protocol::StateSlotId::Numbered(slot));
+        self.show_state_status((if used { "Has state" } else { "Empty" }).to_string());
+    }
+
+    /// Saves into `slot` (it becomes the active slot, like F2 + F1). The grid
     /// cell and its thumbnail update from memory right away.
     fn menu_save_slot(&mut self, slot: u8) {
         self.saves.select_slot(slot);

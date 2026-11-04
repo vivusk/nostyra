@@ -100,6 +100,13 @@ impl EmulationApp<'_> {
         tracing::debug!("pause menu opened");
     }
 
+    /// F2 / `select_slot`: pause on the save-state grid to choose the active slot
+    /// (arrows + Enter pick it and resume, Esc cancels).
+    pub(super) fn open_slot_picker(&mut self) {
+        self.open_menu();
+        self.menu.open_slot_picker();
+    }
+
     /// Resume: hide the menu and restart pacing and audio cleanly.
     pub(super) fn close_menu(&mut self) {
         self.menu.close();

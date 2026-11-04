@@ -1,5 +1,5 @@
 //! State/window press hotkeys from keyboard or pad (bound in config; defaults F1
-//! save, F2/F3 slot, F4 load, F11 fullscreen, F10 pause menu, plus fixed Esc):
+//! save, F2 slot picker, F3 load, F11 fullscreen, F10 pause menu, plus fixed Esc):
 //! the result goes to the window title and, for state hotkeys, on screen for a few
 //! seconds ("Slot 3 · Saved", bottom-left). A successful load clears the rewind
 //! history (it belongs to the timeline that was left). Also applies `--load-state`
@@ -39,8 +39,7 @@ impl EmulationApp<'_> {
                 }
                 status
             }
-            RunnerHotkey::PrevSlot => self.saves.change_slot(-1),
-            RunnerHotkey::NextSlot => self.saves.change_slot(1),
+            RunnerHotkey::SelectSlot => return self.open_slot_picker(),
             RunnerHotkey::TurboAToggle => {
                 let on = self.input.turbo_a_mut().toggle();
                 tracing::info!(on, "turbo A");
@@ -70,7 +69,7 @@ impl EmulationApp<'_> {
             self.apply_state_progress(outcome.progress);
         }
         if resume_point {
-            // "Resumed" / "Could not resume": no slot number (F1-F4 slots untouched).
+            // "Resumed" / "Could not resume": no slot number (F1 / F3 slot untouched).
             self.show_status(outcome.status.clone(), outcome.status);
         } else {
             self.show_state_status(outcome.status);

@@ -197,3 +197,23 @@ fn custom_shader_is_an_extra_choice() {
     );
     assert_eq!(options.shader_value(), "C:/presets/mine.slangp");
 }
+
+#[test]
+fn slot_picker_selects_any_slot_and_back_cancels() {
+    let mut m = menu();
+    m.open_slot_picker();
+    assert_eq!(m.screen(), Screen::Slots(SlotMode::Select));
+    // Empty slots are pickable too (the next F1 saves there).
+    assert_eq!(press(&mut m, &[Right, Right, Down]), None);
+    assert_eq!(m.slot_cursor(), 7);
+    assert_eq!(m.handle(Left), None);
+    assert_eq!(m.handle(Confirm), Some(MenuAction::SelectSlot(6)));
+    let mut m = menu();
+    m.open_slot_picker();
+    m.handle(Right);
+    assert_eq!(
+        m.handle(Back),
+        Some(MenuAction::Resume),
+        "Esc / B: no change"
+    );
+}

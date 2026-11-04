@@ -114,8 +114,9 @@ mod tests {
             assert!(!sleep_unless_cancelled(Duration::from_secs(5), &cancel));
             started.elapsed()
         });
-        // Cancel lands within one poll slice (+ scheduling slack).
-        assert!(cancelled_at < Duration::from_millis(150) + CANCEL_POLL * 2);
+        // Cancel lands far before the 5 s backoff ends; generous slack for slow,
+        // shared CI runners (macOS) where sleeps overshoot by tens of milliseconds.
+        assert!(cancelled_at < Duration::from_secs(1), "{cancelled_at:?}");
     }
 
     #[test]

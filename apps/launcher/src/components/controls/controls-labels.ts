@@ -39,8 +39,7 @@ const PAD_ACTION_LABELS: Record<string, string> = {
 const HOTKEY_LABELS: Record<string, string> = {
   save_state: "Save state",
   load_state: "Load state",
-  prev_slot: "Previous slot",
-  next_slot: "Next slot",
+  select_slot: "Select slot",
   toggle_fullscreen: "Toggle fullscreen",
   pause_menu: "Pause menu",
   fast_forward_hold: "Fast-forward (hold)",

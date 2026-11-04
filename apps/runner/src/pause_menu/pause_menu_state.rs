@@ -8,7 +8,8 @@
 //!       confirm) · Disc (multi-disc games only: list, current disc marked) ·
 //!       Achievements (achievement session only: scrolling list)
 //! ```
-//! Back goes one level up; Back on the root resumes.
+//! Back goes one level up; Back on the root resumes. The slot picker (F2) opens the
+//! grid alone: Enter makes the slot active and resumes, Back resumes unchanged.
 
 use super::achievement_list_page_state::AchievementListPageState;
 use super::menu_option_values::OptionValues;
@@ -100,6 +101,11 @@ impl PauseMenuState {
         self.message = Some(message.into());
     }
 
+    /// Shows the grid as the slot picker (cursor on the active slot).
+    pub fn open_slot_picker(&mut self) {
+        self.screen = Screen::Slots(SlotMode::Select);
+    }
+
     /// Applies one input; returns the action the loop must perform, if any.
     pub fn handle(&mut self, nav: NavEvent) -> Option<MenuAction> {
         self.message = None;
@@ -149,6 +155,7 @@ impl PauseMenuState {
             NavEvent::Right => 1,
             NavEvent::Up => -columns,
             NavEvent::Down => columns,
+            NavEvent::Back if mode == SlotMode::Select => return Some(MenuAction::Resume),
             NavEvent::Back => {
                 self.screen = Screen::Root;
                 return None;
@@ -169,6 +176,7 @@ impl PauseMenuState {
             }
             SlotMode::Save => Some(MenuAction::SaveSlot(slot)),
             SlotMode::Load => used.then_some(MenuAction::LoadSlot(slot)),
+            SlotMode::Select => Some(MenuAction::SelectSlot(slot)),
         }
     }
 

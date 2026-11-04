@@ -65,14 +65,13 @@ pub const DEFAULT_INPUT_GAMEPAD: &DefaultBinds = &[
     ("rstick_right", &[]),
 ];
 
-/// F10 menu (Esc is fixed on top), F1 save, F4 load, F2/F3 slots, F11
+/// F10 menu (Esc is fixed on top), F1 save, F2 slot picker, F3 load, F11
 /// fullscreen, `` ` `` fast-forward hold, Backspace rewind hold, P turbo A on/off.
 pub const DEFAULT_HOTKEYS_KEYBOARD: &DefaultBinds = &[
     ("pause_menu", &["F10"]),
     ("save_state", &["F1"]),
-    ("load_state", &["F4"]),
-    ("prev_slot", &["F2"]),
-    ("next_slot", &["F3"]),
+    ("select_slot", &["F2"]),
+    ("load_state", &["F3"]),
     ("toggle_fullscreen", &["F11"]),
     ("fast_forward_hold", &["Backquote"]),
     ("rewind_hold", &["Backspace"]),
@@ -84,9 +83,8 @@ pub const DEFAULT_HOTKEYS_KEYBOARD: &DefaultBinds = &[
 pub const DEFAULT_HOTKEYS_GAMEPAD: &DefaultBinds = &[
     ("pause_menu", &[]),
     ("save_state", &[]),
+    ("select_slot", &[]),
     ("load_state", &[]),
-    ("prev_slot", &[]),
-    ("next_slot", &[]),
     ("toggle_fullscreen", &[]),
     ("fast_forward_hold", &["right_trigger"]),
     ("rewind_hold", &["left_trigger"]),

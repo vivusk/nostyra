@@ -1,5 +1,5 @@
 //! Achievement hardcore and the game's states: the session's `HardcoreGate` is
-//! shared with the slots, whose `load` refuses first (the chokepoint); F4 / the menu
+//! shared with the slots, whose `load` refuses first (the chokepoint); F3 / the menu
 //! check it even before the pre-boot guard, which queries the core. Saving (F1, menu,
 //! auto-save on exit) stays allowed.
 

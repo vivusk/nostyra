@@ -9,6 +9,7 @@ pub(super) fn screen_title(screen: Screen) -> &'static str {
         Screen::Root | Screen::ConfirmQuit | Screen::ConfirmReset => "Paused",
         Screen::Slots(SlotMode::Save) | Screen::ConfirmOverwrite(_) => "Save state",
         Screen::Slots(SlotMode::Load) => "Load state",
+        Screen::Slots(SlotMode::Select) => "Select slot",
         Screen::Options => "Options",
         Screen::Discs => "Disc",
         Screen::Achievements => "Achievements",
@@ -63,10 +64,12 @@ pub(super) fn footer_hint(state: &PauseMenuState) -> &str {
     let reason = (state.screen() == Screen::Options)
         .then(|| options.unavailable_reason(OPTION_ITEMS[state.option_cursor()]))
         .flatten();
-    state
-        .message()
-        .or(reason)
-        .unwrap_or("Enter / A: select   Esc / B: back")
+    let hint = if state.screen() == Screen::Slots(SlotMode::Select) {
+        "Enter / A: use this slot   Esc / B: cancel"
+    } else {
+        "Enter / A: select   Esc / B: back"
+    };
+    state.message().or(reason).unwrap_or(hint)
 }
 
 /// `none` → "None", `crt-easymode` → "CRT Easymode", a `.slangp` path → "Custom".

@@ -143,7 +143,7 @@ fn check_states_refused(session: &mut CoreSession, paths: &RunnerDataPaths) {
     let outcome = resume.attempt(&saves, session).expect("answered at once");
     assert!(!outcome.loaded);
     assert_eq!(outcome.status, COULD_NOT_RESUME);
-    assert_eq!(saves.load_state(session).0, STATES_NEED_HW_CONTEXT, "F4");
+    assert_eq!(saves.load_state(session).0, STATES_NEED_HW_CONTEXT, "F3");
     let frame = RgbaFrameBuffer::default();
     assert_eq!(
         saves.save_state(session, &frame, None),

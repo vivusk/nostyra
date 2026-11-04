@@ -149,8 +149,9 @@ mod tests {
     #[test]
     fn default_root_ends_in_nostyra_data_dir() {
         let root = default_data_root().unwrap();
+        // Linux XDG paths use the lower-case app name (`~/.local/share/nostyra`).
         assert!(
-            root.to_string_lossy().contains("Nostyra"),
+            root.to_string_lossy().to_lowercase().contains("nostyra"),
             "{}",
             root.display()
         );

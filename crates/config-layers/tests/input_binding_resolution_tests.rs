@@ -126,17 +126,17 @@ fn conflicts_resolve_hotkey_first_with_warnings() {
     let paths = layers(&root);
     write(
         &paths.global,
-        "[input_keyboard]\nb = [\"F1\"]\n[hotkeys_keyboard]\nnext_slot = [\"F2\"]",
+        "[input_keyboard]\nb = [\"F1\"]\n[hotkeys_keyboard]\nselect_slot = [\"F3\"]",
     );
     let (config, warnings) = resolve_config_with_warnings(&paths, None);
     assert!(config.input.keyboard["b"].is_empty());
     assert_eq!(config.input.hotkeys_keyboard["save_state"], ["F1"]);
     assert_eq!(
-        config.input.hotkeys_keyboard["prev_slot"],
-        ["F2"],
+        config.input.hotkeys_keyboard["select_slot"],
+        ["F3"],
         "first wins"
     );
-    assert!(config.input.hotkeys_keyboard["next_slot"].is_empty());
+    assert!(config.input.hotkeys_keyboard["load_state"].is_empty());
     assert_eq!(warnings.len(), 2, "{warnings:?}");
 
     let (global_only, global_warnings) = resolve_layers_with_warnings(&[&paths.global], None);

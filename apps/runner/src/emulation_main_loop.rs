@@ -1,13 +1,14 @@
 //! Runner loop (winit `ApplicationHandler`): emulation runs on the main thread.
 //! One redraw = pump SDL events → pause menu input (no frames while it is open) →
 //! emulate due frames (paced by `LoopTiming`, or uncapped while fast-forward is held,
-//! or stepped back while rewind is held) → present. Keyboard comes from winit,
+//! or stepped back while rewind is held) → periodic resume point → present. Keyboard comes from winit,
 //! gamepads from SDL.
 
 use std::cell::Cell;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::Instant;
 
 use config_layers::ResolvedConfig;
 use input_mapping::{AnalogInputs, InputBindings, JoypadInputSource, SdlGamepadManager};
@@ -29,6 +30,7 @@ use crate::hw_render_setup::HwRenderSetup;
 use crate::loop_timing::LoopTiming;
 use crate::on_screen_status::OnScreenStatus;
 use crate::pause_menu::PauseMenu;
+use crate::periodic_resume_save::PeriodicResumeSave;
 use crate::runner_cli_args::RunnerCliArgs;
 use crate::runner_core_options;
 use crate::runner_data_paths::RunnerDataPaths;
@@ -44,6 +46,7 @@ mod emulate_time_stats;
 mod fast_forward;
 mod hotkey_actions;
 mod pause_glue;
+mod periodic_resume_glue;
 pub(crate) mod pointer_events;
 mod present_step;
 pub(crate) mod rewind_playback;
@@ -100,6 +103,8 @@ pub struct EmulationApp<'a> {
     emulate_stats: EmulateTimeStats,
     /// `--load-state N|auto` until it has loaded or failed (tried before each redraw's frames).
     startup_load: Option<StartupStateLoad>,
+    /// When the `auto` slot is next saved during play (every 1 / 3 minutes).
+    periodic_resume: PeriodicResumeSave,
 }
 
 impl<'a> EmulationApp<'a> {
@@ -166,6 +171,7 @@ impl<'a> EmulationApp<'a> {
             startup_load: args
                 .load_state
                 .map(|slot| StartupStateLoad::new(slot, savestates)),
+            periodic_resume: PeriodicResumeSave::for_system(paths.system.id, Instant::now()),
         }
     }
 
@@ -186,6 +192,7 @@ impl<'a> EmulationApp<'a> {
         self.update_pointer();
         self.apply_startup_load();
         self.emulate_due_frames()?;
+        self.save_periodic_resume_point();
         self.show_core_messages();
         if let Some(av) = self.session.take_av_change() {
             let prefs = self

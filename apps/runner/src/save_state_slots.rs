@@ -10,7 +10,7 @@
 //! disc / revision (content tag) → reject; length / CRC differ → "damaged". A core
 //! without states this session (no hardware context, `states_available`) → refused
 //! before any file is read. Hardcore (`HardcoreGate`) refuses every load first: this
-//! is the one chokepoint of F4, the menu, `--load-state` and the resume point.
+//! is the one chokepoint of F3, the menu, `--load-state` and the resume point.
 
 use std::path::PathBuf;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -31,6 +31,33 @@ use crate::state_load_checks::{check_state_size, unserialize_or_restore};
 #[path = "state_failure_status.rs"]
 mod state_failure_status;
 pub use state_failure_status::{failure_status, STATES_NEED_HW_CONTEXT};
+
+/// A serialized slot ready to write: sidecar and state file (path, bytes).
+pub struct StateFiles {
+    sidecar: (PathBuf, Vec<u8>),
+    state: (PathBuf, Vec<u8>),
+}
+
+impl StateFiles {
+    /// Sidecar first: a crash in between never leaves a state without metadata;
+    /// old state + new sidecar then fails the length / CRC check ("damaged"),
+    /// refused before the core.
+    pub fn write(&self) -> anyhow::Result<()> {
+        write_atomically(&self.sidecar.0, &self.sidecar.1)?;
+        write_atomically(&self.state.0, &self.state.1)?;
+        Ok(())
+    }
+
+    /// State size in bytes (logs).
+    pub fn state_len(&self) -> usize {
+        self.state.1.len()
+    }
+    /// Files from raw parts (worker tests).
+    #[cfg(test)]
+    pub fn from_parts(sidecar: (PathBuf, Vec<u8>), state: (PathBuf, Vec<u8>)) -> Self {
+        Self { sidecar, state }
+    }
+}
 
 pub struct SaveStateSlots {
     dir: PathBuf,
@@ -112,6 +139,22 @@ impl SaveStateSlots {
         progress: Option<String>,
     ) -> anyhow::Result<()> {
         let started = Instant::now();
+        let files = self.prepare(session, id, progress)?;
+        let bytes = files.state_len();
+        files.write()?;
+        let ms = started.elapsed().as_secs_f64() * 1000.0;
+        tracing::info!(slot = %id, bytes, ms, "state saved");
+        Ok(())
+    }
+
+    /// Serializes the core into the files of `id` without writing them (the
+    /// periodic resume point writes them off the frame thread).
+    pub fn prepare(
+        &self,
+        session: &mut CoreSession,
+        id: StateSlotId,
+        progress: Option<String>,
+    ) -> anyhow::Result<StateFiles> {
         let state = session.serialize()?;
         let created_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -127,14 +170,10 @@ impl SaveStateSlots {
         };
         self.guard.stamp(&mut sidecar, &state);
         let (state_path, sidecar_path) = self.paths(id);
-        // Sidecar first: a crash in between never leaves a state without metadata;
-        // old state + new sidecar then fails the length / CRC check ("damaged"),
-        // refused before the core.
-        write_atomically(&sidecar_path, &serde_json::to_vec_pretty(&sidecar)?)?;
-        write_atomically(&state_path, &state)?;
-        let ms = started.elapsed().as_secs_f64() * 1000.0;
-        tracing::info!(slot = %id, bytes = state.len(), ms, "state saved");
-        Ok(())
+        Ok(StateFiles {
+            sidecar: (sidecar_path, serde_json::to_vec_pretty(&sidecar)?),
+            state: (state_path, state),
+        })
     }
 
     /// Loads `id`; returns the sidecar's achievement progress (`None`: the state was

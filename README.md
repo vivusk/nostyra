@@ -16,8 +16,8 @@ by its content, moved or renamed ROMs keep history and saves), M4 controls & res
 checks and macOS/Linux pending.
 
 See [docs/project-overview-pdr.md](docs/project-overview-pdr.md) and
-[docs/system-architecture.md](docs/system-architecture.md). First public release: **v0.1.0** (Windows x64
-portable zip), see the [release notes](docs/release-notes-v0.1.0.md) and
+[docs/system-architecture.md](docs/system-architecture.md). Latest release: **v0.2.0** (Windows x64
+portable zip), see the [release notes](docs/release-notes-v0.2.0.md) and
 [Install (Windows portable)](#install-windows-portable).
 
 ## Install (Windows portable)
@@ -33,7 +33,7 @@ portable zip), see the [release notes](docs/release-notes-v0.1.0.md) and
    then click **Run anyway**.
 
 Needs Windows 10 / 11 x64 and the Microsoft Edge WebView2 Runtime (built into Windows 11 and updated
-Windows 10). See the [release notes](docs/release-notes-v0.1.0.md) for requirements, known limits and how
+Windows 10). See the [release notes](docs/release-notes-v0.2.0.md) for requirements, known limits and how
 to report bugs.
 
 ## Build
@@ -267,7 +267,8 @@ cargo run -p nostyra-runner -- --core cores/dolphin_libretro.dll --rom path/to/g
 Default keyboard: arrows, Z = B, X = A, A = Y, S = X, Q/W = L/R, E/R = L2/R2, Enter = Start,
 Right Shift = Select; on systems with analog sticks (Nintendo 64, Dreamcast, PSP, GameCube, Wii) I/J/K/L = left stick and
 T/F/G/H = right stick (on the DS T/F/G/H move the touch cursor). Gamepads work out of the box (SNES layout by position).
-Default hotkeys: F1 save state, F2 / F3 previous / next slot (0-9), F4 load state,
+Default hotkeys: F1 save state, F2 select slot (opens the slot grid: arrows / D-pad
+move, Enter / A use that slot, Esc / B cancel), F3 load state,
 F11 fullscreen, F10 pause menu, P turbo A on / off (every system: player 1's A
 button presses itself 3 frames on / 3 off, about 10 times a second, until P again;
 "Turbo A: On/Off" on screen; off at each start). Buttons and hotkeys are rebindable (see
@@ -283,7 +284,7 @@ at once, SRAM saved (and a resume point, see [Resume](#resume)). Hold `` ` `` (k
 fast-forward (uncapped speed, audio muted). With `rewind.enabled = true` in a
 config layer (off by default), hold Backspace or L2 to rewind (2× speed, audio
 muted; `rewind.buffer_mb`, default 64, caps the history). The window title shows the current slot
-and result, and F1–F4 also
+and result, and F1–F3 also
 show a short status ("Slot 3 · Saved") in the bottom-left of the picture for 3 s.
 Options: `--fullscreen`, `--audio-sync` (force audio-paced timing; auto-selected on
 non-60 Hz displays), `--state-slot N` (starting slot, 0-9), `--load-state N` (start
@@ -357,7 +358,7 @@ run_ahead_frames = 1     # 0 (default) | 1 | 2
 enabled = true           # default false
 buffer_mb = 64           # 16-512, default 64
 [resume]
-auto_save = true         # default true: save a resume point when you quit
+auto_save = true         # default true: save a resume point on quit and every 1 / 3 min
 mode = "ask"             # ask (default) | always | never (launcher only)
 [achievements]           # global.toml only (ignored in system / core / game files)
 enabled = true           # default true: achievements run while you are logged in
@@ -371,7 +372,7 @@ b = ["KeyX", "Space"]
 [input_gamepad]          # positional names: south east west north back start
 a = ["south"]            # left_shoulder right_shoulder left_trigger right_trigger
 b = ["east"]             # left_stick right_stick dpad_up/down/left/right misc1 …
-[hotkeys_keyboard]       # pause_menu save_state load_state prev_slot next_slot
+[hotkeys_keyboard]       # pause_menu save_state select_slot load_state
 save_state = ["F5"]      # toggle_fullscreen fast_forward_hold rewind_hold turbo_a_toggle
 [hotkeys_gamepad]
 save_state = ["right_stick"]   # R3 saves, L3 loads
@@ -426,8 +427,11 @@ from that file. The launcher window cannot capture keys that WebView2 keeps for 
 ### Resume
 
 When you quit a game (pause menu Quit, closing the window or Alt+F4, even while
-paused) after about 10 seconds of play (600 emulated frames), the runner saves a resume point. A crash,
-a kill, an error or a shorter session keeps the previous one. On the next Play the
+paused) after about 10 seconds of play (600 emulated frames), the runner saves a resume point. While you
+play it is also saved every minute (every 3 minutes on PSP, Dreamcast, GameCube and Wii, whose states are
+large), real time, so fast-forward does not save more often and the paused menu does not save; the file is
+written in the background. A crash, a kill or an error therefore loses at most that much; a session shorter
+than 10 seconds keeps the previous point. On the next Play the
 launcher asks **Continue** or **Start fresh** (`resume.mode = "ask"`); `always`
 continues without asking (unless there is a warning), `never` always starts normally. Start fresh keeps your
 in-game saves and the resume point. The dialog warns, and focuses Start fresh, when

@@ -176,7 +176,7 @@ jobs:
       - name: Test
         if: runner.os != 'Linux'
         timeout-minutes: 30
-        run: cargo test --workspace
+        run: cargo test --workspace --no-fail-fast
       # OpenGL tests (Nintendo 64 on GLideN64, Dreamcast on Flycast, the PSP smoke on
       # PPSSPP, Dolphin's pixel + save-state suites and its resume process test) on
       # Mesa llvmpipe: SDL's offscreen video driver makes the hidden GL window through
@@ -189,4 +189,4 @@ jobs:
           SDL_VIDEO_DRIVER: offscreen
           LIBGL_ALWAYS_SOFTWARE: '1'
           NOSTYRA_REQUIRE_GL: '1'
-        run: cargo test --workspace
+        run: cargo test --workspace --no-fail-fast

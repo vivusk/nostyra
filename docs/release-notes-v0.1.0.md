@@ -61,8 +61,8 @@ automated tests but are marked **Experimental** until they get manual testing.
 ## Requirements
 
 - Windows 10 or 11, 64-bit (x64).
-- Microsoft Edge WebView2 Runtime. Windows 11 and updated Windows 10 include it. If it is missing, Nostyra
-  shows a message with the download link.
+- Microsoft Edge WebView2 Runtime. Windows 11 and updated Windows 10 include it. If it is missing, Windows
+  shows an error with the download link (choose **Evergreen Bootstrapper**).
 - A GPU with DirectX 12 or Vulkan support.
 - Nintendo 64, Dreamcast, PSP, GameCube and Wii also need **OpenGL 3.3**. Without it the game stops with
   "This system needs OpenGL 3.3 graphics — update the graphics driver." Demanding Wii games may not run

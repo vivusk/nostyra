@@ -74,6 +74,41 @@ fn render_overlay_frames_to_png_when_asked() {
         .overlay(OUTPUT, "game", Some(&mut overlay.badges))
         .unwrap();
     save(canvas, &dir.join("overlay-achievement-list.png"));
+    save_menu_screens(dir);
+}
+
+/// The pause menu's root, options, save grid and quit question.
+fn save_menu_screens(dir: &Path) {
+    use crate::pause_menu::{DiscList, NavEvent::*, OptionValues, PauseMenu, SlotSummary};
+    let screens: [(&str, &[_]); 5] = [
+        ("root", &[Down]),
+        ("slot-picker", &[]),
+        ("options", &[Up, Up, Confirm, Down, Down]),
+        ("save-grid", &[Down, Confirm, Right]),
+        ("quit-question", &[Up, Confirm]),
+    ];
+    for (name, navs) in screens {
+        let mut menu = PauseMenu::default();
+        let slots = (0..crate::pause_menu::SLOT_COUNT)
+            .map(|n| SlotSummary {
+                used: n % 3 == 1,
+                saved_at: (n % 3 == 1).then(|| "2026-11-04 19:32".to_string()),
+            })
+            .collect::<Vec<_>>();
+        let options =
+            OptionValues::from_config(&config_layers::ResolvedConfig::default(), None, None);
+        let thumbs =
+            crate::pause_menu::SlotThumbnailCache::new(vec![Default::default(); slots.len()]);
+        menu.open(slots, options, 0, thumbs, DiscList::default());
+        if name == "slot-picker" {
+            menu.open_slot_picker();
+        }
+        navs.iter().for_each(|nav| {
+            menu.handle(*nav);
+        });
+        let canvas = menu.overlay(OUTPUT, "Chrono Trigger (USA) — Tiếng Việt", None);
+        save(canvas.unwrap(), &dir.join(format!("menu-{name}.png")));
+    }
 }
 
 /// A pause menu showing the achievement page (opened through the root item).

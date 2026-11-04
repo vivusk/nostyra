@@ -25,12 +25,11 @@ pub const PAD_ACTIONS: [&str; 24] = [
 
 /// Runner hotkeys. The order is the conflict priority (an input bound to two
 /// hotkeys stays on the first) and the order docs and the UI list them in.
-pub const HOTKEYS: [&str; 9] = [
+pub const HOTKEYS: [&str; 8] = [
     "pause_menu",
     "save_state",
+    "select_slot",
     "load_state",
-    "prev_slot",
-    "next_slot",
     "toggle_fullscreen",
     "fast_forward_hold",
     "rewind_hold",

@@ -90,9 +90,8 @@ fn defaults_are_the_m3_bindings() {
     }
     for (hotkey, key) in [
         ("save_state", "F1"),
-        ("load_state", "F4"),
-        ("prev_slot", "F2"),
-        ("next_slot", "F3"),
+        ("select_slot", "F2"),
+        ("load_state", "F3"),
         ("toggle_fullscreen", "F11"),
         ("pause_menu", "F10"),
         ("fast_forward_hold", "Backquote"),

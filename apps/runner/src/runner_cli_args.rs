@@ -55,7 +55,7 @@ pub struct RunnerCliArgs {
     #[arg(long)]
     pub audio_sync: bool,
 
-    /// Save-state slot used by F1 (save) / F4 (load).
+    /// Save-state slot used by F1 (save) / F3 (load).
     #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u8).range(0..=i64::from(MAX_STATE_SLOT)))]
     pub state_slot: u8,
 
@@ -108,7 +108,7 @@ pub struct RunnerCliArgs {
 }
 
 impl RunnerCliArgs {
-    /// Numbered slot active at start (F1/F4, slot grid); `--load-state auto` keeps
+    /// Numbered slot active at start (F1/F3, slot grid); `--load-state auto` keeps
     /// `--state-slot`.
     pub fn start_slot(&self) -> u8 {
         state_slot_arg::start_slot(self.load_state, self.state_slot)

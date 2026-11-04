@@ -14,6 +14,8 @@ pub(crate) mod achievement_list_page_tests;
 mod achievement_list_view;
 mod menu_labels;
 mod menu_option_values;
+mod menu_panel_painter;
+mod menu_rows_painter;
 mod menu_types;
 #[cfg(test)]
 mod pause_menu_binding_input_tests;
@@ -84,6 +86,14 @@ impl PauseMenu {
         self.open = Some(OpenMenu { state, thumbnails });
         self.input.on_open();
         self.painted_for = None;
+    }
+
+    /// Switches the just-opened menu to the slot picker (F2 / `select_slot`).
+    pub fn open_slot_picker(&mut self) {
+        if let Some(open) = self.open.as_mut() {
+            open.state.open_slot_picker();
+            self.painted_for = None;
+        }
     }
 
     /// Hides the menu; keys still held are swallowed until released.

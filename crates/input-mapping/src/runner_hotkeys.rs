@@ -6,8 +6,8 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RunnerHotkey {
     SaveState,
-    PrevSlot,
-    NextSlot,
+    /// Opens the save-state grid to choose the active slot (F1 / load use it).
+    SelectSlot,
     LoadState,
     ToggleFullscreen,
     /// Opens the in-game pause menu (quitting moved into it; closing the window
@@ -28,8 +28,7 @@ impl RunnerHotkey {
             "pause_menu" => Self::PauseMenu,
             "save_state" => Self::SaveState,
             "load_state" => Self::LoadState,
-            "prev_slot" => Self::PrevSlot,
-            "next_slot" => Self::NextSlot,
+            "select_slot" => Self::SelectSlot,
             "toggle_fullscreen" => Self::ToggleFullscreen,
             "fast_forward_hold" => Self::FastForwardHold,
             "rewind_hold" => Self::RewindHold,

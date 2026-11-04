@@ -71,7 +71,7 @@ mod tests {
             12,
             "5 menu options + 2 resume + 5 achievements keys"
         );
-        assert_eq!(input.len(), 48 + 18, "2 × 24 actions + 2 × 9 hotkeys");
+        assert_eq!(input.len(), 48 + 16, "2 × 24 actions + 2 × 8 hotkeys");
         assert!(input.keys().all(|key| is_input_key(key)));
         assert!(!is_input_key("input.keyboard") && is_input_key("hotkeys_gamepad.save_state"));
     }

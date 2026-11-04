@@ -30,6 +30,8 @@ pub enum MenuAction {
     Resume,
     SaveSlot(u8),
     LoadSlot(u8),
+    /// Make the slot the active one (slot picker, F2) and resume.
+    SelectSlot(u8),
     SetShader(String),
     SetScaling(VideoScaling),
     SetRunAhead(u8),
@@ -103,6 +105,8 @@ impl DiscList {
 pub enum SlotMode {
     Save,
     Load,
+    /// Slot picker (F2 / `select_slot`): Enter makes the slot active, Esc cancels.
+    Select,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

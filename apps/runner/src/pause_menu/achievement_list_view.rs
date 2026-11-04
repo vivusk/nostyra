@@ -8,12 +8,12 @@ use video_renderer::{FontFace, OverlayCanvas, TtfText};
 use self::achievement_list_row_view::{draw_badge, paint_row, RowCell, RowFonts};
 use super::achievement_list_page::ListEntry;
 use super::achievement_list_page_state::AchievementListPageState;
+use super::menu_panel_painter::{fill_rounded_rect, paint_panel};
 use super::pause_menu_view::{HIGHLIGHT_RGBA, MUTED_RGBA, TEXT_RGBA};
 use crate::achievement_overlay::{BadgeCache, ACCENT_RGBA};
 
 mod achievement_list_row_view;
 
-const PANEL_RGBA: [u8; 4] = [20, 22, 30, 240];
 const HINT: &str = "Up / Down: scroll   Left / Right: page   Esc / B: back";
 
 /// Text size of the page for an output `height` (a little smaller than popups).
@@ -41,7 +41,7 @@ pub fn paint_achievement_list(
         return; // too small for a readable page: dim only
     };
     let (x, y) = ((output.0 - width) / 2, (output.1 - height) / 2);
-    canvas.fill_rect(x, y, width, height, PANEL_RGBA);
+    paint_panel(canvas, [x, y, width, height], px / 2, (px / 12).max(1));
     let (left, inner) = (x + pad, width - 2 * pad);
     let (bold, regular) = ((FontFace::Bold, px), (FontFace::Regular, small));
     // Header: game icon, title, mode and totals.
@@ -99,7 +99,8 @@ pub fn paint_achievement_list(
             }
             ListEntry::Row(row) if row_y + row_h <= rows_bottom => {
                 if index == list.cursor() {
-                    canvas.fill_rect(left - pad / 2, row_y, inner + pad, row_h, HIGHLIGHT_RGBA);
+                    let pill = [left - pad / 2, row_y, inner + pad, row_h];
+                    fill_rounded_rect(canvas, pill, px / 4 + 1, HIGHLIGHT_RGBA);
                 }
                 let icon = row_h - pad;
                 let icon_rect = [left, row_y + pad / 2, icon, icon];
