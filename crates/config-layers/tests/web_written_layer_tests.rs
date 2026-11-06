@@ -1,4 +1,4 @@
-//! A layer file written by the web edition (nostyra.com/online, phase 07 browser
+//! A layer file written by the web edition (nostyra.com/play, phase 07 browser
 //! smoke: Settings → Controls → A + M, copied byte for byte from the Data folder)
 //! is read by the desktop like its own: same keys, same resolution.
 

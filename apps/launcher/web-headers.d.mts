@@ -1,4 +1,5 @@
 // Types of web-headers.mjs (plain JS so scripts/build-web.mjs can import it with Node).
+export declare const WEB_BASE_PATH: string;
 export declare const LAUNCHER_CSP: string;
 export declare const PLAYER_CSP: string;
 export declare function headerRules(base?: string): { source: string; headers: Record<string, string> }[];

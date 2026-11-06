@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+## 2026-11-06 — v0.3.1
+- Release v0.3.1 (`docs/release-notes-v0.3.1.md`): Nostyra Online is served at `https://nostyra.com/play/` (was `/online/`). One base path `WEB_BASE_PATH` in `apps/launcher/web-headers.mjs` (default `/play`, `NOSTYRA_WEB_BASE` overrides) drives Vite `base`, every response-header rule and the package folder; `build-info.json` gains `basePath`; `browser-gate.js` falls back to the page folder. Deploy guide: `/play` paths + "Migrating from /online/" (308 redirect `/online/:path*` → `/play/:path*`, data kept: OPFS, IndexedDB `nostyra-online`, Web Lock and folder permissions are per origin). Desktop app unchanged.
+
 ## 2026-11-06 — v0.3.0
 - Release v0.3.0 (`docs/release-notes-v0.3.0.md`): Nostyra Online (web edition, M16), shared Data folder, `Documents\Nostyra` default data root for new installs, single-ROM ZIP archives (PR #1 by jnovax). Highlights:
 - **Nostyra Online** (M16): the launcher in desktop Chrome / Edge at `https://nostyra.com/online` — pick a ROM folder, same Home / Library / Detail / Settings, play NES, SNES, GB, GBC, GBA, Mega Drive, Master System, Game Gear, SG-1000 and PlayStation in the page (EmulatorJS 4.2.3, self-hosted). Nothing is uploaded.

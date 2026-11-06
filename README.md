@@ -17,8 +17,8 @@ checks and macOS/Linux pending. **M16 — Nostyra Online**, the web edition for 
 Data folder with the desktop app, is implemented (manual checks pending, see [Nostyra Online](#nostyra-online-web-edition)).
 
 See [docs/project-overview-pdr.md](docs/project-overview-pdr.md) and
-[docs/system-architecture.md](docs/system-architecture.md). Latest release: **v0.3.0** (Windows x64
-portable zip), see the [release notes](docs/release-notes-v0.3.0.md) and
+[docs/system-architecture.md](docs/system-architecture.md). Latest release: **v0.3.1** (Windows x64
+portable zip), see the [release notes](docs/release-notes-v0.3.1.md) and
 [Install (Windows portable)](#install-windows-portable).
 
 ## Install (Windows portable)
@@ -34,12 +34,12 @@ portable zip), see the [release notes](docs/release-notes-v0.3.0.md) and
    then click **Run anyway**.
 
 Needs Windows 10 / 11 x64 and the Microsoft Edge WebView2 Runtime (built into Windows 11 and updated
-Windows 10). See the [release notes](docs/release-notes-v0.3.0.md) for requirements, known limits and how
+Windows 10). See the [release notes](docs/release-notes-v0.3.1.md) for requirements, known limits and how
 to report bugs.
 
 ## Nostyra Online (web edition)
 
-The same launcher in the browser at **https://nostyra.com/online**: pick your ROM folder, browse the library
+The same launcher in the browser at **https://nostyra.com/play**: pick your ROM folder, browse the library
 and play in the page through [EmulatorJS](https://emulatorjs.org) 4.2.3 (self-hosted, GPL-3.0). Nothing is
 uploaded: the site is static files, your ROMs and saves stay on your computer.
 

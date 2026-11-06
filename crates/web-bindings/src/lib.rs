@@ -1,4 +1,4 @@
-//! The web edition's (nostyra.com/online) WebAssembly module: the same Rust logic the
+//! The web edition's (nostyra.com/play) WebAssembly module: the same Rust logic the
 //! desktop runs — system registry, content classification and identity, DAT
 //! matching, single-ROM ZIPs, soft patches, entry naming, config layers, controls — behind a
 //! thin wasm-bindgen surface (`wasm_exports`, wasm32 only). The marshalling-free

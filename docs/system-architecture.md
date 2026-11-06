@@ -21,7 +21,7 @@ Last updated: 2026-10-29 · Status: M0–M4 + M6–M15 implemented (Windows; man
 
 ### 1.1 Web edition (M16, Nostyra Online)
 ```
-nostyra.com/online (static files, Chrome / Edge)
+nostyra.com/play (static files, Chrome / Edge)
 ┌ page: React UI (same components) ── api/*.ts ── src/backend → @nostyra/backend = backend/web/ (alias) ┐
 │   commands in TS (names = Tauri commands) · web-event-bus (same event names / payloads)               │
 │   ├─ db worker: sqlite-wasm, OPFS (desktop migrations)   ├─ scan worker: FileReaderSync → wasm classify │
@@ -659,12 +659,12 @@ OPFS, desktop migrations unchanged); the desktop `nostyra.db` is never opened.
   wasm build, EmulatorJS fetch (sha256), DAT copy, licence notices (`public/notices/`: Nostyra
   GPL-3.0, cargo-about over `crates/web-bindings` for `wasm32` with `about-web.hbs`, npm notices
   `--web` without Tauri), `npm run build:web`, `check-web-bundle`, then writes
-  `dist/nostyra-web-<version>/` = `online/` (served at nostyra.com/online/, ~32 MB / 125 files),
+  `dist/nostyra-web-<version>/` = `play/` (served at nostyra.com/play/, ~32 MB / 125 files),
   `vercel.headers.json`, `DEPLOY.md` (= `docs/web-edition-deploy-guide.md`), `build-info.json`,
   + zip; prints bytes per part and checks Vercel's 100 MB / 15,000-file CLI upload limits.
   Headers have one source, `apps/launcher/web-headers.mjs` (rules never set one key twice on a
   path): launcher CSP (no `'unsafe-eval'`; artwork from api.github.com / raw.githubusercontent.com)
-  and `/online/player.html` CSP with `'unsafe-eval'` (EJS asm.js extractors, D3), `no-cache`
+  and `/play/player.html` CSP with `'unsafe-eval'` (EJS asm.js extractors, D3), `no-cache`
   pages, `immutable` `assets/` + `emulatorjs/`, 1 day `libretro-database/`, wasm / data
   Content-Type, `nosniff`, `Referrer-Policy: no-referrer`, no COOP/COEP. The web-only Vite
   plugin `web-vite-plugin.mjs` serves them per path in `vite preview --mode web`, injects the

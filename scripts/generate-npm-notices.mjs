@@ -49,7 +49,7 @@ const out = [
   "==================================",
   "",
   web
-    ? "Nostyra Online (the web edition, nostyra.com/online) bundles the npm packages below,"
+    ? "Nostyra Online (the web edition, nostyra.com/play) bundles the npm packages below,"
     : "The launcher's user interface (inside Nostyra.exe) bundles the npm packages below,",
   "unmodified. Packages marked [build tool] are development tools that emit part of",
   "their own code into the bundle. Source: https://www.npmjs.com/package/<name>",

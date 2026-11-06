@@ -18,7 +18,7 @@ function* walk(dir) {
   }
 }
 
-/** Part name of one file, by its path below online/. */
+/** Part name of one file, by its path below the served folder. */
 function partOf(rel) {
   const core = /^emulatorjs\/[^/]+\/cores\/([a-z0-9_]+)-(?:legacy-)?wasm\.data$/.exec(rel);
   if (core) return `core ${core[1]}`;
@@ -31,10 +31,10 @@ function partOf(rel) {
   return "launcher (JS, CSS, fonts, index.html)";
 }
 
-/** Every file of the online/ folder with its part and size. */
-export function sizeParts(online) {
-  const files = [...walk(online)].map((path) => {
-    const rel = relative(online, path).split(sep).join("/");
+/** Every file of the served folder with its part and size. */
+export function sizeParts(served) {
+  const files = [...walk(served)].map((path) => {
+    const rel = relative(served, path).split(sep).join("/");
     return { rel, part: partOf(rel), size: statSync(path).size };
   });
   const byPart = new Map();
@@ -46,7 +46,7 @@ export function sizeParts(online) {
 const mb = (n) => `${(n / 1048576).toFixed(2).padStart(7)} MB`;
 
 export function printSizes({ files, bytes, total }, zip) {
-  console.log("\nSize per part (online/):");
+  console.log("\nSize per part (served folder):");
   for (const [part, size] of Object.entries(bytes)) console.log(`  ${mb(size)}  ${part}`);
   const largest = files.reduce((a, b) => (b.size > a.size ? b : a));
   console.log(`  ${mb(total)}  total, ${files.length} files; largest ${largest.rel} (${mb(largest.size).trim()})`);

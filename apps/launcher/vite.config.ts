@@ -1,12 +1,14 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { WEB_BASE_PATH } from "./web-headers.mjs";
 import { nostyraWebPlugin } from "./web-vite-plugin.mjs";
 
 // Two editions from one React app (src/backend/backend-contract.ts):
 // - default: the desktop launcher inside Tauri (fixed dev port = tauri.conf.json
 //   `devUrl`; no reloads when Rust sources under src-tauri change);
-// - `--mode web`: nostyra.com/online, served under /online/, built to dist-web/,
+// - `--mode web`: nostyra.com/play, served under WEB_BASE_PATH (web-headers.mjs,
+//   default /play), built to dist-web/,
 //   with the browser backend (never imports @tauri-apps/*).
 export default defineConfig(({ mode }) => {
   const web = mode === "web";
@@ -15,7 +17,7 @@ export default defineConfig(({ mode }) => {
   return {
     // Web: browser gate, per-path preview headers, licences version (web-vite-plugin.mjs).
     plugins: web ? [react(), tailwindcss(), nostyraWebPlugin()] : [react(), tailwindcss()],
-    base: web ? "/online/" : "/",
+    base: web ? `${WEB_BASE_PATH}/` : "/",
     // public/ = web-only static files (libretro-database copy, EmulatorJS, player,
     // browser gate, licences page);
     // the desktop bundle never ships them.

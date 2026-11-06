@@ -3,19 +3,19 @@ import { test } from "node:test";
 import { headerRules, headersFor, LAUNCHER_CSP, PLAYER_CSP, vercelHeaders } from "../../web-headers.mjs";
 
 const PATHS = [
-  "/online",
-  "/online/",
-  "/online/index.html",
-  "/online/player.html",
-  "/online/player-boot.js",
-  "/online/licences.html",
-  "/online/browser-gate.js",
-  "/online/assets/index-AbC123.js",
-  "/online/assets/nostyra_web_bg-AbC123.wasm",
-  "/online/emulatorjs/4.2.3/loader.js",
-  "/online/emulatorjs/4.2.3/cores/snes9x-legacy-wasm.data",
-  "/online/libretro-database/Nintendo - Game Boy.dat",
-  "/online/libretro-database/metadat/genre/Nintendo - Game Boy.dat",
+  "/play",
+  "/play/",
+  "/play/index.html",
+  "/play/player.html",
+  "/play/player-boot.js",
+  "/play/licences.html",
+  "/play/browser-gate.js",
+  "/play/assets/index-AbC123.js",
+  "/play/assets/nostyra_web_bg-AbC123.wasm",
+  "/play/emulatorjs/4.2.3/loader.js",
+  "/play/emulatorjs/4.2.3/cores/snes9x-legacy-wasm.data",
+  "/play/libretro-database/Nintendo - Game Boy.dat",
+  "/play/libretro-database/metadat/genre/Nintendo - Game Boy.dat",
 ];
 
 const pattern = (source: string) => new RegExp(`^${source.replace(/:[A-Za-z]\w*(?=\()/g, "")}$`);
@@ -43,32 +43,32 @@ test("every path gets CSP, cache policy, nosniff and referrer policy", () => {
 });
 
 test("only the player page may eval (EmulatorJS extractors, spike D3)", () => {
-  assert.equal(headersFor("/online/player.html")["Content-Security-Policy"], PLAYER_CSP);
+  assert.equal(headersFor("/play/player.html")["Content-Security-Policy"], PLAYER_CSP);
   assert.match(PLAYER_CSP, /script-src [^;]*'unsafe-eval'/);
   assert.doesNotMatch(LAUNCHER_CSP, /'unsafe-eval'/);
-  for (const path of ["/online", "/online/", "/online/index.html", "/online/player-boot.js"]) {
+  for (const path of ["/play", "/play/", "/play/index.html", "/play/player-boot.js"]) {
     assert.equal(headersFor(path)["Content-Security-Policy"], LAUNCHER_CSP, path);
   }
   assert.match(LAUNCHER_CSP, /connect-src [^;]*https:\/\/raw\.githubusercontent\.com[^;]*https:\/\/api\.github\.com/);
 });
 
 test("cache: pages revalidate, hashed and versioned files are immutable, DATs one day", () => {
-  assert.equal(headersFor("/online/")["Cache-Control"], "no-cache");
-  assert.equal(headersFor("/online/player.html")["Cache-Control"], "no-cache");
-  assert.match(headersFor("/online/assets/index-AbC123.js")["Cache-Control"], /immutable/);
-  assert.match(headersFor("/online/emulatorjs/4.2.3/loader.js")["Cache-Control"], /immutable/);
-  assert.match(headersFor("/online/libretro-database/x.dat")["Cache-Control"], /max-age=86400/);
+  assert.equal(headersFor("/play/")["Cache-Control"], "no-cache");
+  assert.equal(headersFor("/play/player.html")["Cache-Control"], "no-cache");
+  assert.match(headersFor("/play/assets/index-AbC123.js")["Cache-Control"], /immutable/);
+  assert.match(headersFor("/play/emulatorjs/4.2.3/loader.js")["Cache-Control"], /immutable/);
+  assert.match(headersFor("/play/libretro-database/x.dat")["Cache-Control"], /max-age=86400/);
 });
 
 test("content types of wasm and core data", () => {
-  assert.equal(headersFor("/online/assets/sqlite3-x.wasm")["Content-Type"], "application/wasm");
-  assert.equal(headersFor("/online/emulatorjs/4.2.3/cores/mgba-legacy-wasm.data")["Content-Type"], "application/octet-stream");
-  assert.equal(headersFor("/online/index.html")["Content-Type"], undefined);
+  assert.equal(headersFor("/play/assets/sqlite3-x.wasm")["Content-Type"], "application/wasm");
+  assert.equal(headersFor("/play/emulatorjs/4.2.3/cores/mgba-legacy-wasm.data")["Content-Type"], "application/octet-stream");
+  assert.equal(headersFor("/play/index.html")["Content-Type"], undefined);
 });
 
-test("vercel block is key/value pairs under /online", () => {
+test("vercel block is key/value pairs under /play", () => {
   for (const rule of vercelHeaders()) {
-    assert.ok(rule.source === "/online" || rule.source.startsWith("/online/"));
+    assert.ok(rule.source === "/play" || rule.source.startsWith("/play/"));
     for (const header of rule.headers) assert.deepEqual(Object.keys(header), ["key", "value"]);
   }
 });

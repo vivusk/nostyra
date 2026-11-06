@@ -1,6 +1,6 @@
 [package]
 name = "web-bindings"
-description = "WebAssembly surface of the shared Rust logic for the web edition (nostyra.com/online): catalog, identity, DAT match, ZIP, soft patches, naming, config layers."
+description = "WebAssembly surface of the shared Rust logic for the web edition (nostyra.com/play): catalog, identity, DAT match, ZIP, soft patches, naming, config layers."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

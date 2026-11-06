@@ -1,9 +1,22 @@
-// Response headers of the web edition (nostyra.com/online) — the single source for
-// `vite preview --mode web` (web-vite-plugin.mjs) and for the `vercel.json` `headers`
-// block written by scripts/build-web.mjs. Rules never overlap for one header key on
+// Response headers and base path of the web edition (nostyra.com/play) — the single
+// source for `vite build/preview --mode web` (vite.config.ts, web-vite-plugin.mjs) and for
+// the `vercel.json` `headers` block and package folder written by scripts/build-web.mjs.
+// Rules never overlap for one header key on
 // one path, so the result does not depend on how the host merges matching rules.
 // `source` = Vercel pattern (path-to-regexp: plain regex groups, an optional `:name`
 // before a group); `headersFor` runs the same patterns as regular expressions.
+
+/** URL path the web edition is served under, without trailing slash (`/play`).
+ *  `NOSTYRA_WEB_BASE` overrides it for a build (e.g. a staging path). Everything that
+ *  depends on the location — Vite `base`, every header rule, the package folder name —
+ *  derives from this value; app code uses `import.meta.env.BASE_URL`. */
+export const WEB_BASE_PATH = normaliseBase(globalThis.process?.env?.NOSTYRA_WEB_BASE ?? "/play");
+
+function normaliseBase(base) {
+  const trimmed = `/${base}`.replace(/\/+/g, "/").replace(/\/$/, "");
+  if (!/^\/[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)*$/.test(trimmed)) throw new Error(`bad NOSTYRA_WEB_BASE: ${base}`);
+  return trimmed;
+}
 
 /** CSP directives measured in the phase 00 spike (row 1c). */
 function csp(extra) {
@@ -43,8 +56,8 @@ const IMMUTABLE = "public, max-age=31536000, immutable";
 // libretro-database/ paths are not versioned: one day, then revalidate (ETag).
 const ONE_DAY = "public, max-age=86400, must-revalidate";
 
-/** Header rules for one base path (no trailing slash), e.g. "/online". */
-export function headerRules(base = "/online") {
+/** Header rules for one base path (no trailing slash), e.g. "/play". */
+export function headerRules(base = WEB_BASE_PATH) {
   const p = (path) => `${base}${path}`;
   return [
     { source: p("/(.*)"), headers: { "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" } },
@@ -68,7 +81,7 @@ export function headerRules(base = "/online") {
 }
 
 /** The `headers` array for the site's vercel.json. */
-export function vercelHeaders(base = "/online") {
+export function vercelHeaders(base = WEB_BASE_PATH) {
   return headerRules(base).map(({ source, headers }) => ({
     source,
     headers: Object.entries(headers).map(([key, value]) => ({ key, value })),
@@ -78,7 +91,7 @@ export function vercelHeaders(base = "/online") {
 const patternOf = (source) => new RegExp(`^${source.replace(/:[A-Za-z]\w*(?=\()/g, "")}$`);
 
 /** Headers for one request path (no query), in rule order. */
-export function headersFor(pathname, base = "/online") {
+export function headersFor(pathname, base = WEB_BASE_PATH) {
   const result = {};
   for (const { source, headers } of headerRules(base)) {
     if (patternOf(source).test(pathname)) Object.assign(result, headers);

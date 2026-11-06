@@ -1,6 +1,6 @@
 // The one seam between the React launcher and what runs it. Chosen at build time
 // (vite alias `@nostyra/backend`): `backend/tauri` (desktop: Rust commands, Tauri
-// events, native dialogs, asset protocol) or `backend/web` (nostyra.com/online:
+// events, native dialogs, asset protocol) or `backend/web` (nostyra.com/play:
 // commands implemented in the browser over the File System Access API and wasm).
 // The `api/*` wrappers and the few components that used Tauri directly go through
 // this contract only, so the web bundle never imports `@tauri-apps/*`.

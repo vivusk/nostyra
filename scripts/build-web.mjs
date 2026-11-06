@@ -1,10 +1,11 @@
-// Builds the deployable web edition (nostyra.com/online) end to end:
+// Builds the deployable web edition (nostyra.com/play) end to end:
 // wasm module → EmulatorJS (sha256-verified) → libretro-database copy → licence notices
 // → `npm run build:web` → bundle check → dist/nostyra-web-<version>/ with
-//   online/**            exactly what https://nostyra.com/online/ serves
+//   play/**              exactly what https://nostyra.com/play/ serves (folder named after
+//                        WEB_BASE_PATH in apps/launcher/web-headers.mjs)
 //   vercel.headers.json  the `headers` block for the site's vercel.json (web-headers.mjs)
 //   DEPLOY.md            handoff guide (docs/web-edition-deploy-guide.md)
-//   build-info.json      version, commit, sizes
+//   build-info.json      version, commit, base path, sizes
 // plus dist/nostyra-web-<version>.zip, and prints the size of each part.
 // Usage: node scripts/build-web.mjs --shell=ps1|sh (called by build-web.ps1 / .sh,
 // which pick the platform's helper scripts). Needs wasm-pack 0.15.0, cargo-about 0.9.2,
@@ -41,7 +42,7 @@ helper("build-web-wasm");
 helper("fetch-emulatorjs");
 helper("copy-web-libretro-database");
 
-// 4: licence notices served under /online/notices/ (public/notices/, git-ignored).
+// 4: licence notices served under <base>/notices/ (public/notices/, git-ignored).
 const notices = join(launcher, "public", "notices");
 rmSync(notices, { recursive: true, force: true });
 mkdirSync(notices, { recursive: true });
@@ -61,19 +62,20 @@ const stage = join(dist, name);
 const zip = join(dist, `${name}.zip`);
 rmSync(stage, { recursive: true, force: true });
 rmSync(zip, { force: true });
-cpSync(join(launcher, "dist-web"), join(stage, "online"), { recursive: true });
-const { vercelHeaders } = await import(pathToFileURL(join(launcher, "web-headers.mjs")).href);
-writeFileSync(join(stage, "vercel.headers.json"), `${JSON.stringify({ headers: vercelHeaders("/online") }, null, 2)}\n`);
+const { WEB_BASE_PATH, vercelHeaders } = await import(pathToFileURL(join(launcher, "web-headers.mjs")).href);
+const served = WEB_BASE_PATH.slice(1); // "play"
+cpSync(join(launcher, "dist-web"), join(stage, served), { recursive: true });
+writeFileSync(join(stage, "vercel.headers.json"), `${JSON.stringify({ headers: vercelHeaders(WEB_BASE_PATH) }, null, 2)}\n`);
 copyFileSync(join(repo, "docs", "web-edition-deploy-guide.md"), join(stage, "DEPLOY.md"));
 
-const parts = sizeParts(join(stage, "online"));
+const parts = sizeParts(join(stage, served));
 const commit = git("rev-parse", "--short", "HEAD").stdout.trim();
 const dirty = git("status", "--porcelain").stdout.trim() !== "";
 // GPL-3.0: the licences page links the source at tag v<version>; it must be this source.
 const tagMatches = git("diff", "--quiet", `v${version}`, "--", ".").status === 0 && !dirty;
 writeFileSync(
   join(stage, "build-info.json"),
-  `${JSON.stringify({ version, commit, dirty, sourceTag: `v${version}`, sourceTagMatches: tagMatches, builtAt: new Date().toISOString(), bytes: parts.bytes }, null, 2)}\n`,
+  `${JSON.stringify({ version, commit, dirty, basePath: `${WEB_BASE_PATH}/`, sourceTag: `v${version}`, sourceTagMatches: tagMatches, builtAt: new Date().toISOString(), bytes: parts.bytes }, null, 2)}\n`,
 );
 
 if (process.platform === "win32") {

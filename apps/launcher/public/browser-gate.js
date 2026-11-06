@@ -10,7 +10,8 @@
   if (typeof window.showDirectoryPicker === "function" && !mobile) return;
 
   document.documentElement.setAttribute("data-unsupported-browser", "");
-  var base = document.currentScript ? document.currentScript.src.replace(/[^/]*$/, "") : "/online/";
+  // The folder this script is served from (the site base, e.g. /play/), else the page's.
+  var base = (document.currentScript ? document.currentScript.src : location.pathname).replace(/[^/]*$/, "");
   var style = document.createElement("link");
   style.rel = "stylesheet";
   style.href = base + "static-page.css";

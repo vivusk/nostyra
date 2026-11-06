@@ -1,4 +1,4 @@
-// Web backend (nostyra.com/online): composes the per-group command tables, the
+// Web backend (nostyra.com/play): composes the per-group command tables, the
 // in-page event bus, folder pickers and asset URLs. Later phases add group files,
 // not lines here.
 import type { Backend } from "../backend-contract";
