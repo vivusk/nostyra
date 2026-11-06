@@ -9,6 +9,11 @@ import { ControlsFixedRow } from "./controls-fixed-row";
 import { gamepadLabel, systemActionLabel } from "./controls-labels";
 import { useControlsEditor, type ControlsRow } from "./use-controls-editor";
 import { useSystems } from "../../hooks/use-system-queries";
+import { edition } from "../../backend";
+
+/** What the fixed pause inputs do (web: no pause menu; holding them exits the game). */
+const FIXED_PAUSE = edition === "web" ? "Pause / resume (hold: exit game)" : "Pause menu";
+const CHORD_PAUSE = edition === "web" ? "Pause / resume" : "Pause menu";
 
 const DEVICE_CHOICES: { value: InputDevice; label: string }[] = [
   { value: "keyboard", label: "Keyboard" },
@@ -105,11 +110,11 @@ export function ControlsEditor({ scope, systemId }: { scope: GameplayConfigScope
       <ControlsGroup title="Shortcuts">
         {rows.hotkeys.map(renderRow)}
         {device === "keyboard" ? (
-          <ControlsFixedRow input="Esc" action="Pause menu" />
+          <ControlsFixedRow input="Esc" action={FIXED_PAUSE} />
         ) : (
           <>
-            <ControlsFixedRow input={pad("guide")} action="Pause menu" />
-            <ControlsFixedRow input={`${pad("back")} + ${pad("start")} (hold)`} action="Pause menu" />
+            <ControlsFixedRow input={pad("guide")} action={FIXED_PAUSE} />
+            <ControlsFixedRow input={`${pad("back")} + ${pad("start")} (hold)`} action={CHORD_PAUSE} />
           </>
         )}
       </ControlsGroup>

@@ -14,7 +14,7 @@ mod runner_session_manager;
 mod session_update;
 
 pub use pending_session_import::{
-    import_pending_sessions, PendingImportError, PendingImportSummary,
+    import_pending_sessions, PendingImportError, PendingImportSummary, WEB_RECORD_WAIT_S,
 };
 pub use runner_core_probe::{probe_core_with_runner, ProbedCore};
 pub use runner_exit_classification::{classify_exit, SessionErrorKind};

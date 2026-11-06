@@ -7,15 +7,21 @@ rust-version.workspace = true
 license.workspace = true
 publish = false
 
+[features]
+default = ["native"]
+# Desktop only: OS data roots (`directories`), log files (chrono, tracing) and the
+# on-disk game entry lookup. Off for the web edition (wasm32).
+native = ["dep:chrono", "dep:directories", "dep:tracing", "dep:tracing-subscriber"]
+
 [dependencies]
 # Log file names and timestamps in local time (log_files).
-chrono.workspace = true
-directories.workspace = true
+chrono = { workspace = true, optional = true }
+directories = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 # Shared log setup (stderr + size-capped file) for launcher and runner.
-tracing.workspace = true
-tracing-subscriber.workspace = true
+tracing = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
 
 [dev-dependencies]
 tempfile.workspace = true

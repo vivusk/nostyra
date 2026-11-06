@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { useResolvedAsset } from "../lib/asset-url";
 import { monogram, tileColor } from "../lib/game-display";
 
 interface CoverImageProps {
@@ -17,12 +18,13 @@ interface CoverImageProps {
  *  landscape → letterboxed, never cropped). Lazy, fades in; a missing or broken
  *  image shows the monogram. */
 export function CoverImage({
-  src,
+  src: assetSrc,
   title,
   className = "",
   monogramClassName = "text-[40px]",
   fit = "contain",
 }: CoverImageProps) {
+  const src = useResolvedAsset(assetSrc);
   const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
   const imgRef = useRef<HTMLImageElement>(null);
 

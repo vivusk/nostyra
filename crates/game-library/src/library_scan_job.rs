@@ -8,13 +8,15 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, MutexGuard};
 
 use rayon::prelude::*;
-use storage_db::{upsert_scanned_batch, Connection, FileFingerprint, LibraryFolder, RelinkedGame};
+use storage_db::{upsert_scanned_batch, Connection, FileFingerprint, LibraryFolder};
 use system_catalog::ALL_SYSTEMS;
 
 use crate::dat_rematch::rematch_unidentified;
-use crate::folder_scanner::{DiscoveredFile, ScanFailure};
+use crate::folder_scanner::DiscoveredFile;
 use crate::library_error::LibraryError;
 use crate::library_scan_discovery::{discover_folder, FolderDiscovery};
+use crate::library_scan_options::ScanOptions;
+pub use crate::library_scan_summary::{ScanProgress, ScanSummary};
 use crate::scanned_game_builder::build_scanned_game;
 use crate::system_catalogs::SystemCatalogs;
 
@@ -22,38 +24,6 @@ use crate::system_catalogs::SystemCatalogs;
 const BATCH_SIZE: usize = 50;
 /// Hashing is I/O bound; more threads just thrash the disk.
 const MAX_HASH_THREADS: usize = 4;
-
-/// Progress for the UI scan banner. `files_done` counts unchanged files too; pass A
-/// ("looking for games") reports each folder with `files_total == 0`.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ScanProgress {
-    pub folder_path: String,
-    pub files_total: usize,
-    pub files_done: usize,
-    pub current_path: Option<String>,
-}
-
-/// What a scan did. `matched`/`unmatched` count the files hashed in this run.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ScanSummary {
-    pub added: usize,
-    pub updated: usize,
-    pub unchanged: usize,
-    pub relinked: usize,
-    /// Every relink of this scan (old → new path), for the launcher's save-folder move.
-    pub relinked_games: Vec<RelinkedGame>,
-    pub missing: usize,
-    pub skipped: usize,
-    pub matched: usize,
-    pub unmatched: usize,
-    /// Unchanged games the DAT identified this run (no re-hash needed).
-    pub rematched: usize,
-    pub failures: Vec<ScanFailure>,
-    /// `(folder path, error)` of folders that could not be scanned (missing root,
-    /// database error); their rows are left as they were.
-    pub folder_errors: Vec<(String, String)>,
-    pub cancelled: bool,
-}
 
 /// Scans `folders` for games of every registry system and writes the results
 /// (metadata of matched games included). `now` (unix seconds) stamps new games.
@@ -65,6 +35,28 @@ pub fn scan_library(
     now: i64,
     progress: &(dyn Fn(&ScanProgress) + Sync),
     cancel: &AtomicBool,
+) -> Result<ScanSummary, LibraryError> {
+    scan_library_with_options(
+        db,
+        folders,
+        catalogs,
+        now,
+        progress,
+        cancel,
+        ScanOptions::default(),
+    )
+}
+
+/// [`scan_library`] with opt-in single-ROM archive discovery.
+#[allow(clippy::too_many_arguments)]
+pub fn scan_library_with_options(
+    db: &Mutex<Connection>,
+    folders: &[LibraryFolder],
+    catalogs: &SystemCatalogs,
+    now: i64,
+    progress: &(dyn Fn(&ScanProgress) + Sync),
+    cancel: &AtomicBool,
+    options: ScanOptions,
 ) -> Result<ScanSummary, LibraryError> {
     let mut summary = ScanSummary::default();
     let mut discoveries = Vec::with_capacity(folders.len());
@@ -78,7 +70,7 @@ pub fn scan_library(
             folder_path: folder.path.clone(),
             ..ScanProgress::default()
         });
-        match discover_folder(db, folder, &ALL_SYSTEMS) {
+        match discover_folder(db, folder, &ALL_SYSTEMS, options) {
             Ok(found) => discoveries.push(found),
             Err(err) => summary
                 .folder_errors

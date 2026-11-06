@@ -8,36 +8,19 @@
 use std::path::{Path, PathBuf};
 
 use config_layers::{
-    global_config_path, known_keys, layer_known_values, resolve_config_with_warnings,
-    set_layer_value, ConfigLayerPaths, ResolvedConfig, Table, Value, BUNDLED_PRESETS,
+    gameplay_config_view, global_config_path, layer_known_values, resolve_config_with_warnings,
+    set_layer_value, settable_key_refusal, ConfigLayerPaths, ResolvedConfig, Table, Value,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tauri::{AppHandle, Manager};
 
 use crate::app_state::AppState;
 use crate::command_error::{CommandError, CommandResult};
 use crate::commands::blocking::run_blocking;
 use crate::commands::game_data_target::GameDataTarget;
-use crate::commands::input_config_view::{
-    is_global_only_key, resolve_global_only, split_game_layer, split_input_keys, split_resolved,
-    InputConfigView,
-};
+use crate::commands::input_config_view::resolve_global_only;
 
-/// What the Settings page (no game) or the Detail Settings tab (a game) shows.
-#[derive(Debug, Serialize)]
-pub struct GameplayConfigView {
-    /// Every gameplay key (menu options + `resume.*`) with the value the runner /
-    /// launcher will use (CLI flags aside).
-    pub resolved: Table,
-    /// Gameplay keys the game layer sets (empty without a game).
-    pub game: Table,
-    /// Gameplay keys the global layer sets.
-    pub global: Table,
-    /// Bundled shader presets besides `none`.
-    pub presets: &'static [&'static str],
-    /// The binding sections (Controls editor), same layering.
-    pub input: InputConfigView,
-}
+pub use config_layers::GameplayConfigView;
 
 /// Which layer a write goes to: `"global"` or `{ "gameId": n }`.
 #[derive(Debug, Deserialize)]
@@ -88,27 +71,14 @@ pub(crate) fn build_view(
     game_layers: Option<&ConfigLayerPaths>,
     system_actions: Option<&[&str]>,
 ) -> GameplayConfigView {
-    let (global, input_global) = split_input_keys(layer_view(global_path));
-    let ((config, warnings), (game, input_game)) = match game_layers {
+    let ((config, warnings), game) = match game_layers {
         Some(layers) => (
             resolve_config_with_warnings(layers, system_actions),
-            split_game_layer(layer_view(&layers.game)),
+            layer_view(&layers.game),
         ),
-        None => (resolve_global_only(global_path), Default::default()),
+        None => (resolve_global_only(global_path), Table::new()),
     };
-    let (resolved, input_resolved) = split_resolved(&config);
-    GameplayConfigView {
-        resolved,
-        game,
-        global,
-        presets: BUNDLED_PRESETS,
-        input: InputConfigView {
-            resolved: input_resolved,
-            game: input_game,
-            global: input_global,
-            warnings,
-        },
-    }
+    gameplay_config_view(&config, warnings, layer_view(global_path), game)
 }
 
 /// Sets (`value`) or clears (`null` = "use default") one known key (gameplay or a
@@ -130,12 +100,13 @@ pub async fn set_gameplay_config_value(
     .await
 }
 
-/// `achievements.*` is global-only: refuse a game write rather than ignore it.
+/// Unknown keys and `achievements.*` (global-only) in a game layer are refused.
 fn refuse_global_only_in_game(scope: &ConfigScope, key: &str) -> CommandResult<()> {
-    if matches!(scope, ConfigScope::Game { .. }) && is_global_only_key(key) {
-        return Err(CommandError::invalid(format!("`{key}` is global-only.")));
+    let game_scope = matches!(scope, ConfigScope::Game { .. });
+    match settable_key_refusal(key, game_scope) {
+        Some(reason) => Err(CommandError::invalid(reason)),
+        None => Ok(()),
     }
-    Ok(())
 }
 
 /// The layer file a write to `scope` edits.
@@ -175,10 +146,8 @@ pub fn scope_layer_and_config(
 /// Writes one known key; anything outside the schema is refused before touching
 /// the file (`set_layer_value` itself accepts unknown keys).
 fn write_known_value(layer: &Path, key: &str, value: Option<Value>) -> CommandResult<()> {
-    if !known_keys().any(|known| known == key) {
-        return Err(CommandError::invalid(format!(
-            "Unknown gameplay setting `{key}`."
-        )));
+    if let Some(reason) = settable_key_refusal(key, false) {
+        return Err(CommandError::invalid(reason));
     }
     set_layer_value(layer, key, value)?;
     tracing::info!(layer = %layer.display(), key, "gameplay setting saved");

@@ -3,6 +3,7 @@
 import type { BindingKey } from "../../api/tauri-commands-gameplay";
 import type { InputCatalog, InputDevice, LabelStyle } from "../../api/tauri-commands-input";
 import type { SystemView } from "../../api/tauri-commands-systems";
+import { edition } from "../../backend";
 
 /** RetroPad button labels by catalog action name (SNES names; other pads show the
  *  subset their system lists, e.g. NES: B, A, Select, Start, D-pad). L3 / R3 are the
@@ -41,7 +42,7 @@ const HOTKEY_LABELS: Record<string, string> = {
   load_state: "Load state",
   select_slot: "Select slot",
   toggle_fullscreen: "Toggle fullscreen",
-  pause_menu: "Pause menu",
+  pause_menu: edition === "web" ? "Pause / resume" : "Pause menu",
   fast_forward_hold: "Fast-forward (hold)",
   rewind_hold: "Rewind (hold)",
   turbo_a_toggle: "Turbo A (on/off)",

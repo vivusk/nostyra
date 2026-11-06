@@ -6,6 +6,7 @@
 use crate::disc_probe::Media;
 use crate::rom_header_rules::{ContentProbe, HeaderRule};
 use crate::system_specs::{AnalogSticks, SystemSpec};
+use crate::web_core_specs::WEB_GENESIS_PLUS_GX;
 
 /// Mega Drive / Genesis: No-Intro `.md`, GoodGen `.bin` / `.gen` / `.smd`. `.bin`
 /// is shared with disc images and `.md` with Markdown documents, so both need
@@ -51,6 +52,7 @@ pub const GENESIS: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(1),
+    web_core: Some(WEB_GENESIS_PLUS_GX),
 };
 
 /// Master System / Mark III: `.sms`, 1 KiB .. 4 MiB (8-bit carts are at most 1 MiB;
@@ -76,6 +78,7 @@ pub const SMS: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(11),
+    web_core: Some(WEB_GENESIS_PLUS_GX),
 };
 
 /// Game Gear: `.gg`, same limits as the Master System.
@@ -100,6 +103,7 @@ pub const GG: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(15),
+    web_core: Some(WEB_GENESIS_PLUS_GX),
 };
 
 /// SG-1000: `.sg`, same limits as the Master System.
@@ -124,6 +128,7 @@ pub const SG1000: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(33),
+    web_core: Some(WEB_GENESIS_PLUS_GX),
 };
 
 /// Button 1 / Button 2 / Start (Pause on the Master System) + D-pad.

@@ -84,5 +84,11 @@ impl From<config_layers::ConfigError> for CommandError {
     }
 }
 
+impl From<config_layers::BindingRefused> for CommandError {
+    fn from(err: config_layers::BindingRefused) -> Self {
+        Self::invalid(err.0)
+    }
+}
+
 /// Result alias for commands.
 pub type CommandResult<T> = Result<T, CommandError>;

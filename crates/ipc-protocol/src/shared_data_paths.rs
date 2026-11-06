@@ -1,5 +1,6 @@
-//! Data locations both processes must agree on, and the pending play-session file
-//! the runner leaves for the launcher.
+//! Data locations every app must agree on (desktop launcher, runner, web edition).
+//! Pure path builders under a given data root; the OS default roots and the per-game
+//! entry lookup on disk live in `native_data_roots` (feature `native`).
 //!
 //! Per-game layout (names from `game_folder_key`: `<rom key> [<content id>]`):
 //! saves in `<data>/saves/<system>/<name>/`, game config layer in
@@ -7,44 +8,17 @@
 
 use std::path::{Path, PathBuf};
 
-use serde::{Deserialize, Serialize};
-
-use crate::game_folder_key::resolve_game_entry;
-
-/// Default data root: `<exe dir>/data` in a portable copy ([`portable_dir`]), else per
-/// user (`%APPDATA%\Nostyra\data` on Windows). Runner and launcher both call this, so
-/// their defaults cannot drift; `None` if the OS has no home directory.
-pub fn default_data_root() -> Option<PathBuf> {
-    if let Some(dir) = portable_dir() {
-        return Some(dir.join(PORTABLE_DATA_DIR));
-    }
-    directories::ProjectDirs::from("", "", "Nostyra").map(|dirs| dirs.data_dir().to_path_buf())
-}
-
 /// Marker file shipped beside the exes in the portable zip: its presence makes the copy
 /// keep everything (data, data-folder choice) in its own folder.
 pub const PORTABLE_MARKER_FILE: &str = "portable.txt";
 /// Data root folder name inside a portable copy.
 pub const PORTABLE_DATA_DIR: &str = "data";
-
-/// The folder of the running exe when it holds [`PORTABLE_MARKER_FILE`] (portable
-/// copy); `None` for an installed or dev build. Launcher and runner sit side by side,
-/// so both see the same marker.
-pub fn portable_dir() -> Option<PathBuf> {
-    let exe = std::env::current_exe().ok()?;
-    portable_dir_of(exe.parent()?)
-}
-
-/// [`portable_dir`] for a given exe folder (pure, for tests).
-pub fn portable_dir_of(exe_dir: &Path) -> Option<PathBuf> {
-    exe_dir
-        .join(PORTABLE_MARKER_FILE)
-        .is_file()
-        .then(|| exe_dir.to_path_buf())
-}
+/// The desktop launcher's library database, `<data>/nostyra.db` (the web edition
+/// keeps its own database in the browser and never opens this one).
+pub const DATABASE_FILE_NAME: &str = "nostyra.db";
 
 /// `<data>/sessions/pending/`: one JSON file per finished session, written by the
-/// runner (`--ipc`), imported and removed by the launcher.
+/// runner (`--ipc`) or the web edition, imported and removed by the launcher.
 pub fn pending_sessions_dir(data_root: &Path) -> PathBuf {
     data_root.join("sessions").join("pending")
 }
@@ -90,119 +64,32 @@ pub fn game_config_system_dir(data_root: &Path, system: &str) -> PathBuf {
     config_dir(data_root).join("game").join(system)
 }
 
-/// The game's own folder: SRAM, save-state slots and the core's save directory.
-/// `content_sha1` is the game's stored sha1 (`games.sha1`); see `resolve_game_entry`
-/// (may rename a legacy folder; never creates one).
-pub fn saves_dir_for_game(
-    data_root: &Path,
-    system: &str,
-    rom_path: &Path,
-    content_sha1: &str,
-) -> PathBuf {
-    resolve_game_entry(
-        &saves_system_dir(data_root, system),
-        rom_path,
-        content_sha1,
-        "",
-    )
-}
-
-/// The game config layer file. The only place this path is built: config-layers
-/// and the launcher both take it from here.
-pub fn game_config_path_for_game(
-    data_root: &Path,
-    system: &str,
-    rom_path: &Path,
-    content_sha1: &str,
-) -> PathBuf {
-    resolve_game_entry(
-        &game_config_system_dir(data_root, system),
-        rom_path,
-        content_sha1,
-        GAME_CONFIG_EXT,
-    )
-}
-
 /// Extension of a game config layer file.
 pub const GAME_CONFIG_EXT: &str = ".toml";
-
-/// Content of a pending session file. Survives the launcher closing mid-game.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct PendingSessionRecord {
-    /// Exactly the `--rom` argument, which the launcher takes from `games.rom_path`.
-    pub rom_path: String,
-    /// Unix seconds when the session started.
-    pub started_at: i64,
-    pub play_seconds: u64,
-    pub exit_code: i32,
-}
-
-/// Unique, sortable file name: `<started_ms>-<pid>.json`.
-pub fn pending_session_file_name(started_unix_ms: u128, pid: u32) -> String {
-    format!("{started_unix_ms}-{pid}.json")
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn default_root_ends_in_nostyra_data_dir() {
-        let root = default_data_root().unwrap();
-        // Linux XDG paths use the lower-case app name (`~/.local/share/nostyra`).
-        assert!(
-            root.to_string_lossy().to_lowercase().contains("nostyra"),
-            "{}",
-            root.display()
-        );
-    }
-
-    #[test]
-    fn portable_only_with_the_marker_file() {
-        let dir = tempfile::tempdir().unwrap();
-        assert_eq!(portable_dir_of(dir.path()), None);
-        std::fs::write(dir.path().join(PORTABLE_MARKER_FILE), "").unwrap();
-        assert_eq!(portable_dir_of(dir.path()), Some(dir.path().to_path_buf()));
-    }
-
-    #[test]
-    fn per_game_paths_share_the_name() {
-        let root = Path::new("no-such-data-dir");
-        let rom = Path::new("E:/ROMs/Zelda: Link?.sfc");
-        let sha1 = "6b47bb75d16514b6a476aa0c73a683a2a4c18765";
+    fn layout_under_the_data_root() {
+        let root = Path::new("data");
         assert_eq!(
-            saves_dir_for_game(root, "snes", rom, sha1),
-            root.join("saves")
-                .join("snes")
-                .join("Zelda_ Link_ [6B47BB75]")
+            saves_system_dir(root, "nes"),
+            root.join("saves").join("nes")
         );
         assert_eq!(
-            game_config_path_for_game(root, "snes", rom, sha1),
-            root.join("config")
-                .join("game")
-                .join("snes")
-                .join("Zelda_ Link_ [6B47BB75].toml")
+            game_config_system_dir(root, "nes"),
+            root.join("config").join("game").join("nes")
         );
-    }
-
-    #[test]
-    fn pending_layout_and_record_json() {
-        let dir = pending_sessions_dir(Path::new("data"));
-        assert_eq!(dir, Path::new("data").join("sessions").join("pending"));
+        assert_eq!(system_dir(root), root.join("system"));
         assert_eq!(
-            pending_session_file_name(1_700_000_000_123, 42),
-            "1700000000123-42.json"
+            staged_content_dir(root),
+            root.join("temp").join("staged-content")
         );
-        let record = PendingSessionRecord {
-            rom_path: "E:/ROMs/a.sfc".into(),
-            started_at: 1_700_000_000,
-            play_seconds: 90,
-            exit_code: 0,
-        };
-        let json = serde_json::to_string(&record).unwrap();
         assert_eq!(
-            serde_json::from_str::<PendingSessionRecord>(&json).unwrap(),
-            record
+            pending_sessions_dir(root),
+            root.join("sessions").join("pending")
         );
     }
 }

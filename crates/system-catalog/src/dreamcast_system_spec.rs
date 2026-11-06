@@ -60,6 +60,7 @@ pub const DREAMCAST: SystemSpec = SystemSpec {
     analog_triggers: true,
     touch_screen: None,
     ra_console_id: Some(40),
+    web_core: None,
 };
 
 #[cfg(test)]

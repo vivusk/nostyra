@@ -13,10 +13,8 @@ use crate::auto_save_on_exit::AUTO_SAVE_MIN_FRAMES;
 
 /// Time between two periodic saves on most systems.
 pub const INTERVAL: Duration = Duration::from_secs(60);
-/// Time between two periodic saves on [`LARGE_STATE_SYSTEMS`].
+/// Time between two periodic saves on `system_catalog::LARGE_STATE_SYSTEMS`.
 pub const LARGE_STATE_INTERVAL: Duration = Duration::from_secs(180);
-/// Systems whose states are tens of MB or more (a save stalls one frame longer).
-const LARGE_STATE_SYSTEMS: [&str; 4] = ["psp", "dreamcast", "gc", "wii"];
 
 /// When the next periodic save is due.
 #[derive(Debug)]
@@ -29,7 +27,7 @@ pub struct PeriodicResumeSave {
 impl PeriodicResumeSave {
     /// The interval of system `system_id` (catalog id, e.g. `"snes"`), counted from `now`.
     pub fn for_system(system_id: &str, now: Instant) -> Self {
-        let large = LARGE_STATE_SYSTEMS.contains(&system_id);
+        let large = system_catalog::has_large_states(system_id);
         Self {
             interval: if large {
                 LARGE_STATE_INTERVAL

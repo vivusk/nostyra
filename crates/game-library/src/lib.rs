@@ -8,38 +8,33 @@
 
 #![deny(unsafe_code)]
 
-mod clrmamepro_dat_parser;
-mod dat_index;
+// Identity code lives in `rom-identity` (shared with the web edition); these aliases
+// keep the `crate::<module>` paths of the scanner modules unchanged.
+use rom_identity::{dat_index, rom_archive, rom_file_hasher, serial_match_keys};
+
 mod dat_rematch;
-mod dat_serial_index;
 mod disc_file_grouping;
-mod disc_game_identity;
 mod folder_scanner;
-mod game_content_sha1;
-mod gamecube_wii_identity;
 mod library_error;
 mod library_scan_discovery;
 mod library_scan_job;
-mod metadata_dat_index;
-mod nds_game_code;
-mod rom_file_hasher;
+mod library_scan_options;
+mod library_scan_summary;
 mod scanned_game_builder;
-mod serial_match_keys;
-mod state_content_tag;
 mod system_catalogs;
 
-pub use clrmamepro_dat_parser::{
-    parse_clrmamepro_dat, parse_clrmamepro_games, DatEntry, DatGame, DatRom,
+pub use folder_scanner::{
+    discover_rom_files, discover_rom_files_with_options, DiscoveredFile, DiscoveredFiles,
+    ScanFailure,
 };
-pub use dat_index::{display_region, display_title, DatIndex};
-pub use folder_scanner::{discover_rom_files, DiscoveredFile, DiscoveredFiles, ScanFailure};
-pub use game_content_sha1::game_content_sha1;
 pub use library_error::LibraryError;
-pub use library_scan_job::{scan_library, ScanProgress, ScanSummary};
-pub use metadata_dat_index::{MetadataIndex, METADATA_PARTIAL_VERSION, METADATA_SOURCE_VERSION};
-pub use rom_file_hasher::{
-    hash_bytes, hash_file_streaming, hash_headerless, hash_rom_bytes, hash_rom_file, read_rom_file,
-    RomHashes,
+pub use library_scan_job::{scan_library, scan_library_with_options, ScanProgress, ScanSummary};
+pub use library_scan_options::{read_scan_options, set_zip_scanning, ScanOptions};
+pub use rom_identity::{
+    display_region, display_title, game_content_sha1, hash_bytes, hash_file_streaming,
+    hash_headerless, hash_rom_bytes, hash_rom_file, is_rom_archive, parse_clrmamepro_dat,
+    parse_clrmamepro_games, read_rom_archive, read_rom_file, state_content_tag, ArchivedRom,
+    DatEntry, DatGame, DatIndex, DatLoadError, DatRom, MetadataIndex, MetadataRecord, RomHashes,
+    METADATA_PARTIAL_VERSION, METADATA_SOURCE_VERSION,
 };
-pub use state_content_tag::state_content_tag;
 pub use system_catalogs::{SystemCatalog, SystemCatalogs};

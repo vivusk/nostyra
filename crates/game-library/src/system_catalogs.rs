@@ -10,8 +10,8 @@ use storage_db::GameMetadataRecord;
 use system_catalog::{SystemSpec, ALL_SYSTEMS};
 
 use crate::dat_index::DatIndex;
-use crate::metadata_dat_index::MetadataIndex;
 use crate::serial_match_keys::serial_rule;
+use rom_identity::{stored_game_metadata, MetadataIndex, MetadataRecord};
 
 /// Reference data one system's games are identified with.
 #[derive(Debug, Default)]
@@ -89,10 +89,8 @@ impl SystemCatalogs {
         }
     }
 
-    /// Vendored metadata of a stored game and the version to stamp it with. Looked up
-    /// by the stored `crc32`, else (re-headered NES rows store a CRC the metadat does
-    /// not know) by the metadata CRC of the DAT game `dat_name`, else (disc games,
-    /// metadat keyed by serial) by the stored `serial`, else the DAT game's serial.
+    /// Vendored metadata of a stored game and the version to stamp it with (lookup
+    /// order: `rom_identity::stored_game_metadata`).
     /// Shared by the startup self-heal and "Reset to database values".
     pub fn metadata_for_game(
         &self,
@@ -100,17 +98,11 @@ impl SystemCatalogs {
         dat_name: Option<&str>,
         crc32: &str,
         serial: Option<&str>,
-    ) -> Option<(&GameMetadataRecord, &'static str)> {
+    ) -> Option<(GameMetadataRecord, &'static str)> {
         let catalog = self.get(platform_id);
-        let by_name = dat_name.and_then(|name| catalog.dat.metadata_crc_for_name(name));
-        let dat_serial = dat_name.and_then(|name| catalog.dat.serial_for_name(name));
-        let record = catalog
-            .metadata
-            .lookup(crc32)
-            .or_else(|| by_name.and_then(|crc| catalog.metadata.lookup(crc)))
-            .or_else(|| serial.and_then(|s| catalog.metadata.lookup_serial(s)))
-            .or_else(|| dat_serial.and_then(|s| catalog.metadata.lookup_serial(s)))?;
-        Some((record, catalog.metadata.source_version()))
+        let record =
+            stored_game_metadata(&catalog.dat, &catalog.metadata, dat_name, crc32, serial)?;
+        Some((storage_record(record), catalog.metadata.source_version()))
     }
 
     fn load(&self, spec: &SystemSpec) -> SystemCatalog {
@@ -137,6 +129,17 @@ impl SystemCatalogs {
             "system catalog loaded"
         );
         SystemCatalog { dat, metadata }
+    }
+}
+
+/// The storage-db row form of an index record.
+pub(crate) fn storage_record(record: &MetadataRecord) -> GameMetadataRecord {
+    GameMetadataRecord {
+        developer: record.developer.clone(),
+        publisher: record.publisher.clone(),
+        genre: record.genre.clone(),
+        release_year: record.release_year,
+        players: record.players,
     }
 }
 

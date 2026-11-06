@@ -18,12 +18,15 @@ members = [
     "crates/config-layers",
     "crates/system-catalog",
     "crates/disc-image",
+    "crates/content-file-source",
+    "crates/rom-identity",
+    "crates/web-bindings",
     "crates/hw-render-gl",
     "crates/achievements",
 ]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.99"
 license = "GPL-3.0-or-later"
@@ -37,14 +40,19 @@ input-mapping = { path = "crates/input-mapping" }
 storage-db = { path = "crates/storage-db" }
 game-library = { path = "crates/game-library" }
 core-manager = { path = "crates/core-manager" }
-ipc-protocol = { path = "crates/ipc-protocol" }
+# default-features = false: native consumers enable `native` / `fs` explicitly, the web
+# bindings (wasm32) take only the pure parts (feature unification would otherwise
+# keep the native deps on for every user).
+ipc-protocol = { path = "crates/ipc-protocol", default-features = false }
 runner-session = { path = "crates/runner-session" }
 http-download-util = { path = "crates/http-download-util" }
 artwork-cache = { path = "crates/artwork-cache" }
 rom-patch = { path = "crates/rom-patch" }
-config-layers = { path = "crates/config-layers" }
+config-layers = { path = "crates/config-layers", default-features = false }
 system-catalog = { path = "crates/system-catalog" }
 disc-image = { path = "crates/disc-image" }
+content-file-source = { path = "crates/content-file-source" }
+rom-identity = { path = "crates/rom-identity" }
 hw-render-gl = { path = "crates/hw-render-gl" }
 achievements = { path = "crates/achievements" }
 
@@ -160,3 +168,7 @@ opt-level = 3
 
 [profile.dev.package.audio-output]
 opt-level = 3
+
+# Web edition wasm: optimise for size (download size matters more than speed).
+[profile.release.package.web-bindings]
+opt-level = "s"

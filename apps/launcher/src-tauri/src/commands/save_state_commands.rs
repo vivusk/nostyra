@@ -163,3 +163,7 @@ fn delete_slot_files(dir: &Path, slot: StateSlotId) -> std::io::Result<()> {
 #[cfg(test)]
 #[path = "save_state_commands_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "save_state_web_files_tests.rs"]
+mod web_files_tests;

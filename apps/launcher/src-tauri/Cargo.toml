@@ -19,13 +19,13 @@ tauri-build.workspace = true
 achievements.workspace = true
 anyhow.workspace = true
 artwork-cache.workspace = true
-config-layers.workspace = true
+config-layers = { workspace = true, features = ["fs"] }
 core-manager.workspace = true
 # Resume-point warnings: CRC of save.srm / the soft-patch file vs the sidecar.
 crc32fast.workspace = true
 game-library.workspace = true
 http-download-util.workspace = true
-ipc-protocol.workspace = true
+ipc-protocol = { workspace = true, features = ["native"] }
 rayon.workspace = true
 rom-patch.workspace = true
 runner-session.workspace = true

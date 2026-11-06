@@ -110,7 +110,7 @@ pub async fn reset_game_metadata(app: AppHandle, game_id: i64) -> CommandResult<
             )
         });
         if let Some((record, version)) = indexed {
-            storage_db::upsert_from_index(&state.db(), game_id, record, version, unix_now())?;
+            storage_db::upsert_from_index(&state.db(), game_id, &record, version, unix_now())?;
         }
         detail_view(&state, game_id)?.ok_or_else(not_found)
     })

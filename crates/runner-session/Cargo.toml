@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-ipc-protocol.workspace = true
+ipc-protocol = { workspace = true, features = ["native"] }
 serde.workspace = true
 serde_json.workspace = true
 storage-db.workspace = true

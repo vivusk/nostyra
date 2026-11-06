@@ -22,7 +22,7 @@ winit.workspace = true
 
 [dev-dependencies]
 # GPU test renders every preset the config accepts by name.
-config-layers.workspace = true
+config-layers = { workspace = true, features = ["fs"] }
 # Bundled presets parse in normal (GPU-less) tests.
 librashader-presets.workspace = true
 

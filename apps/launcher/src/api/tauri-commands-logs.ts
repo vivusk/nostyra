@@ -1,5 +1,5 @@
 // Settings → About → Logs commands (`log_commands.rs`).
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 
 export const logCommands = {
   /** Opens `<data>/logs/` in the file manager. */

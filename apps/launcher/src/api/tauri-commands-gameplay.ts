@@ -2,7 +2,7 @@
 // save-state slots and the resume point
 // (src-tauri/src/commands/{gameplay_config,save_state,resume}_commands.rs).
 // Loading a slot = `commands.playGame(gameId, slot)`; Continue = `playGame(gameId, "auto")`.
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 
 export type VideoScaling = "aspect" | "integer" | "stretch";
 /** What Play does when a resume point exists. */

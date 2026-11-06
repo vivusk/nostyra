@@ -6,13 +6,8 @@ use std::path::PathBuf;
 /// instead; these errors stop the operation.
 #[derive(Debug, thiserror::Error)]
 pub enum LibraryError {
-    #[error("cannot read {path}: {source}")]
-    Io {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-    #[error("invalid DAT file {path}: {message}")]
-    DatParse { path: PathBuf, message: String },
+    #[error(transparent)]
+    Dat(#[from] rom_identity::DatLoadError),
     #[error(transparent)]
     Storage(#[from] storage_db::StorageError),
     #[error("cannot start scan worker threads: {0}")]

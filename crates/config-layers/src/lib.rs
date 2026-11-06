@@ -15,37 +15,61 @@
 //!
 //! Files are app-managed but hand-editable: writes keep unknown keys, but not
 //! comments (plain `toml`, no format-preserving editor).
+//!
+//! Feature `fs` (desktop): file reading/writing, atomic writes, staged folders. Without
+//! it (web edition, wasm32) the pure parts remain: parse a layer's text
+//! ([`parse_layer_text`]), merge parsed layers ([`resolve_layer_tables_with_warnings`]),
+//! edit a layer table ([`edit_layer_table`]), the input schema, the Controls catalog
+//! ([`input_catalog`]), the assign-with-steal rules ([`plan_assign`]) and the
+//! launcher's settings view ([`gameplay_config_view`]).
 
 #![deny(unsafe_code)]
 
 mod achievements_config;
+#[cfg(feature = "fs")]
 mod atomic_file_write;
+mod config_layer_edit;
 mod config_layer_paths;
 mod config_layer_reader;
+#[cfg(feature = "fs")]
 mod config_layer_writer;
 mod core_layer_id;
+mod gameplay_config_view;
+mod input_binding_assign;
 mod input_binding_defaults;
 mod input_binding_names;
 mod input_binding_schema;
+mod input_catalog;
 mod input_conflicts;
 mod known_key_checks;
 mod known_values_view;
 mod resolved_config_diff;
 mod resolved_config_schema;
 mod resume_config_schema;
+#[cfg(feature = "fs")]
 mod staged_dir_replace;
 mod toml_table_deep_merge;
 
 use std::path::PathBuf;
 
 pub use achievements_config::{AchievementsConfig, ACHIEVEMENTS_SECTION};
+#[cfg(feature = "fs")]
 pub use atomic_file_write::write_atomically;
+pub use config_layer_edit::{edit_layer_table, layer_table_text};
 pub use config_layer_paths::{global_config_path, ConfigLayerPaths};
+pub use config_layer_reader::{parse_layer_text, resolve_layer_tables_with_warnings};
+#[cfg(feature = "fs")]
 pub use config_layer_reader::{
     resolve_config, resolve_config_with_warnings, resolve_layers_with_warnings,
 };
+#[cfg(feature = "fs")]
 pub use config_layer_writer::{set_layer_value, set_layer_values};
 pub use core_layer_id::{bundled_preset_rel_path, core_layer_id, BUNDLED_PRESETS};
+pub use gameplay_config_view::{
+    gameplay_config_view, is_global_only_key, is_input_key, reset_controls_edits,
+    settable_key_refusal, GameplayConfigView, InputConfigView,
+};
+pub use input_binding_assign::{plan_assign, AssignPlan, BindingRefused, InputDevice};
 pub use input_binding_defaults::{
     DefaultBinds, DEFAULT_HOTKEYS_GAMEPAD, DEFAULT_HOTKEYS_KEYBOARD, DEFAULT_INPUT_GAMEPAD,
     DEFAULT_INPUT_KEYBOARD,
@@ -57,15 +81,19 @@ pub use input_binding_names::{
     PAD_ACTIONS, RESERVED_GAMEPAD_INPUTS, RESERVED_KEYBOARD_KEYS, RESERVED_PAD_HOTKEY_INPUTS,
 };
 pub use input_binding_schema::{defaults_table, Binds, InputConfig};
+pub use input_catalog::{input_catalog, GamepadInputInfo, InputCatalog};
 pub use input_conflicts::resolve_input_conflicts;
 pub use known_key_checks::MENU_OPTION_KEYS;
-pub use known_values_view::{layer_known_values, resolved_known_values};
+#[cfg(feature = "fs")]
+pub use known_values_view::layer_known_values;
+pub use known_values_view::{known_values_of_layer, resolved_known_values};
 pub use resolved_config_diff::{changed_keys, known_keys};
 pub use resolved_config_schema::{
     is_valid_shader, LatencyConfig, ResolvedConfig, RewindConfig, VideoConfig, VideoScaling,
     MAX_RUN_AHEAD_FRAMES, REWIND_BUFFER_MB_RANGE, SHADER_NONE,
 };
 pub use resume_config_schema::{ResumeConfig, ResumeMode};
+#[cfg(feature = "fs")]
 pub use staged_dir_replace::{remove_stale_staging, replace_dir, staging_dirs};
 pub use toml::{Table, Value};
 

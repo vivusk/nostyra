@@ -76,11 +76,20 @@ fn run(f: &Fixture, old: &str, new: &str, running: Option<i64>) -> Vec<Migration
 fn rename_renames_id_named_files() {
     let f = fixture("Game (USA).nes", &[], false);
     write_game_files(f.data.path(), &format!("Game [{}]", id(0)));
+    // The web edition's files in the same folder go along with it.
+    let old_dir = f.data.path().join(format!("saves/nes/Game [{}]", id(0)));
+    std::fs::write(old_dir.join("web-slot2.state"), b"web").unwrap();
+    std::fs::write(old_dir.join("save.web.srm"), b"web").unwrap();
     let results = run(&f, "Game.nes", "Game (USA).nes", None);
     assert_eq!(results.len(), 1);
     assert_eq!(results[0].moved.len(), 2, "{results:?}");
     assert!(results[0].skipped.is_empty());
     assert!(has_files(f.data.path(), &format!("Game (USA) [{}]", id(0))));
+    let new_dir = f
+        .data
+        .path()
+        .join(format!("saves/nes/Game (USA) [{}]", id(0)));
+    assert!(new_dir.join("web-slot2.state").is_file() && new_dir.join("save.web.srm").is_file());
     assert!(!f
         .data
         .path()

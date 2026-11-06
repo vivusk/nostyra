@@ -1,6 +1,6 @@
 // Typed wrappers for the M2 commands: game detail, favorites, metadata edits, home
 // data and the artwork job (src-tauri/src/commands/{game_detail,home,artwork}_commands.rs).
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 import type { ArtworkProgressEvent } from "./tauri-events";
 import type { Game } from "./tauri-commands";
 

@@ -56,9 +56,8 @@ pub fn identity_source(path: &Path, signature: DiscSignature) -> Result<PathBuf,
 fn largest(files: impl Iterator<Item = PathBuf>) -> Result<PathBuf, DiscError> {
     let mut best: Option<(u64, PathBuf)> = None;
     for file in files {
-        let len = std::fs::metadata(&file)
-            .map_err(|_| DiscError::MissingFile(crate::m3u_playlist::display_name(&file)))?
-            .len();
+        let len = content_file_source::len(&file)
+            .map_err(|_| DiscError::MissingFile(crate::m3u_playlist::display_name(&file)))?;
         if best.as_ref().is_none_or(|(size, _)| len >= *size) {
             best = Some((len, file));
         }

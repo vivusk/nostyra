@@ -20,7 +20,7 @@ checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
 
 [[package]]
 name = "achievements"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cc",
  "config-layers",
@@ -203,7 +203,7 @@ checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 
 [[package]]
 name = "artwork-cache"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "http-download-util",
  "image",
@@ -393,7 +393,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "audio-output"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "libretro-host",
  "sdl3",
@@ -739,6 +739,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cast"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
+
+[[package]]
 name = "cc"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -924,7 +930,7 @@ dependencies = [
 
 [[package]]
 name = "config-layers"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "ipc-protocol",
  "serde",
@@ -945,6 +951,13 @@ name = "constant_time_eq"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d52eff69cd5e647efe296129160853a42795992097e8af39800e1060caeea9b"
+
+[[package]]
+name = "content-file-source"
+version = "0.3.0"
+dependencies = [
+ "tempfile",
+]
 
 [[package]]
 name = "cookie"
@@ -1032,7 +1045,7 @@ dependencies = [
 
 [[package]]
 name = "core-manager"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "config-layers",
  "http-download-util",
@@ -1383,9 +1396,10 @@ dependencies = [
 
 [[package]]
 name = "disc-image"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chd",
+ "content-file-source",
  "flate2",
  "system-catalog",
  "tempfile",
@@ -1853,11 +1867,12 @@ dependencies = [
 
 [[package]]
 name = "game-library"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "crc32fast",
  "disc-image",
  "rayon",
+ "rom-identity",
  "sha1",
  "storage-db",
  "system-catalog",
@@ -1865,6 +1880,7 @@ dependencies = [
  "thiserror 2.0.21",
  "tracing",
  "walkdir",
+ "zip",
 ]
 
 [[package]]
@@ -2378,7 +2394,7 @@ dependencies = [
 
 [[package]]
 name = "http-download-util"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "thiserror 2.0.21",
  "tracing",
@@ -2399,7 +2415,7 @@ checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 
 [[package]]
 name = "hw-render-gl"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "glow",
  "libretro-host",
@@ -2663,7 +2679,7 @@ dependencies = [
 
 [[package]]
 name = "input-mapping"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "config-layers",
  "libretro-host",
@@ -2675,7 +2691,7 @@ dependencies = [
 
 [[package]]
 name = "ipc-protocol"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "directories",
@@ -3177,7 +3193,7 @@ dependencies = [
 
 [[package]]
 name = "libretro-host"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cc",
  "libloading 0.9.0",
@@ -3319,6 +3335,16 @@ name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
+
+[[package]]
+name = "minicov"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4869b6a491569605d66d3952bcdf03df789e5b536e5f0cf7758a7f08a55ae24d"
+dependencies = [
+ "cc",
+ "walkdir",
+]
 
 [[package]]
 name = "miniz_oxide"
@@ -3499,7 +3525,7 @@ dependencies = [
 
 [[package]]
 name = "nostyra-launcher"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "achievements",
  "anyhow",
@@ -3533,7 +3559,7 @@ dependencies = [
 
 [[package]]
 name = "nostyra-runner"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "achievements",
  "anyhow",
@@ -3561,6 +3587,7 @@ dependencies = [
  "tracing",
  "video-renderer",
  "winit",
+ "zip",
 ]
 
 [[package]]
@@ -4040,6 +4067,12 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
+
+[[package]]
+name = "oorandom"
+version = "11.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "open"
@@ -4751,8 +4784,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "rom-identity"
+version = "0.3.0"
+dependencies = [
+ "content-file-source",
+ "crc32fast",
+ "disc-image",
+ "sha1",
+ "system-catalog",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tracing",
+ "zip",
+]
+
+[[package]]
 name = "rom-patch"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "crc32fast",
  "tempfile",
@@ -4787,7 +4835,7 @@ dependencies = [
 
 [[package]]
 name = "runner-session"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "ipc-protocol",
  "serde",
@@ -5575,7 +5623,7 @@ checksum = "ff7589a1859b09232522bb9edf076ca7fcf14ded96685d3fa629db73023ffbb7"
 
 [[package]]
 name = "storage-db"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "rusqlite",
  "rusqlite_migration",
@@ -5701,8 +5749,9 @@ dependencies = [
 
 [[package]]
 name = "system-catalog"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
+ "content-file-source",
  "tempfile",
 ]
 
@@ -6691,7 +6740,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "video-renderer"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "config-layers",
  "fontdue",
@@ -6824,6 +6873,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasm-bindgen-test"
+version = "0.3.79"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae7499dfd45780a0a91d7ee6bb9ac51970a4479a41a89da443fdda5a39547d42"
+dependencies = [
+ "async-trait",
+ "cast",
+ "js-sys",
+ "libm",
+ "minicov",
+ "nu-ansi-term",
+ "num-traits",
+ "oorandom",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test-macro",
+ "wasm-bindgen-test-shared",
+]
+
+[[package]]
+name = "wasm-bindgen-test-macro"
+version = "0.3.79"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b84b5ac638bfb168196a1a461fcc8f46a294a18b1b6be52133b4e0db122cc9f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.9",
+]
+
+[[package]]
+name = "wasm-bindgen-test-shared"
+version = "0.2.129"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f692aa943ccd88363733b77063f32cfed5bc6cbea8e6e8b251b302f881606fe"
+
+[[package]]
 name = "wasm-streams"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6943,6 +7031,26 @@ dependencies = [
  "log",
  "once_cell",
  "pkg-config",
+]
+
+[[package]]
+name = "web-bindings"
+version = "0.3.0"
+dependencies = [
+ "config-layers",
+ "content-file-source",
+ "crc32fast",
+ "disc-image",
+ "ipc-protocol",
+ "js-sys",
+ "rom-identity",
+ "rom-patch",
+ "serde",
+ "serde_json",
+ "system-catalog",
+ "tempfile",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
 ]
 
 [[package]]

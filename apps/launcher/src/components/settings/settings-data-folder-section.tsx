@@ -1,8 +1,9 @@
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "../../backend";
 import { useState } from "react";
 import { errorMessage } from "../../api/tauri-commands";
 import { dataFolderCommands, type DataFolderCheck } from "../../api/tauri-commands-data-folder";
 import { useSetupState } from "../../hooks/use-library-queries";
+import { isInsideAppData } from "../../lib/data-folder-location";
 import { useErrorToast } from "../error-toast";
 import { DataFolderChangeDialog } from "./data-folder-change-dialog";
 
@@ -41,6 +42,11 @@ export function SettingsDataFolderSection() {
         Library database, cores, saves and save states live here.
         {busy && " Wait for the running game, scan or download to finish to change it."}
       </p>
+      {setup?.dataRoot && isInsideAppData(setup.dataRoot) && (
+        <p className="m-0 text-xs text-muted">
+          To share saves with Nostyra Online, move this folder outside AppData (e.g. Documents\Nostyra).
+        </p>
+      )}
       {picked && <DataFolderChangeDialog path={picked.path} check={picked.check} onClose={() => setPicked(null)} />}
     </>
   );

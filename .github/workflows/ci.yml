@@ -1,9 +1,9 @@
 name: CI
 
+# Manual only (Actions → CI → Run workflow): releases are checked by local gates
+# before scripts/release.ps1, so pushes and pull requests never start a build.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

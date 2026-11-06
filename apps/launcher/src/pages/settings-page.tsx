@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
 import { AddFolderButton } from "../components/add-folder-button";
 import { LastScanProblemsLink } from "../components/scan-problems-dialog";
+import { capabilities } from "../backend";
 import { SettingsBiosSection } from "../components/settings/settings-bios-section";
 import { SettingsCoresSection } from "../components/settings/settings-cores-section";
 import { SettingsDataFolderSection } from "../components/settings/settings-data-folder-section";
+import { WebDataFolderSection } from "../components/settings/web-data-folder-section";
 import { SettingsLogsRow } from "../components/settings/settings-logs-row";
+import { WebLicencesLink } from "../components/web-licences-link";
+import { SettingsZipScan } from "../components/settings/settings-zip-scan";
 import { SettingsArtworkSection } from "../components/settings-artwork-section";
 import { ControlsSection } from "../components/settings/controls-section";
 import { GameplayDefaultsSection } from "../components/settings/gameplay-defaults-section";
@@ -41,6 +45,7 @@ export function SettingsPage() {
           ))}
         </ul>
         <p className="m-0 text-xs text-muted">Removing a folder hides its games; play history comes back if you add it again.</p>
+        <SettingsZipScan />
         <LastScanProblemsLink />
         <div className="flex flex-wrap gap-3">
           <AddFolderButton />
@@ -55,9 +60,11 @@ export function SettingsPage() {
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Emulator cores">
-        <SettingsCoresSection />
-      </SettingsSection>
+      {capabilities.coreDownload && (
+        <SettingsSection title="Emulator cores">
+          <SettingsCoresSection />
+        </SettingsSection>
+      )}
 
       <SettingsSection title="BIOS">
         <SettingsBiosSection />
@@ -67,9 +74,11 @@ export function SettingsPage() {
         <GameplayDefaultsSection />
       </SettingsSection>
 
-      <SettingsSection title="RetroAchievements">
-        <SettingsAchievementsSection />
-      </SettingsSection>
+      {capabilities.achievements && (
+        <SettingsSection title="RetroAchievements">
+          <SettingsAchievementsSection />
+        </SettingsSection>
+      )}
 
       <SettingsSection title="Controls">
         <ControlsSection />
@@ -80,7 +89,7 @@ export function SettingsPage() {
       </SettingsSection>
 
       <SettingsSection title="Data folder">
-        <SettingsDataFolderSection />
+        {capabilities.dataFolderMove ? <SettingsDataFolderSection /> : <WebDataFolderSection />}
       </SettingsSection>
 
       <SettingsSection title="About">
@@ -89,7 +98,8 @@ export function SettingsPage() {
           (CC-BY-SA-4.0). Artwork: libretro-thumbnails, downloaded per game into a local cache.
           Nostyra does not ship or download games.
         </p>
-        <SettingsLogsRow />
+        <WebLicencesLink className="self-start" />
+        {capabilities.logs && <SettingsLogsRow />}
       </SettingsSection>
     </div>
   );

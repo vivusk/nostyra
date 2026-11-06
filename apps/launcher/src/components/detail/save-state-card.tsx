@@ -1,5 +1,5 @@
 import type { SaveStateSlot } from "../../api/tauri-commands-gameplay";
-import { assetUrl } from "../../lib/asset-url";
+import { assetUrl, useResolvedAsset } from "../../lib/asset-url";
 import { saveSlotLabel } from "../../lib/save-slot-label";
 import { relativeTime, relativeTimeInSentence } from "../../lib/relative-time";
 
@@ -19,7 +19,7 @@ interface SaveStateCardProps {
  *  relative time (absolute on hover), Load + Delete. The resume point (`slot "auto"`)
  *  is the same card titled "Resume point" with an accent border and Continue. */
 export function SaveStateCard({ state, loadDisabledReason, deleteDisabledReason, onLoad, onDelete }: SaveStateCardProps) {
-  const thumbnail = assetUrl(state.thumbnailPath, state.createdAt);
+  const thumbnail = useResolvedAsset(assetUrl(state.thumbnailPath, state.createdAt));
   const savedAt = new Date(state.createdAt * 1000).toLocaleString();
   const label = saveSlotLabel(state.slot);
   const resume = state.slot === "auto";

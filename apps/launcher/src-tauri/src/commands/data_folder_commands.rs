@@ -113,7 +113,7 @@ pub async fn change_data_folder(
                 reopen(&mut db)?;
                 return Err(storage_error(err));
             }
-            remove_moved_originals(&current, &copied);
+            remove_moved_originals(&current, &plan, &copied);
             tracing::info!(to = %target.display(), files = copied.len(), "data folder moved");
             app.restart();
         }

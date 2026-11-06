@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-config-layers.workspace = true
+config-layers = { workspace = true, features = ["fs"] }
 # The cdreader behind rc_hash (CHD / CSO / CDI / Redump GD cue tracks).
 disc-image.workspace = true
 http-download-util.workspace = true

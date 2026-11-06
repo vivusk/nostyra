@@ -112,3 +112,7 @@ pub fn current_patch_crc32(rom: &Path) -> Option<u32> {
 #[cfg(test)]
 #[path = "resume_point_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "resume_point_web_files_tests.rs"]
+mod web_files_tests;

@@ -1,4 +1,6 @@
 [toolchain]
 channel = "1.99.1"
 components = ["rustfmt", "clippy"]
+# wasm32: the web edition (crates/web-bindings; scripts/check-wasm-crates.*).
+targets = ["wasm32-unknown-unknown"]
 profile = "minimal"

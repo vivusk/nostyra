@@ -65,6 +65,7 @@ pub(crate) fn strip_global_only(layer: &mut Table, source: &Path) {
 }
 
 #[cfg(test)]
+#[cfg(feature = "fs")]
 mod tests {
     #![allow(clippy::unwrap_used)] // test code: panics are the failure signal
     use crate::{resolve_config, ConfigLayerPaths};

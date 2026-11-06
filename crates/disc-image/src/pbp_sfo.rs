@@ -4,7 +4,7 @@
 //! `NPUMDIMG`, homebrew with an empty PSAR) is a PSP eboot. `DISC_ID` is the serial
 //! without its dash (`SLUS00594`, `ULUS10041`).
 
-use std::fs::File;
+use content_file_source::ContentFile;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
@@ -39,7 +39,7 @@ pub struct PbpInfo {
 impl PbpInfo {
     /// Reads the header, `PARAM.SFO` and PSAR magic of a `.pbp` file.
     pub fn read(path: &Path) -> Result<Self, DiscError> {
-        let mut file = File::open(path)?;
+        let mut file = content_file_source::open(path)?;
         let mut header = [0u8; 0x28];
         file.read_exact(&mut header)
             .map_err(|_| DiscError::Format("file too short for a PBP header"))?;
@@ -83,9 +83,9 @@ impl PbpInfo {
 }
 
 /// First bytes of `DATA.PSAR` (empty when the PSAR is empty or past the end).
-fn psar_magic(file: &mut File, offset: u32) -> Result<Vec<u8>, DiscError> {
+fn psar_magic(file: &mut ContentFile, offset: u32) -> Result<Vec<u8>, DiscError> {
     let mut magic = Vec::with_capacity(10);
-    if u64::from(offset) < file.metadata()?.len() {
+    if u64::from(offset) < content_file_source::stream_len(file.as_mut())? {
         file.seek(SeekFrom::Start(u64::from(offset)))?;
         file.by_ref().take(10).read_to_end(&mut magic)?;
     }

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { GameAchievementsView } from "../../api/tauri-commands-achievements";
 import { useGameAchievements } from "../../hooks/use-achievements-queries";
-import { assetUrl } from "../../lib/asset-url";
+import { assetUrl, useResolvedAsset } from "../../lib/asset-url";
 import { relativeTimeInSentence } from "../../lib/relative-time";
 import { AchievementRow } from "./achievement-row";
 
@@ -33,8 +33,8 @@ export function AchievementsTab({ gameId }: { gameId: number }) {
 
 function AchievementList({ view }: { view: GameAchievementsView }) {
   const game = view.game;
+  const icon = useResolvedAsset(assetUrl(game?.iconPath ?? null));
   if (!game) return null;
-  const icon = assetUrl(game.iconPath);
   return (
     <section aria-labelledby="achievements-title" className={CARD}>
       <div className="flex flex-wrap items-center gap-4">

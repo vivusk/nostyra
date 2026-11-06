@@ -89,6 +89,20 @@ pub fn find_game_id_by_rom_path(conn: &Connection, rom_path: &str) -> StorageRes
         .optional()?)
 }
 
+/// A game whose content sha1 is `sha1` (any case): the web edition's play sessions
+/// name the game this way. Copies of the same game share it: a visible, present
+/// row wins, then the oldest.
+pub fn find_game_id_by_sha1(conn: &Connection, sha1: &str) -> StorageResult<Option<i64>> {
+    Ok(conn
+        .query_row(
+            "SELECT id FROM games WHERE sha1 = ?1 COLLATE NOCASE
+             ORDER BY folder_id IS NULL, missing, id LIMIT 1",
+            params![sha1],
+            |r| r.get(0),
+        )
+        .optional()?)
+}
+
 /// Visible games per platform id (Library system filter), platform id order.
 pub fn library_platform_counts(conn: &Connection) -> StorageResult<Vec<(String, i64)>> {
     let mut stmt = conn.prepare_cached(

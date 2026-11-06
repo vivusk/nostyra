@@ -71,7 +71,7 @@ impl GdiSheet {
         self.tracks
             .iter()
             .zip(self.referenced_paths(gdi_path))
-            .filter(|(_, path)| !path.is_file())
+            .filter(|(_, path)| !content_file_source::is_file(path))
             .map(|(track, _)| track.file.clone())
             .collect()
     }

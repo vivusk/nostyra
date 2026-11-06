@@ -1,3 +1,4 @@
+import { capabilities } from "../../backend";
 import { biosCommands, type CoreBios } from "../../api/tauri-commands-bios";
 import { useAddBiosFile, useBiosStatus } from "../../hooks/use-bios-queries";
 
@@ -53,6 +54,7 @@ function CoreBiosBlock({ core }: { core: CoreBios }) {
         >
           Add BIOS file…
         </button>
+        {capabilities.revealInFolder && (
         <button
           type="button"
           onClick={() => void biosCommands.openSystemFolder()}
@@ -60,6 +62,7 @@ function CoreBiosBlock({ core }: { core: CoreBios }) {
         >
           Open folder
         </button>
+        )}
       </div>
     </div>
   );

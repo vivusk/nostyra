@@ -1,5 +1,5 @@
 // BIOS and memory card commands (`bios_commands.rs`, `memory_card_commands.rs`).
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 
 /** A file in the system folder that looks like a BIOS. */
 export interface BiosFile {

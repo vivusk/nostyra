@@ -15,6 +15,11 @@ export function keyNameFromCode(code: string, keyboardKeys: readonly string[]): 
   return keyboardKeys.includes(name) ? name : null;
 }
 
+/** The DOM `code` of a stored key name (inverse of `keyNameFromCode`). */
+export function codeFromKeyName(name: string): string {
+  return Object.entries(DOM_TO_WINIT).find(([, winit]) => winit === name)?.[0] ?? name;
+}
+
 /** Whether a keydown should be ignored by a capture (auto-repeat, IME composition). */
 export function isIgnorableKeyEvent(event: Pick<KeyboardEvent, "repeat" | "isComposing" | "code">): boolean {
   return event.repeat || event.isComposing || event.code === "" || event.code === "Unidentified";

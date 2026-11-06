@@ -7,7 +7,8 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::shared_data_paths::{default_data_root, portable_dir};
+use crate::default_data_root::default_data_root;
+use crate::native_data_roots::portable_dir;
 
 const LOCATION_FILE_NAME: &str = "data-location.txt";
 

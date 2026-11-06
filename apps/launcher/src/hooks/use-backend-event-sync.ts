@@ -1,7 +1,7 @@
 // Subscribes once (in AppShell) to every backend event and folds it into the
 // TanStack Query cache, so components only read queries.
 import { useEffect } from "react";
-import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { capabilities, listen, type Unlisten } from "../backend";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   EVENTS,
@@ -45,7 +45,7 @@ export function useBackendEventSync() {
     const setSession = (value: GameSessionState | null) =>
       queryClient.setQueryData(queryKeys.session, value);
 
-    const subscriptions: Promise<UnlistenFn>[] = [
+    const subscriptions: Promise<Unlisten>[] = [
       listen<ScanProgressEvent>(EVENTS.scanProgress, (e) => {
         queryClient.setQueryData(queryKeys.scanProgress, e.payload);
       }),
@@ -64,6 +64,10 @@ export function useBackendEventSync() {
         const moved = e.payload.relinked;
         if (moved > 0) {
           showNotice(`${moved} moved or renamed ${moved === 1 ? "game kept its" : "games kept their"} history`);
+        }
+        const desktopOnly = e.payload.desktopOnly ?? 0;
+        if (desktopOnly > 0) {
+          showNotice(`${desktopOnly} ${desktopOnly === 1 ? "game needs" : "games need"} the desktop app`);
         }
       }),
       listen<CoreDownloadProgressEvent>(EVENTS.coreDownloadProgress, (e) => {
@@ -93,9 +97,11 @@ export function useBackendEventSync() {
         void queryClient.invalidateQueries({ queryKey: queryKeys.gameplayConfigRoot });
         void queryClient.invalidateQueries({ queryKey: queryKeys.gameAchievements(e.payload.gameId) });
         const error = e.payload.error;
-        // Game errors offer a bug-report zip (logs of this session included).
+        // Game errors offer a bug-report zip (logs of this session included; the web
+        // edition has no log files).
         if (error) {
-          showError(error.message, error.detail, { label: "Create bug report", onClick: () => createBugReport() });
+          const report = capabilities.logs ? { label: "Create bug report", onClick: () => createBugReport() } : undefined;
+          showError(error.message, error.detail, report);
         }
       }),
       listen<SessionEvent>(EVENTS.achievementsChanged, (e) => {

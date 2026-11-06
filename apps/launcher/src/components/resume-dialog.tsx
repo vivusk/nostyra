@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ResumeInfo, ResumeWarning } from "../api/tauri-commands-gameplay";
 import { useGameDetail } from "../hooks/use-game-detail-queries";
-import { assetUrl } from "../lib/asset-url";
+import { assetUrl, useResolvedAsset } from "../lib/asset-url";
 import { relativeTimeInSentence } from "../lib/relative-time";
 
 const WARNING_TEXT: Record<ResumeWarning, string> = {
@@ -37,7 +37,7 @@ export function ResumeDialog({ gameId, info, onContinue, onStartFresh, onClose }
     warning === "state-incompatible"
       ? `${info.incompatibleReason ?? WARNING_TEXT[warning]} — cannot load`
       : WARNING_TEXT[warning];
-  const thumbnail = assetUrl(info.thumbnailPath, info.createdAt);
+  const thumbnail = useResolvedAsset(assetUrl(info.thumbnailPath, info.createdAt));
   const savedAt = info.createdAt !== null ? relativeTimeInSentence(info.createdAt) : null;
 
   useEffect(() => {

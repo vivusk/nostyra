@@ -2,7 +2,7 @@
 //! hunks (usually 4096 B), unit size 2048, no CD/GD track metadata (maybe a `DVD `
 //! tag). A `.chd` with CD/GD tracks goes to [`ChdTrackReader`] instead.
 
-use std::fs::File;
+use content_file_source::ContentFile;
 use std::io::BufReader;
 use std::path::Path;
 
@@ -18,7 +18,7 @@ use crate::DiscError;
 const MAX_HUNK_BYTES: u64 = 1024 * 1024;
 
 pub struct ChdDvdReader {
-    chd: Chd<BufReader<File>>,
+    chd: Chd<BufReader<ContentFile>>,
     hunk_bytes: u64,
     sectors: u64,
     hunk_buf: Vec<u8>,
@@ -28,7 +28,7 @@ pub struct ChdDvdReader {
 
 /// Opens a `.chd`: a DVD image as plain sectors, a CD/GD image's track 1 otherwise.
 pub fn open_chd(path: &Path) -> Result<Box<dyn DiscReader>, DiscError> {
-    let mut chd = Chd::open(BufReader::new(File::open(path)?), None)?;
+    let mut chd = Chd::open(BufReader::new(content_file_source::open(path)?), None)?;
     let metas: Vec<Metadata> = chd.metadata_refs().try_into()?;
     let dvd =
         chd.header().unit_bytes() as usize == SECTOR_DATA_BYTES && track_table(&metas).is_empty();

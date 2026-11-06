@@ -16,6 +16,7 @@ use crate::rom_header_rules::{ContentProbe, HeaderRule};
 use crate::sega_system_specs::{GENESIS, GG, SG1000, SMS};
 pub use crate::snes_nes_system_specs::{NES, SNES};
 use crate::touch_screen_rule::TouchScreenRule;
+use crate::web_core_specs::WebCore;
 
 /// Everything Nostyra needs to know about one system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -66,6 +67,9 @@ pub struct SystemSpec {
     /// `rc_libretro` take). `None`: no achievements on this system (GameCube / Wii:
     /// out of scope, rcheevos has no frontend support for their core).
     pub ra_console_id: Option<u8>,
+    /// EmulatorJS core of the web edition (`None`: not playable in the browser:
+    /// N64 / NDS / PSP until M16b, Dreamcast / GameCube / Wii never).
+    pub web_core: Option<WebCore>,
 }
 
 /// Which pad sticks a system reads as analog axes.

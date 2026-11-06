@@ -68,6 +68,10 @@ fn shared_file_name_is_copied_to_each_game() {
     let temp = scratch();
     let data = temp.path();
     write_legacy(data, "snes", "Game");
+    // A web write cut short in the shared entry is not copied (web files are).
+    let legacy = data.join("saves/snes/Game");
+    std::fs::write(legacy.join("save.srm.crswap"), b"half").unwrap();
+    std::fs::write(legacy.join("web-slot0.state"), b"web").unwrap();
     let keys = [
         key(1, "snes", "E:/A/Game.sfc", A),
         key(2, "snes", "E:/B/Game.smc", B),
@@ -80,6 +84,8 @@ fn shared_file_name_is_copied_to_each_game() {
     assert!(has_files(data, "snes", "Game [AAAAAAAA]"));
     assert!(has_files(data, "snes", "Game [BBBBBBBB]"));
     assert!(has_files(data, "snes", "Game"), "legacy stays");
+    let copy = data.join("saves/snes/Game [AAAAAAAA]");
+    assert!(copy.join("web-slot0.state").is_file() && !copy.join("save.srm.crswap").exists());
 }
 
 #[test]

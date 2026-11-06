@@ -1,0 +1,16 @@
+[package]
+name = "content-file-source"
+description = "Where ROM / disc identity code reads content files from: the OS file system, or a source the web edition installs (File System Access reads)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

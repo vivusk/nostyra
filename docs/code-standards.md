@@ -25,6 +25,7 @@ Last updated: 2026-10-29
 - Files written while a game may run (SRAM, states, thumbnails, config layers) use `config_layers::write_atomically`.
 - Hot paths (per-frame/per-sample): no allocation, no locks contended with UI thread.
 - Doc comments (`///`) on all public items; explain *why*, not *what*.
+- Web edition (M16): crates the browser uses (`rom-identity`, `system-catalog`, `rom-patch`, `disc-image`, `ipc-protocol` / `config-layers` without default features, `web-bindings`) must build for `wasm32-unknown-unknown` (`scripts/check-wasm-crates.sh`): OS access (`fs`, `directories`, clocks, logging setup) only behind the `native` / `fs` features; pure rules take bytes, text or a `read_at` callback. `wasm-bindgen` / `js-sys` only in `crates/web-bindings`, under `cfg(target_arch = "wasm32")`. A rule both editions need (naming, identity, config) is written once in Rust and exported to the web, never re-implemented in TS.
 
 ## TypeScript / React (M1+)
 - Strict TS, function components, hooks.
@@ -40,6 +41,8 @@ Last updated: 2026-10-29
   `convertFileSrc`, never user input.
 - Long lists: virtualise (`@tanstack/react-virtual`) with fixed row heights; memoise row items and
   keep callbacks stable.
+- Two editions, one UI: components and hooks import only `src/api/*` and `src/backend` (never `@tauri-apps/*` or `backend/tauri|web` directly); edition differences go through `capabilities` flags or `edition`, web-only code paths are guarded so `vite build` (desktop) drops them. The web bundle must not contain `@tauri-apps` (`scripts/check-web-bundle.*`). Files under `public/` (player, gate) are plain classic scripts: no inline scripts or styles (production CSP).
+- Web pure helpers covered by `node --test` stay import-free (Node strips types but cannot resolve extension-less imports; pass dependencies in as parameters); `*.test.ts` live next to the code and are excluded from tsc.
 
 ## Testing
 - Unit tests next to code (`#[cfg(test)]`).

@@ -2,7 +2,7 @@
 
 > **Old Worlds. New Ways.**
 
-Last updated: 2026-10-29 · Status: M0–M4 + M6–M15 implemented (Windows; manual checks pending); M5 HD Remaster lives on branch `hd-remaster`; Big Picture & Deck deferred
+Last updated: 2026-11-06 · Status: M0–M4 + M6–M16 implemented (Windows; manual checks pending; M16 = web edition Nostyra Online); M5 HD Remaster lives on branch `hd-remaster`; Big Picture & Deck deferred
 
 ## 1. Vision
 
@@ -22,7 +22,7 @@ Nostyra is a free, open-source, cross-platform retro game launcher + emulation f
 
 - No ROM distribution, ROM download, or piracy links.
 - No custom emulation core (we host libretro cores).
-- No mobile / web / console ports.
+- No mobile / console ports. The web edition (M16) is desktop Chrome / Edge only, on ten systems, and never replaces the desktop app.
 - No monetization, accounts, or telemetry by default.
 
 ## 4. Target Users
@@ -45,6 +45,7 @@ Nostyra is a free, open-source, cross-platform retro game launcher + emulation f
 | GPU cores | Backend-agnostic hw-render API in `libretro-host`; OpenGL backend `hw-render-gl` (hidden SDL3 context, FBO readback into the wgpu presenter) | Shaders / overlay / thumbnails unchanged; Vulkan and zero-copy plug in later |
 | Audio/Input | SDL3 | Unified gamepad DB, Steam Input friendly |
 | Storage | SQLite (rusqlite, WAL) | Embedded, fast, zero setup |
+| Web edition (M16) | Same React launcher built with `vite --mode web` over a TS backend (`src/backend/web/`); shared Rust rules compiled to wasm (`crates/web-bindings`); own sqlite-wasm DB in OPFS; EmulatorJS 4.2.3 self-hosted, one iframe per game; static site at nostyra.com/online (Vercel, manual deploy) | No server, no upload; saves / config / BIOS shared with the desktop as files in one Data folder, never the desktop DB |
 | Achievements | rcheevos v12.5.0 (MIT) vendored unmodified, `rc_client` in the runner behind a safe single-thread wrapper; softcore default, hardcore coded but hidden until RA approves the client | Same library and data as RetroArch; RA requires ≥ 6 months public before hardcore credit |
 
 ### Snes9x license note
@@ -68,6 +69,7 @@ Snes9x has a non-commercial, non-GPL license. Nostyra (GPLv3) does **not** link 
 - **M7 Handheld Systems**: Game Boy, Game Boy Color and Game Boy Advance on one mGBA core (registry data: three systems, one core, DATs, migration); in-game clocks of Game Boy carts kept across restarts (`rtc.bin`); LCD shader preset; system filter scales to 5+ systems.
 - **M6 Multi-system Library**: one library across systems — any folder layout, files classified by extension + content (never folder names); NES on the Mesen core (GPLv3, loaded as a separate library like Snes9x); system registry crate (`system-catalog`) as the only owner of system/core facts; NES No-Intro DAT + metadat (headered and re-headered dumps); cores per system, none required at first run (install prompt on first Play); Library system filter + badges, Controls per system, NES box art; moved/renamed ROMs keep history and saves.
 - **M15 RetroAchievements**: rcheevos `rc_client` on the 14 RA systems (all but GameCube / Wii); log in once in launcher Settings (password used once, token stored unencrypted with a visible notice, Log out deletes it); games identified by RA's hash through Nostyra's own disc readers (CHD / CSO / CDI / GDI / cue; PS1 `.pbp` unavailable); softcore by default with hardcore fully enforced but hidden behind one flag until RA approval; leaderboards hardcore-only in rcheevos v12.5.0; in-game overlay (placard, unlock popups with badges + chime, indicators, pause-menu list) with a bundled Unicode font (Latin / Greek / Cyrillic); offline unlocks persisted and sent later; progress in save states and rewind; launcher Achievements tab from the last play.
+- **M16 Web edition (Nostyra Online)**: `https://nostyra.com/online` for desktop Chrome / Edge (other browsers → gate page): pick a ROM folder (File System Access), same Home / Library / Detail / Settings, play NES, SNES, GB, GBC, GBA, MD, SMS, GG, SG-1000 and PS1 via EmulatorJS 4.2.3; content ids identical to the desktop (Rust identity rules in wasm), so a Data folder shared with the desktop (browser storage by default; desktop default moved to `Documents\Nostyra` because Chrome blocks AppData) gives the same in-game saves, TOML settings, controls and BIOS; web save states kept apart (`web-slot*` / `web-auto`); web play time imported by the desktop by content sha1; single tab; licences page; desktop-only features shown disabled. N64 / NDS / PSP and multi-disc switching → M16b.
 - **Later**: Big Picture & Deck (spatial-nav UI, `--big-picture` flag, Flatpak, gamescope / Steam Deck validation, packaging `nostyra-runner` into installers; deferred by user 2026-10-18), cloud save sync (WebDAV/Dropbox/GDrive), netplay.
 
 ## 7. Non-Functional Requirements

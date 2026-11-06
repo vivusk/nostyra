@@ -1,7 +1,7 @@
 // Typed wrappers for the Controls editor commands
 // (src-tauri/src/commands/{input_catalog,gamepad_capture}_commands.rs). Names,
 // labels and defaults come from the backend catalog; nothing is hand-listed here.
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 import type { BindingKey, GameplayConfigScope } from "./tauri-commands-gameplay";
 
 export type InputDevice = "keyboard" | "gamepad";

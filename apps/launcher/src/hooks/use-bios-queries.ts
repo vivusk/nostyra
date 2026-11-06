@@ -1,6 +1,6 @@
 // BIOS status (Settings) and memory cards (Detail → Save states).
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "../backend";
 import { biosCommands } from "../api/tauri-commands-bios";
 import { errorMessage } from "../api/tauri-commands";
 import { queryKeys } from "../api/query-keys";

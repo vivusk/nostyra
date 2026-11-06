@@ -22,7 +22,6 @@ pub mod game_detail_commands;
 pub mod gamepad_capture_commands;
 pub mod gameplay_config_commands;
 pub mod home_commands;
-mod input_binding_assign;
 pub mod input_catalog_commands;
 mod input_config_view;
 pub mod library_commands;

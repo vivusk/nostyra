@@ -1,4 +1,4 @@
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "../backend";
 import { useAddLibraryFolder } from "../hooks/use-library-queries";
 
 /** Opens the OS folder picker and adds the folder (then a rescan starts). */

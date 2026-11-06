@@ -7,6 +7,12 @@ rust-version.workspace = true
 license.workspace = true
 publish = false
 
+[features]
+default = ["fs"]
+# Desktop only: read/write layer files (atomic writes, staged folders), find the game
+# layer on disk. Off for the web edition (wasm32), which keeps the pure parse/merge.
+fs = ["ipc-protocol/native"]
+
 [dependencies]
 ipc-protocol.workspace = true
 serde.workspace = true

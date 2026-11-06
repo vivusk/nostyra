@@ -28,7 +28,7 @@ $Allow = @{
     'apps/runner/src/achievements_real_core_loader.rs' = 'test-only module (#[cfg(test)] mod in main.rs)'
     'apps/runner/src/runner_real_core_suite.rs'        = 'test-only module (#[cfg(test)] mod in main.rs)'
     'crates/disc-image/src/test_gd_images.rs'          = 'test-only fixtures (cfg(test) / feature test-images): Redump and TOSEC track file names'
-    'crates/game-library/src/clrmamepro_dat_parser.rs' = 'DAT format: libretro NES DAT names headered ROMs *.nes'
+    'crates/rom-identity/src/clrmamepro_dat_parser.rs' = 'DAT format: libretro NES DAT names headered ROMs *.nes'
     'crates/ipc-protocol/src/shared_data_paths.rs'     = 'RTC_FILE_NAME = "rtc.bin": RTC save file name, not a ROM extension'
 }
 

@@ -7,10 +7,12 @@ use std::path::Path;
 
 use toml::{Table, Value};
 
+#[cfg(feature = "fs")]
 use crate::config_layer_reader::read_layer_table;
 use crate::known_key_checks::drop_invalid_keys;
 use crate::resolved_config_diff::{as_table, known_keys};
 use crate::resolved_config_schema::ResolvedConfig;
+#[cfg(feature = "fs")]
 use crate::ConfigError;
 
 /// Every known key with its effective value.
@@ -20,12 +22,18 @@ pub fn resolved_known_values(config: &ResolvedConfig) -> Table {
 
 /// The valid known keys one layer file sets (missing file → empty). Invalid values
 /// are dropped (as resolution does) and unknown keys are left out.
+#[cfg(feature = "fs")]
 pub fn layer_known_values(path: &Path) -> Result<Table, ConfigError> {
-    let Some(mut layer) = read_layer_table(path)? else {
-        return Ok(Table::new());
-    };
-    drop_invalid_keys(&mut layer, path);
-    Ok(flatten_known(&layer))
+    Ok(match read_layer_table(path)? {
+        Some(layer) => known_values_of_layer(layer, path),
+        None => Table::new(),
+    })
+}
+
+/// [`layer_known_values`] of a parsed layer (`source` names it in warnings).
+pub fn known_values_of_layer(mut layer: Table, source: &Path) -> Table {
+    drop_invalid_keys(&mut layer, source);
+    flatten_known(&layer)
 }
 
 /// Known keys present in a layer-shaped table, keyed by dotted name, schema order.
@@ -51,6 +59,7 @@ mod tests {
         assert_eq!(view["rewind.buffer_mb"], Value::Integer(64));
     }
 
+    #[cfg(feature = "fs")]
     #[test]
     fn layer_view_keeps_valid_known_keys_only() {
         let temp = tempfile::Builder::new()

@@ -13,11 +13,12 @@ offline play of games played online once, unlocks sent later; see [RetroAchievem
 GameCube + Wii (plain and compressed discs identified by their game ID without hashing gigabytes; Wii Remote +
 Nunchuk with the pointer aimed by the mouse), M13 Nintendo DS, M12 Sony PSP, M11 Sega Dreamcast, M10 Nintendo 64, M9 Sega 8/16-bit, M8 PlayStation, M7 handheld systems, M6 multi-system library (one ROM folder organised any way you like, every file classified
 by its content, moved or renamed ROMs keep history and saves), M4 controls & resume and M3 play features; manual
-checks and macOS/Linux pending.
+checks and macOS/Linux pending. **M16 — Nostyra Online**, the web edition for Chrome / Edge sharing the
+Data folder with the desktop app, is implemented (manual checks pending, see [Nostyra Online](#nostyra-online-web-edition)).
 
 See [docs/project-overview-pdr.md](docs/project-overview-pdr.md) and
-[docs/system-architecture.md](docs/system-architecture.md). Latest release: **v0.2.0** (Windows x64
-portable zip), see the [release notes](docs/release-notes-v0.2.0.md) and
+[docs/system-architecture.md](docs/system-architecture.md). Latest release: **v0.3.0** (Windows x64
+portable zip), see the [release notes](docs/release-notes-v0.3.0.md) and
 [Install (Windows portable)](#install-windows-portable).
 
 ## Install (Windows portable)
@@ -33,10 +34,72 @@ portable zip), see the [release notes](docs/release-notes-v0.2.0.md) and
    then click **Run anyway**.
 
 Needs Windows 10 / 11 x64 and the Microsoft Edge WebView2 Runtime (built into Windows 11 and updated
-Windows 10). See the [release notes](docs/release-notes-v0.2.0.md) for requirements, known limits and how
+Windows 10). See the [release notes](docs/release-notes-v0.3.0.md) for requirements, known limits and how
 to report bugs.
 
+## Nostyra Online (web edition)
+
+The same launcher in the browser at **https://nostyra.com/online**: pick your ROM folder, browse the library
+and play in the page through [EmulatorJS](https://emulatorjs.org) 4.2.3 (self-hosted, GPL-3.0). Nothing is
+uploaded: the site is static files, your ROMs and saves stay on your computer.
+
+- **Browsers:** desktop **Chrome or Edge** 122+ (Opera usually works). It needs the File System Access folder
+  picker: Firefox, Safari, phones and tablets get a "use Chrome or Edge on a computer" page; Brave ships the
+  picker turned off (turn on `brave://flags/#file-system-access-api`, restart Brave).
+- **Systems:** NES, SNES, Game Boy, Game Boy Color, Game Boy Advance, Mega Drive / Genesis, Master System,
+  Game Gear, SG-1000 and PlayStation (multi-disc `.m3u`: disc 1 only; prefer `.chd` for big discs). Games of
+  other systems in the folder are counted ("N games need the desktop app") but not listed. N64 / DS / PSP may
+  follow later; Dreamcast, GameCube and Wii stay desktop-only.
+- **Data folder (saves, settings, controls, BIOS):** the first run asks where to keep it — **browser
+  storage** (nothing to set up, only in this browser profile, lost when the site's data is cleared) or **a
+  folder on this PC**. Choose the desktop app's Data folder to share in-game saves (`save.srm`, `rtc.bin`),
+  settings, controls and BIOS files with the desktop app. A new desktop install already uses
+  `Documents\Nostyra`, which the browser can open. Chrome refuses folders inside **AppData** ("contains system
+  files"), so an install made by v0.2.0 or earlier (`%APPDATA%\Nostyra\data`) must move its folder first:
+  desktop Settings → Data folder → Change…, e.g. to `Documents\Nostyra`. Switching later from browser storage
+  to a folder (Settings → Data folder) copies saves and settings across without overwriting anything.
+  Chrome / Edge ask for folder access again on later visits unless you choose "Allow on every visit".
+- **Not shared:** library, play history, favourites and covers (each edition keeps its own) and save states
+  (the browser's are `web-slot0..9` / `web-auto` in the same game folder; the desktop never lists them and
+  the browser never loads desktop states). A browser save whose size differs from the desktop's file is kept
+  as `save.web.srm`, which the desktop does not read. Play time from the browser joins the desktop's history
+  once the desktop has scanned that ROM; a desktop app of v0.2.0 or earlier discards those browser play
+  records, so update it first.
+- **Desktop app only** (shown disabled): core downloads, shaders, scaling modes, run-ahead, rewind,
+  RetroAchievements, logs and bug reports, show in folder, memory-card import, PlayStation memory card 2, the
+  F2 slot picker.
+- **Do not play the same game in the browser and the desktop app at the same time:** the last one to save
+  wins. In-game saves are written every 30 s while playing and on Exit game, so closing the tab mid-game can
+  lose up to the last 30 s of in-game progress. One Nostyra Online tab at a time: a second tab says it is
+  already open.
+- **Controls:** keyboard and standard-layout pads (Xbox, PlayStation, most others) use the same bindings as
+  the desktop (Settings → Controls edits the shared files). Esc or the Guide button: tap = pause / resume,
+  hold 1 s = exit the game. **PlayStation pad does nothing?** Steam (PlayStation controller support in Steam
+  Input) or DS4Windows / HidHide hides it from the browser: exit Steam or turn off Steam Input for PlayStation
+  controllers, reconnect the pad, then press a button on the page.
+- **Licences:** the "Licences and source code" link (first run, Settings → About) lists EmulatorJS and every
+  shipped core with its source (Snes9x and Genesis Plus GX are non-commercial: the site stays free, no ads).
+  Deploying the site: [docs/web-edition-deploy-guide.md](docs/web-edition-deploy-guide.md).
+
 ## Build
+
+### ROM ZIP archives
+
+Enable **Settings → ROM folders → Scan ZIP archives** to scan ZIPs containing one
+NES, SNES, Mega Drive/Genesis, Master System, Game Gear, SG-1000 or GBA ROM.
+The ROM may be in a subfolder alongside documents. ZIPs with several ROMs, ROMs of
+other systems (e.g. arcade sets) or nested archives are skipped quietly; a damaged ZIP,
+an unsafe member name or a ROM compressed with anything but standard Deflate (or a
+password) is listed as a scan problem. The option is off by default;
+changing it rescans the library. Turning it off keeps already scanned ZIP games
+playable and still detects archives that were deleted.
+
+Play extracts only the ROM to temporary storage and cleans it up when the session
+ends. Saves, game settings and play history use the original archive identity;
+the source ZIP is never modified. Soft patches go beside the ZIP with the same
+basename (for example, `Game.zip` and `Game.ips`).
+
+### Build requirements
 
 Requirements: Rust (version pinned in `rust-toolchain.toml`, installed
 automatically by rustup), CMake on PATH (SDL3 is built from source; on Windows the
@@ -213,6 +276,10 @@ Logs stay on your PC: `<data folder>/logs/` holds the launcher and game logs. Th
 password or token. Nothing is uploaded automatically: a bug report is a zip you create and attach yourself
 (see [Logs and bug reports](#logs-and-bug-reports)).
 
+Nostyra Online (web edition) reads your ROM and Data folders in the browser only; it uploads nothing and has
+no account. Its only network requests besides the site's own files are cover art and the cover index from
+GitHub (`raw.githubusercontent.com`, `api.github.com`), as on the desktop.
+
 ## Logs and bug reports
 
 The launcher writes `<data folder>/logs/launcher-YYYYMMDD-HHMMSS.log` each time it starts, and every game
@@ -292,7 +359,15 @@ from slot N and make it current; an empty or incompatible slot shows an error an
 game starts normally; not combinable with `--state-slot`), `--load-state auto` (start
 from the resume point; "Resumed", or "Could not resume" and a normal start),
 `--data-dir DIR`.
-Saves live in the per-user data dir (`%APPDATA%\Nostyra\data` on Windows by default; Settings → Data folder → Change… picks another folder, optionally moving the data there, and restarts):
+Saves live in the data folder. A new install uses `Documents\Nostyra` (`~/Documents/Nostyra` on
+macOS / Linux); an install made by v0.2.0 or earlier keeps its old folder (`%APPDATA%\Nostyra\data`) as long as
+its library database is there — nothing is moved for you. Settings → Data folder → Change… picks another
+folder, optionally moving the data there, and restarts. The web edition (Nostyra Online) can share this
+folder (pick it in its Settings → Data folder) to use the same in-game saves, settings, controls and BIOS
+files; Chrome cannot open folders inside AppData, so Settings shows a hint to move an AppData folder
+(e.g. to `Documents\Nostyra`). Its save states stay apart (`web-slotN.*` / `web-auto.*`, never offered by
+the desktop app), and play time from the browser is added to the desktop's history once the desktop has
+scanned that ROM. Do not play the same game in both at once. Layout:
 one folder per game, `saves/<system>/<ROM name> [<ID>]/` (`snes`, `nes`, `gb`, `gbc`, `gba`, `n64`, `genesis`,
 `sms`, `gg`, `sg1000`, `psx`, `dreamcast`, `psp`, `nds`, `gc`, `wii`),
 holding `save.srm`, `rtc.bin` (cartridge clock of Game Boy games with one, e.g. Pokémon

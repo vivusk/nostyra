@@ -1,0 +1,12 @@
+/* Nostyra web player iframe (player.html): the EmulatorJS canvas fills the frame. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+#game {
+  width: 100%;
+  height: 100%;
+}

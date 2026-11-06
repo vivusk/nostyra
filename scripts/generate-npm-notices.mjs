@@ -1,7 +1,8 @@
 // Writes the licence notices of the npm packages that end up in the launcher's bundled
 // web UI (apps/launcher/dist): every non-dev package of apps/launcher/package-lock.json,
 // plus the build tools that emit some of their own code into the bundle.
-// Usage: node scripts/generate-npm-notices.mjs <output file>
+// Usage: node scripts/generate-npm-notices.mjs <output file> [--web]
+// --web: the web edition's bundle (apps/launcher/dist-web), which has no Tauri packages.
 // Reads licence files from apps/launcher/node_modules (run `npm ci` first). No dependencies.
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -14,6 +15,7 @@ const BUNDLED_BUILD_TOOLS = new Set(["tailwindcss", "vite"]);
 const LICENCE_FILE = /^(licen[cs]e|copying)(\.(md|txt))?$|^licen[cs]e-[\w.-]+$/i;
 
 const outFile = process.argv[2];
+const web = process.argv.includes("--web");
 if (!outFile) {
   console.error("usage: node scripts/generate-npm-notices.mjs <output file>");
   process.exit(2);
@@ -26,6 +28,7 @@ const entries = Object.entries(lock.packages)
   .filter(([path]) => path.startsWith("node_modules/"))
   .map(([path, meta]) => ({ path, name: path.slice(path.lastIndexOf("node_modules/") + 13), meta }))
   .filter(({ name, meta }) => !meta.dev || BUNDLED_BUILD_TOOLS.has(name))
+  .filter(({ name }) => !web || !name.startsWith("@tauri-apps/"))
   .sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 
 function licenceTexts(packageDir, name) {
@@ -45,7 +48,9 @@ const out = [
   "Nostyra - third-party npm packages",
   "==================================",
   "",
-  "The launcher's user interface (inside Nostyra.exe) bundles the npm packages below,",
+  web
+    ? "Nostyra Online (the web edition, nostyra.com/online) bundles the npm packages below,"
+    : "The launcher's user interface (inside Nostyra.exe) bundles the npm packages below,",
   "unmodified. Packages marked [build tool] are development tools that emit part of",
   "their own code into the bundle. Source: https://www.npmjs.com/package/<name>",
   "",

@@ -51,6 +51,8 @@ export interface ScanFinishedEvent {
   failures: ScanProblem[];
   cancelled: boolean;
   error: string | null;
+  /** Web edition only: games found whose system the browser cannot play. */
+  desktopOnly?: number;
 }
 
 /** A file a scan could not add, with a readable reason. */

@@ -2,7 +2,7 @@
 
 use config_layers::{
     global_config_path, layer_known_values, resolve_config, resolve_layers_with_warnings,
-    set_layer_value, GAMEPAD_INPUT_NAMES,
+    set_layer_value, Value, GAMEPAD_INPUT_NAMES,
 };
 
 use super::*;

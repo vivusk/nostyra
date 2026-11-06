@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { capabilities } from "../../backend";
 import type { GameplayConfig, GameplayConfigKey } from "../../api/tauri-commands-gameplay";
 import { baseChoices, valueLabel, type Choice } from "./gameplay-config-choices";
 import { SegmentedControl, SelectControl, SettingRow } from "./gameplay-setting-controls";
@@ -18,7 +19,7 @@ interface GameplayConfigFormProps {
   onChange: (key: GameplayConfigKey, value: GameplayValue | null) => void;
 }
 
-const ROWS: { key: GameplayConfigKey; label: string; help?: string; control: "select" | "segmented" | "toggle" }[] = [
+const ALL_ROWS: { key: GameplayConfigKey; label: string; help?: string; control: "select" | "segmented" | "toggle" }[] = [
   { key: "video.shader", label: "Shader", control: "select" },
   { key: "video.scaling", label: "Scaling", control: "segmented" },
   { key: "latency.run_ahead_frames", label: "Run-ahead", help: "Reduces input lag; uses more CPU", control: "segmented" },
@@ -27,6 +28,15 @@ const ROWS: { key: GameplayConfigKey; label: string; help?: string; control: "se
   { key: "resume.mode", label: "Resume", help: "On Play: ask to continue, always continue, or always start fresh", control: "segmented" },
   { key: "resume.auto_save", label: "Save resume point", help: "On exit and every minute of play (3 min on PSP, Dreamcast, GameCube, Wii), for Continue", control: "toggle" },
 ];
+
+/** Rows of this edition: shader, scaling, run-ahead and rewind only where the player has them. */
+const ROWS = ALL_ROWS.filter(
+  ({ key }) =>
+    (key !== "video.shader" || capabilities.shaders) &&
+    (key !== "video.scaling" || capabilities.videoScaling) &&
+    (key !== "latency.run_ahead_frames" || capabilities.runAhead) &&
+    (!key.startsWith("rewind.") || capabilities.rewind),
+);
 
 /** The gameplay settings (video, latency, rewind, resume) for one config layer, shared by Settings → Gameplay
  *  defaults (global) and Detail → Settings (game, with "Use default" choices and

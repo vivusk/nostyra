@@ -1,6 +1,6 @@
 // System registry commands (`system_catalog_commands.rs`): every system Nostyra
 // knows, and the systems the library has games of.
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 
 /** One registry system (labels, extensions, pad actions, core). */
 export interface SystemView {

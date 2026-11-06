@@ -107,7 +107,7 @@ impl CueSheet {
         self.files
             .iter()
             .zip(self.referenced_paths(cue_path))
-            .filter(|(_, path)| !path.is_file())
+            .filter(|(_, path)| !content_file_source::is_file(path))
             .map(|(file, _)| file.name.clone())
             .collect()
     }

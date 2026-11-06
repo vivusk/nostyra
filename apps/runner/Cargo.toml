@@ -15,8 +15,8 @@ chrono.workspace = true
 clap.workspace = true
 # Sidecar CRCs of SRAM and the soft-patch file (resume-point warnings).
 crc32fast.workspace = true
-config-layers.workspace = true
-ipc-protocol.workspace = true
+config-layers = { workspace = true, features = ["fs"] }
+ipc-protocol = { workspace = true, features = ["native"] }
 audio-output.workspace = true
 image.workspace = true
 input-mapping.workspace = true
@@ -39,9 +39,10 @@ system-catalog.workspace = true
 disc-image.workspace = true
 # Content sha1 of the game (save-folder id) when the launcher did not pass it.
 game-library.workspace = true
+tempfile.workspace = true
 
 [dev-dependencies]
-tempfile.workspace = true
+zip.workspace = true
 # Synthetic Dreamcast images (GDI fixtures) for the runner's process tests.
 disc-image = { workspace = true, features = ["test-images"] }
 # sdl3 0.20 refuses `Sdl::new` off the first thread unless its `test-mode` is on (GL

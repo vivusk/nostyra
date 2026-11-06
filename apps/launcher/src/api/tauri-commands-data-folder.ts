@@ -1,5 +1,5 @@
 // Settings → Data folder commands (`data_folder_commands.rs`).
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 
 /** A picked folder, checked as the new data folder. */
 export interface DataFolderCheck {

@@ -18,6 +18,8 @@ pub const EXIT_GRAPHICS: u8 = ipc_protocol::EXIT_GRAPHICS as u8;
 
 #[derive(Debug, thiserror::Error)]
 pub enum RomValidationError {
+    #[error("cannot load ZIP {path}: {reason}")]
+    Archive { path: PathBuf, reason: String },
     #[error("ROM not found or not a file: {0}")]
     NotAFile(PathBuf),
     #[error("cannot tell which system {path} is for: {reason} (pass --system)")]

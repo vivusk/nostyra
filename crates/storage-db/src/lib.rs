@@ -38,8 +38,8 @@ pub use game_metadata_repository::{
     set_favorite, upsert_from_index, MetadataWorkItem,
 };
 pub use game_queries::{
-    find_game_id_by_rom_path, game_platform_ids, get_game, library_platform_counts,
-    library_summary, list_games, RECENTLY_PLAYED_WINDOW_S,
+    find_game_id_by_rom_path, find_game_id_by_sha1, game_platform_ids, get_game,
+    library_platform_counts, library_summary, list_games, RECENTLY_PLAYED_WINDOW_S,
 };
 pub use game_removal::{delete_missing_game, game_files_keys, visible_missing_game_ids};
 pub use game_scan_writes::{file_fingerprints, mark_missing_paths, upsert_scanned_batch};

@@ -157,7 +157,7 @@ fn reheadered_nes_row_keeps_metadata_through_a_stale_heal() {
                 &work.crc32,
                 work.serial.as_deref(),
             )
-            .map(|(record, _)| record.clone())
+            .map(|(record, _)| record)
     };
     assert_eq!(heal_metadata(&mut conn, &lookup, true, 9).unwrap(), 1);
     let healed = get_game_metadata(&conn, 1).unwrap().unwrap();
@@ -189,7 +189,7 @@ fn ps1_rows_heal_by_serial_on_the_vendored_data() {
                 &work.crc32,
                 work.serial.as_deref(),
             )
-            .map(|(record, _)| record.clone())
+            .map(|(record, _)| record)
     };
     assert_eq!(heal_metadata(&mut conn, &lookup, true, 9).unwrap(), 1);
     let healed = get_game_metadata(&conn, 1).unwrap().unwrap();

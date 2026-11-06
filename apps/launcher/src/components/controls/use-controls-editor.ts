@@ -3,7 +3,9 @@
 // Steal rules live in the backend (`assign_binding`); this hook only reports them.
 import type { BindingKey, GameplayConfigScope } from "../../api/tauri-commands-gameplay";
 import type { InputCatalog, InputDevice, LabelStyle } from "../../api/tauri-commands-input";
+import { edition } from "../../backend";
 import { useGameSession } from "../../hooks/use-game-session";
+import { webUnusedBinds } from "../../lib/web-input-map";
 import { useAssignBinding, useGameplayConfig, useResetControls, useSetBindingValue } from "../../hooks/use-gameplay-config-queries";
 import { useGamepadLabelStyle, useInputCatalog } from "../../hooks/use-input-catalog-query";
 import { useErrorToast } from "../error-toast";
@@ -17,6 +19,8 @@ export interface ControlsRow {
   binds: string[];
   /** Game scope only: the game has no value, the row follows the defaults. */
   inherited: boolean;
+  /** Web: bound inputs the browser player cannot use (kept for the desktop). */
+  unused: string[];
 }
 
 export interface ControlsEditorState {
@@ -60,11 +64,13 @@ export function useControlsEditor(scope: GameplayConfigScope, device: InputDevic
 
   const toRow = (section: string) => (name: string): ControlsRow => {
     const key = `${section}.${name}`;
+    const binds = view.resolved[key] ?? [];
     return {
       key,
       label: bindingKeyLabel(key),
-      binds: view.resolved[key] ?? [],
+      binds,
       inherited: gameId !== null && layer[key] === undefined,
+      unused: edition === "web" ? webUnusedBinds(key, binds) : [],
     };
   };
 

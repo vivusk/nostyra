@@ -5,6 +5,7 @@
 use crate::disc_probe::{DiscSignature, Media};
 use crate::rom_header_rules::{ContentProbe, HeaderRule};
 use crate::system_specs::{AnalogSticks, SystemSpec};
+use crate::web_core_specs::WEB_PCSX_REARMED;
 
 /// Sony PlayStation: Redump `.cue` + `.bin` tracks, bare `.bin` / `.iso`, `.chd`,
 /// PS1 classic `.pbp` eboots and `.m3u` multi-disc playlists. Sheets are tiny
@@ -33,4 +34,5 @@ pub const PSX: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(12),
+    web_core: Some(WEB_PCSX_REARMED),
 };

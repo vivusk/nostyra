@@ -2,7 +2,6 @@
 //! Folder names are never read: users organise ROM folders any way they like
 //! (`ROM/Favorites/mario.nes`, an `.sfc` inside `ROM/NES/`), so only content counts.
 
-use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
@@ -121,7 +120,7 @@ fn head_bytes<'a>(
 /// Reads the first [`PROBE_BYTES`] of `path` (fewer for a shorter file).
 pub fn read_probe_bytes(path: &Path) -> std::io::Result<Vec<u8>> {
     let mut first = Vec::with_capacity(PROBE_BYTES);
-    File::open(path)?
+    content_file_source::open(path)?
         .take(PROBE_BYTES as u64)
         .read_to_end(&mut first)?;
     Ok(first)
@@ -140,9 +139,8 @@ pub fn classify_path(
     if candidates_for_extension(ext).is_empty() {
         return Err(ClassifyError::NoCandidate);
     }
-    let file_len = std::fs::metadata(path)
-        .map_err(|err| ClassifyError::Io(err.to_string()))?
-        .len();
+    let file_len =
+        content_file_source::len(path).map_err(|err| ClassifyError::Io(err.to_string()))?;
     classify(ext, file_len, path, disc)
 }
 

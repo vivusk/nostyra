@@ -1,3 +1,4 @@
+import { LibraryScanningNotice, useScanActive } from "../components/library-scanning-notice";
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from "react";
 import type { Game } from "../api/tauri-commands";
 import { ArtworkStatusBanner } from "../components/artwork-status-banner";
@@ -45,6 +46,7 @@ export function LibraryPage({ focusSearch = false }: { focusSearch?: boolean }) 
   const { data: summary } = useLibrarySummary();
   const { data: setup } = useSetupState();
   const { data: scan } = useScanProgress();
+  const scanActive = useScanActive();
   const { data: session } = useGameSession();
   const play = usePlayGame();
   const startScan = useStartScan();
@@ -135,7 +137,7 @@ export function LibraryPage({ focusSearch = false }: { focusSearch?: boolean }) 
           headerRef={headerRef}
         />
       ) : isPending ? null : (
-        <EmptyLibrary filtered={summary !== undefined && summary.total > 0} scanning={Boolean(scan)} />
+        <EmptyLibrary filtered={summary !== undefined && summary.total > 0} scanning={scanActive} />
       )}
       {confirmRemoveAll && (
         <ConfirmDialog
@@ -154,11 +156,10 @@ export function LibraryPage({ focusSearch = false }: { focusSearch?: boolean }) 
 
 function EmptyLibrary({ filtered, scanning }: { filtered: boolean; scanning: boolean }) {
   const { data: systems } = useSystems();
+  if (scanning && !filtered) return <LibraryScanningNotice />;
   const text = filtered
     ? "No games match this search or filter."
-    : scanning
-      ? "Looking for games…"
-      : `No ${supportedSystemsText(systems)} games found in your folders. Add another folder in Settings.`;
+    : `No ${supportedSystemsText(systems)} games found in your folders. Add another folder in Settings.`;
   return (
     <section className="rounded-card border border-border bg-surface px-6 py-10 text-center text-text-soft">{text}</section>
   );

@@ -99,6 +99,7 @@ impl SessionReporter {
             started_at: i64::try_from(session.unix_ms / 1000).unwrap_or(i64::MAX),
             play_seconds,
             exit_code: i32::from(exit_code),
+            content_sha1: None,
         };
         let path = session.pending_dir.join(pending_session_file_name(
             session.unix_ms,

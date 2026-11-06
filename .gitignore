@@ -4,7 +4,16 @@
 # Launcher UI: npm deps, Vite output, Tauri-generated schemas
 /apps/launcher/node_modules/
 /apps/launcher/dist/
+/apps/launcher/dist-web/
 /apps/launcher/src-tauri/gen/
+# Web edition wasm module (scripts/build-web-wasm.*)
+/apps/launcher/src/backend/web/wasm-pkg/
+# Web edition DAT / metadat copy (scripts/copy-web-libretro-database.*)
+/apps/launcher/public/libretro-database/
+# Web edition EmulatorJS runtime + cores (scripts/fetch-emulatorjs.*)
+/apps/launcher/public/emulatorjs/
+# Web edition licence notices (scripts/build-web.*)
+/apps/launcher/public/notices/
 
 # Portable zip output (scripts/build-portable.ps1)
 /dist/
@@ -37,3 +46,8 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Throwaway M16 web-edition spike (phase 00), never shipped
+/spike/
+# Playwright browser profiles of local smoke runs
+/pw-profile-*/

@@ -12,9 +12,11 @@ use storage_db::{
 };
 use system_catalog::SystemSpec;
 
-use crate::folder_scanner::{discover_rom_files, DiscoveredFiles};
+use crate::folder_scanner::{discover_rom_files_with_options, DiscoveredFiles};
 use crate::library_error::LibraryError;
 use crate::library_scan_job::lock;
+use crate::library_scan_options::ScanOptions;
+use crate::rom_archive::is_rom_archive;
 
 /// What pass A found in one folder; pass B hashes and upserts from it (no second walk).
 #[derive(Debug)]
@@ -33,12 +35,13 @@ pub(crate) fn discover_folder(
     db: &Mutex<Connection>,
     folder: &LibraryFolder,
     systems: &[&'static SystemSpec],
+    options: ScanOptions,
 ) -> Result<FolderDiscovery, LibraryError> {
     let root = Path::new(&folder.path);
     if !root.is_dir() {
         return Err(LibraryError::FolderNotFound(root.to_path_buf()));
     }
-    let discovered = discover_rom_files(root, systems);
+    let discovered = discover_rom_files_with_options(root, systems, options);
     let known = file_fingerprints(&lock(db), folder.id)?;
     let present: HashSet<&str> = discovered.files.iter().map(|f| f.path.as_str()).collect();
     // Entries the walk could not read are unknown, not vanished: keep their games.
@@ -46,6 +49,13 @@ pub(crate) fn discover_folder(
     let vanished: Vec<String> = known
         .keys()
         .filter(|path| !present.contains(path.as_str()))
+        // Opting out pauses archive discovery; it does not erase existing games.
+        // Still notice archives that really disappeared, without reading them.
+        .filter(|path| {
+            options.scan_zip_archives
+                || !is_rom_archive(Path::new(path))
+                || !Path::new(path).is_file()
+        })
         .filter(|path| {
             !unreadable
                 .iter()

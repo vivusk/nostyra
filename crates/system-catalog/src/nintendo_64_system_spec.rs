@@ -70,4 +70,5 @@ pub const NINTENDO_64: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(2),
+    web_core: None,
 };

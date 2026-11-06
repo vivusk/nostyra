@@ -13,7 +13,6 @@
 //! - ELF: `7F 'ELF'`, 32-bit, big-endian, machine 20 (PowerPC), program header
 //!   table and every segment inside the file, ≥ 1 executable `PT_LOAD` segment.
 
-use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::ops::RangeInclusive;
 use std::path::Path;
@@ -55,8 +54,8 @@ pub fn read_executable_kind(path: &Path) -> Result<Option<NintendoDiscKind>, Dis
     if !is_executable_ext(ext) {
         return Ok(None);
     }
-    let mut file = File::open(path)?;
-    let file_len = file.metadata()?.len();
+    let mut file = content_file_source::open(path)?;
+    let file_len = content_file_source::stream_len(file.as_mut())?;
     executable_kind_from(&mut file, ext, file_len)
 }
 

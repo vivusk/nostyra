@@ -1,7 +1,13 @@
 import { useRef, type KeyboardEvent } from "react";
 
-export const DETAIL_TABS = ["Overview", "Save states", "Settings", "Achievements"] as const;
-export type DetailTab = (typeof DETAIL_TABS)[number];
+import { capabilities } from "../../backend";
+
+const ALL_TABS = ["Overview", "Save states", "Settings", "Achievements"] as const;
+/** Tabs of this edition (the web has no Achievements tab). */
+export const DETAIL_TABS: readonly (typeof ALL_TABS)[number][] = capabilities.achievements
+  ? ALL_TABS
+  : ALL_TABS.filter((tab) => tab !== "Achievements");
+export type DetailTab = (typeof ALL_TABS)[number];
 /** id of the single tab panel the tabs control. */
 export const detailTabPanelId = "detail-tab-panel";
 

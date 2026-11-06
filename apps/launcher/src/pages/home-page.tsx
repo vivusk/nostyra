@@ -6,6 +6,7 @@ import { HomeHeroBanner } from "../components/home/home-hero-banner";
 import { HomeHeroSelector } from "../components/home/home-hero-selector";
 import { HomeSection } from "../components/home/home-section";
 import { HomeTopBar } from "../components/home/home-top-bar";
+import { LibraryScanningNotice, useScanActive } from "../components/library-scanning-notice";
 import { RecentlyAddedRow } from "../components/home/recently-added-row";
 import { useGameSession } from "../hooks/use-game-session";
 import { usePlayGame } from "../hooks/use-play-game";
@@ -20,6 +21,7 @@ export function HomePage() {
   const { navigate, updateLibrary } = useNavigation();
   const { data, isPending, isError } = useHomeData();
   const { data: session } = useGameSession();
+  const scanning = useScanActive();
   const play = usePlayGame();
   const entries = useMemo(() => (data ? buildHeroEntries(data) : []), [data]);
   // Selection follows the game, so a data refresh that reorders entries keeps it.
@@ -52,6 +54,8 @@ export function HomePage() {
           />
           <HomeHeroSelector entries={entries} selected={selected} onSelect={(i) => setSelectedId(entries[i].game.id)} />
         </section>
+      ) : scanning ? (
+        <LibraryScanningNotice />
       ) : (
         <EmptyHome />
       )}

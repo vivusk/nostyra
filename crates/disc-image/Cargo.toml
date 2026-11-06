@@ -9,6 +9,8 @@ publish = false
 
 [dependencies]
 chd.workspace = true
+# Content reads (OS files, or the web edition's virtual source).
+content-file-source.workspace = true
 flate2.workspace = true
 # std-only registry: the `DiscProbe` trait this crate implements.
 system-catalog.workspace = true

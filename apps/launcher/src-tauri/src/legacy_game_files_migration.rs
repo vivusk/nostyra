@@ -149,11 +149,19 @@ fn copy_to_new_entry(from: &Path, to: &Path) -> io::Result<()> {
     })
 }
 
-/// Copies the contents of folder `from` into the (new, empty) folder `to`.
+/// Copies the contents of folder `from` into the (new, empty) folder `to`, minus
+/// browser swap files (a web write cut short: nothing to keep).
 fn copy_tree(from: &Path, to: &Path) -> io::Result<()> {
     for entry in std::fs::read_dir(from)? {
         let entry = entry?;
-        let (src, dst) = (entry.path(), to.join(entry.file_name()));
+        let name = entry.file_name();
+        if name
+            .to_str()
+            .is_some_and(ipc_protocol::is_browser_swap_file)
+        {
+            continue;
+        }
+        let (src, dst) = (entry.path(), to.join(name));
         if entry.file_type()?.is_dir() {
             std::fs::create_dir(&dst)?;
             copy_tree(&src, &dst)?;

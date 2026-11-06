@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "../../backend";
 import { useEffect, useRef, useState } from "react";
 import {
   DATA_FOLDER_MOVE_PROGRESS,

@@ -63,6 +63,7 @@ pub const NDS: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: Some(TouchScreenRule::DsBottomScreen),
     ra_console_id: Some(18),
+    web_core: None,
 };
 
 #[cfg(test)]

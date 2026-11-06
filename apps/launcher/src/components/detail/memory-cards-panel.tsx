@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "../../backend";
 import type { MemoryCardImport } from "../../api/tauri-commands-bios";
 import { useImportMemoryCard, useMemoryCards } from "../../hooks/use-bios-queries";
 import { ConfirmDialog } from "../confirm-dialog";

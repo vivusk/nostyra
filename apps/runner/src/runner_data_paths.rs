@@ -83,6 +83,14 @@ impl RunnerDataPaths {
             std::fs::create_dir_all(dir)
                 .with_context(|| format!("cannot create {}", dir.display()))?;
         }
+        // Leftovers of a web edition write cut short (closed tab) in the shared folder.
+        let swaps = ipc_protocol::remove_stale_browser_swap_files(
+            &paths.saves_dir,
+            ipc_protocol::STALE_BROWSER_SWAP_AGE,
+        );
+        if swaps > 0 {
+            tracing::info!(count = swaps, "stale browser swap files removed");
+        }
         Ok(paths)
     }
 }
@@ -113,6 +121,42 @@ mod tests {
         assert_eq!(paths.rtc_file, game_dir.join(ipc_protocol::RTC_FILE_NAME));
         assert_eq!(paths.states_dir, game_dir);
         assert_eq!(paths.data_root, root);
+    }
+
+    #[test]
+    fn opening_a_game_removes_stale_browser_swap_files_only() {
+        let temp = tempfile::Builder::new()
+            .prefix("nostyra-paths-swap-")
+            .tempdir()
+            .unwrap();
+        let game_dir = temp
+            .path()
+            .join("saves")
+            .join("nes")
+            .join("Game [6B47BB75]");
+        std::fs::create_dir_all(&game_dir).unwrap();
+        for name in ["save.srm.crswap", "web-slot1.state.crswap", "save.web.srm"] {
+            std::fs::write(game_dir.join(name), b"x").unwrap();
+        }
+        let two_days_ago = std::time::SystemTime::now() - std::time::Duration::from_secs(48 * 3600);
+        std::fs::File::options()
+            .write(true)
+            .open(game_dir.join("save.srm.crswap"))
+            .and_then(|file| file.set_modified(two_days_ago))
+            .unwrap();
+        RunnerDataPaths::resolve(
+            Some(temp.path()),
+            Path::new("Game.nes"),
+            &system_catalog::NES,
+            Some(SHA1),
+        )
+        .unwrap();
+        assert!(!game_dir.join("save.srm.crswap").exists(), "stale: removed");
+        assert!(
+            game_dir.join("web-slot1.state.crswap").exists(),
+            "fresh: may be in use"
+        );
+        assert!(game_dir.join("save.web.srm").exists());
     }
 
     #[test]

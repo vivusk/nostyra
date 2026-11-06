@@ -37,7 +37,7 @@ fn moves_only_nostyra_entries_and_overwrites_on_request() {
         "old sram"
     );
 
-    remove_moved_originals(from.path(), &copied);
+    remove_moved_originals(from.path(), &plan, &copied);
     assert!(!from.path().join("nostyra.db").exists());
     assert!(
         !from.path().join("saves").exists(),
@@ -72,7 +72,7 @@ fn keep_existing_leaves_the_conflicting_original_in_place() {
     assert_eq!(copied, [PathBuf::from("config/system/snes.toml")]);
     assert_eq!(read(to.path(), "config/global.toml"), "new config");
 
-    remove_moved_originals(from.path(), &copied);
+    remove_moved_originals(from.path(), &plan, &copied);
     assert_eq!(read(from.path(), "config/global.toml"), "old config");
     assert!(!from.path().join("config/system").exists());
 }
@@ -103,4 +103,41 @@ fn nested_folders_overlap() {
     assert!(folders_overlap(&inner, &root.path().join("data")));
     assert!(folders_overlap(&other, &other));
     assert!(!folders_overlap(&other, &inner));
+}
+
+#[test]
+fn web_files_move_and_browser_swap_files_are_dropped() {
+    let from = tempfile::tempdir().unwrap();
+    let to = tempfile::tempdir().unwrap();
+    let game = "saves/snes/Zelda [AB]";
+    for name in [
+        "save.srm",
+        "save.web.srm",
+        "web-slot1.state",
+        "web-auto.json",
+    ] {
+        write(from.path(), &format!("{game}/{name}"), name);
+    }
+    write(from.path(), &format!("{game}/save.srm.crswap"), "half");
+    write(from.path(), "sessions/pending/1700-web.json", "{}");
+    write(from.path(), "sessions/pending/1701-web.json.crswap", "half");
+
+    let plan = plan_move(from.path(), to.path()).unwrap();
+    assert_eq!((plan.files.len(), plan.swap_files.len()), (5, 2));
+    let copied = copy_planned_files(from.path(), to.path(), &plan, false, |_, _| {}).unwrap();
+    assert_eq!(
+        read(to.path(), &format!("{game}/web-slot1.state")),
+        "web-slot1.state"
+    );
+    assert_eq!(
+        read(to.path(), &format!("{game}/save.web.srm")),
+        "save.web.srm"
+    );
+    assert!(!to.path().join(format!("{game}/save.srm.crswap")).exists());
+
+    remove_moved_originals(from.path(), &plan, &copied);
+    assert!(
+        !from.path().join("saves").exists() && !from.path().join("sessions").exists(),
+        "swap files do not keep the old folders alive"
+    );
 }

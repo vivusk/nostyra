@@ -8,8 +8,11 @@ use storage_db::{list_games, upsert_scanned_batch, Connection, GameFilter, GameL
 
 use crate::folder_scanner::DiscoveredFile;
 use crate::library_error::LibraryError;
+use crate::rom_archive::is_rom_archive;
 use crate::rom_file_hasher::RomHashes;
-use crate::scanned_game_builder::{scanned_disc_game, scanned_game_from_hashes};
+use crate::scanned_game_builder::{
+    build_scanned_game, scanned_disc_game, scanned_game_from_hashes,
+};
 use crate::system_catalogs::SystemCatalogs;
 use system_catalog::{hash_skip_len, Media};
 
@@ -47,6 +50,17 @@ pub(crate) fn rematch_unidentified(
         };
         let catalog = catalogs.get(file.system.id);
         if catalog.dat.is_empty() {
+            continue;
+        }
+        if is_rom_archive(std::path::Path::new(&file.path)) {
+            // Stored size is the archive fingerprint, not the DAT's ROM size.
+            // Re-read only unidentified archives when a catalog is available;
+            // this also retains NES headerless fallback and the member title.
+            if let Ok(row) = build_scanned_game(file, folder_id, catalog) {
+                if row.dat_name.is_some() {
+                    identified.push(row);
+                }
+            }
             continue;
         }
         if file.system.media == Media::Disc {

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nostyra Online — licences and source code</title>
+    <link rel="stylesheet" href="static-page.css" />
+  </head>
+  <body>
+    <main class="static-page">
+      <p class="brand">NOSTYRA</p>
+      <h1>Licences and source code</h1>
+      <p>
+        Nostyra Online is free and has no ads. It is a static web page: your ROMs, saves and
+        settings stay on your computer and are never uploaded. Nostyra does not ship or
+        download games.
+      </p>
+
+      <h2>Nostyra</h2>
+      <p>
+        Nostyra __NOSTYRA_VERSION__ (the launcher on this page and its WebAssembly module) is
+        licensed under the GNU General Public License v3.0 or later:
+        <a href="notices/Nostyra-GPL-3.0.txt">licence text</a> ·
+        <a href="https://github.com/vivusk/nostyra/tree/v__NOSTYRA_VERSION__">source code (tag v__NOSTYRA_VERSION__)</a>.
+        Third-party code inside it:
+        <a href="notices/THIRD-PARTY-RUST.txt">Rust crates</a> ·
+        <a href="notices/THIRD-PARTY-NPM.txt">npm packages</a> (React, TanStack, SQLite Wasm,
+        the DM Sans and Sora fonts under the SIL Open Font License 1.1, …).
+        SQLite itself is in the public domain.
+      </p>
+
+      <h2>EmulatorJS 4.2.3</h2>
+      <p>
+        Games run in EmulatorJS 4.2.3, licensed under the GNU General Public License v3.0:
+        <a href="emulatorjs/4.2.3/LICENSE">licence text</a> ·
+        <a href="https://github.com/EmulatorJS/EmulatorJS/tree/v4.2.3">source code</a> ·
+        <a href="emulatorjs/4.2.3/SOURCE.txt">where these files come from</a>.
+        The files are served unmodified from this site.
+      </p>
+
+      <h2>Emulator cores</h2>
+      <p>
+        The EmulatorJS 4.2.3 builds of these libretro cores (npm
+        <code>@emulatorjs/core-&lt;name&gt;@4.2.3</code>). Each core file also carries its full
+        licence text (<code>license.txt</code> inside the <code>.data</code> archive).
+      </p>
+      <table>
+        <thead>
+          <tr><th>Core</th><th>Systems</th><th>Licence</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FCEUmm</td><td>NES</td><td>GPL-2.0</td>
+            <td><a href="https://github.com/EmulatorJS/libretro-fceumm">EmulatorJS/libretro-fceumm</a></td>
+          </tr>
+          <tr>
+            <td>Snes9x</td><td>Super Nintendo</td>
+            <td>Snes9x licence: non-commercial use only</td>
+            <td><a href="https://github.com/EmulatorJS/snes9x">EmulatorJS/snes9x</a></td>
+          </tr>
+          <tr>
+            <td>mGBA</td><td>Game Boy, Game Boy Color, Game Boy Advance</td><td>MPL-2.0</td>
+            <td><a href="https://github.com/EmulatorJS/mgba">EmulatorJS/mgba</a></td>
+          </tr>
+          <tr>
+            <td>Genesis Plus GX</td><td>Mega Drive, Master System, Game Gear, SG-1000</td>
+            <td>Genesis Plus GX licence: non-commercial use only (some parts LGPL-2.1 / GPL, see its licence text)</td>
+            <td><a href="https://github.com/EmulatorJS/Genesis-Plus-GX">EmulatorJS/Genesis-Plus-GX</a></td>
+          </tr>
+          <tr>
+            <td>PCSX ReARMed</td><td>PlayStation</td><td>GPL-2.0</td>
+            <td><a href="https://github.com/EmulatorJS/pcsx_rearmed">EmulatorJS/pcsx_rearmed</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Because of the Snes9x and Genesis Plus GX terms, Nostyra Online stays free and is never sold.</p>
+
+      <h2>Game data and artwork</h2>
+      <p>
+        Game identification and metadata: libretro-database (No-Intro and Redump data,
+        compiled by the libretro-database contributors), CC-BY-SA-4.0:
+        <a href="libretro-database/LICENSE">licence text</a> ·
+        <a href="libretro-database/SOURCE.txt">source and commit</a> ·
+        <a href="https://github.com/libretro/libretro-database">libretro/libretro-database</a>.
+      </p>
+      <p>
+        Box art and title screens: <a href="https://github.com/libretro-thumbnails">libretro-thumbnails</a>,
+        downloaded per game from GitHub into your browser's cache.
+      </p>
+
+      <p class="links"><a href="./">Open Nostyra Online</a><a href="https://nostyra.com">nostyra.com</a></p>
+    </main>
+  </body>
+</html>

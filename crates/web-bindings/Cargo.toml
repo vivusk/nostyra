@@ -1,0 +1,39 @@
+[package]
+name = "web-bindings"
+description = "WebAssembly surface of the shared Rust logic for the web edition (nostyra.com/online): catalog, identity, DAT match, ZIP, soft patches, naming, config layers."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+config-layers.workspace = true
+content-file-source.workspace = true
+crc32fast.workspace = true
+disc-image.workspace = true
+ipc-protocol.workspace = true
+rom-identity.workspace = true
+rom-patch.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+system-catalog.workspace = true
+
+# Only the wasm32 build talks to JavaScript; the native workspace build gets the
+# pure (natively tested) modules only. Pins: newest releases at least 14 days old on
+# 2026-11-05 (0.2.130 / 0.3.107 / 0.3.80 of 2026-10-30 too new).
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.129"
+js-sys = "=0.3.106"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "=0.3.79"
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

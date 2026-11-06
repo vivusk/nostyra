@@ -89,6 +89,8 @@ pub fn run() -> anyhow::Result<()> {
             scan_commands::start_scan,
             scan_commands::cancel_scan,
             scan_commands::get_scan_progress,
+            scan_commands::get_scan_zip_archives,
+            scan_commands::set_scan_zip_archives,
             core_commands::get_core_status,
             core_commands::download_core,
             play_commands::play_game,

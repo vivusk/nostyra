@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-config-layers.workspace = true
+config-layers = { workspace = true, features = ["fs"] }
 libretro-host.workspace = true
 sdl3.workspace = true
 system-catalog.workspace = true

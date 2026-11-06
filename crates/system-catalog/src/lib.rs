@@ -43,8 +43,10 @@ mod rom_classifier;
 mod rom_header_rules;
 mod sega_system_specs;
 mod snes_nes_system_specs;
+mod system_groups;
 mod system_specs;
 mod touch_screen_rule;
+mod web_core_specs;
 
 #[cfg(test)]
 mod ra_console_id_tests;
@@ -83,5 +85,12 @@ pub use rom_classifier::{
 };
 pub use rom_header_rules::{hash_skip_len, ines_header_len, ContentProbe, HeaderRule, PROBE_BYTES};
 pub use sega_system_specs::{GENESIS, GG, SG1000, SMS};
+pub use system_groups::{
+    has_large_states, plays_from_zip_archive, LARGE_STATE_SYSTEMS, ZIP_ARCHIVE_SYSTEMS,
+};
 pub use system_specs::{system, AnalogSticks, SystemSpec, ALL_SYSTEMS, DISPLAY_ORDER, NES, SNES};
 pub use touch_screen_rule::{touch_rect, TouchRect, TouchScreenRule};
+pub use web_core_specs::{
+    web_shared_core, WebCore, WEB_CORES, WEB_FCEUMM, WEB_GENESIS_PLUS_GX, WEB_MGBA, WEB_ONLY_CORES,
+    WEB_PCSX_REARMED, WEB_SNES9X,
+};

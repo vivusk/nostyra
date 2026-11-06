@@ -7,7 +7,6 @@
 //! metadata, PSP UMD): one data track at LBA 0. Not yet checked against a real
 //! multi-track CD CHD (only single-track PS1 and GD-ROM images are verified).
 
-use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
@@ -24,7 +23,7 @@ use crate::gdi_sheet::HIGH_DENSITY_LBA;
 use crate::DiscError;
 
 fn entries(path: &Path) -> Result<Vec<ChdTrackEntry>, DiscError> {
-    let mut chd = Chd::open(BufReader::new(File::open(path)?), None)?;
+    let mut chd = Chd::open(BufReader::new(content_file_source::open(path)?), None)?;
     let metas: Vec<Metadata> = chd.metadata_refs().try_into()?;
     Ok(track_table(&metas))
 }

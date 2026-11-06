@@ -19,6 +19,32 @@ Last updated: 2026-10-29 · Status: M0–M4 + M6–M15 implemented (Windows; man
 - Emulation loop is isolated from webview scheduling → stable latency.
 - Runner is usable standalone: `nostyra-runner --core <path> --rom <path> [--system <id>]` (shortcuts, Steam "Non-Steam game"); without `--system` the ROM is classified like the scanner does (§5.1).
 
+### 1.1 Web edition (M16, Nostyra Online)
+```
+nostyra.com/online (static files, Chrome / Edge)
+┌ page: React UI (same components) ── api/*.ts ── src/backend → @nostyra/backend = backend/web/ (alias) ┐
+│   commands in TS (names = Tauri commands) · web-event-bus (same event names / payloads)               │
+│   ├─ db worker: sqlite-wasm, OPFS (desktop migrations)   ├─ scan worker: FileReaderSync → wasm classify │
+│   ├─ wasm (crates/web-bindings): identity, DAT, naming, config layers, sidecars, patches             │
+│   └─ player: one same-origin iframe per game (player.html + EmulatorJS 4.2.3 core)                   │
+└──── FSA handles (IndexedDB): ROM folders (read) · Data folder (OPFS default, or a picked folder) ─────┘
+```
+- **Seam:** `api/*.ts` keep their exports and call `invoke` / `listen` / `open` / `assetUrl` of
+  `src/backend/index.ts` (contract `backend-contract.ts`), which imports `@nostyra/backend`;
+  `vite --mode web` aliases that to `backend/web/` so the web bundle has no `@tauri-apps/*`
+  (`check-web-bundle.*` greps it). Desktop-only commands answer "Desktop app only"; the UI
+  hides / disables features by `capabilities` flags.
+- **Shared rules, not shared processes:** everything that decides a file name or an identity
+  (content id, `<rom key> [ID]`, DAT match, disc grouping, config layers + input schema, state
+  sidecars, pending-session records) is Rust compiled to wasm, so both editions land on the
+  same paths. Details of each part: §5.2.
+- **File ownership in a shared Data folder:** shared = `saves/<sys>/<entry>/{save.srm, rtc.bin}`,
+  `config/**.toml`, `system/` (BIOS), `sessions/pending/*-web.json` (written by the web, imported
+  by the desktop). Web-only in the same folders: `web-slot0..9.*`, `web-auto.*`, `save.web.srm`
+  (size mismatch), `*.crswap` (browser swap, ignored / cleaned by the desktop). Never shared: the
+  desktop `nostyra.db` and artwork cache (the web has its own DB and cache in OPFS). No lock between
+  the editions (atomic writes, last write wins); one web tab via Web Lock `nostyra-online`.
+
 ## 2. Repository Layout (Cargo workspace)
 
 ```
@@ -32,16 +58,19 @@ nostyra/
 │   ├── hw-render-gl/          # OpenGL backend of the hw-render API: hidden SDL3 GL context, FBO, readback [M10]
 │   ├── audio-output/          # SDL3 audio stream, resampler, DRC               [M0]
 │   ├── input-mapping/         # SDL3 devices → RETRO_DEVICE_JOYPAD / ANALOG (sticks, triggers), pointer state (DS touch, Wii IR), config bindings [M0/M4/M10/M11/M13/M14]
-│   ├── ipc-protocol/          # launcher↔runner message types (serde)          [M1]
+│   ├── ipc-protocol/          # launcher↔runner message types (serde); feature `native` = OS data roots, logs, on-disk game entry lookup; pure part (names, layout, sidecars, `web-*` state stems, pending sessions) builds for wasm32 [M1/M16]
 │   ├── storage-db/            # SQLite schema, migrations, repositories        [M1]
-│   ├── game-library/          # scanner, hashing (streamed > 32 MiB), DAT matching, DS game code, GC/Wii game-ID identity (no disc hashing) [M1/M13/M14]
+│   ├── game-library/          # scanner (walkdir + rayon), storage-db writes, per-system catalogs; identity, metadat index and disc grouping rules via rom-identity [M1/M13/M14/M16]
+│   ├── rom-identity/          # identity without a DB (desktop + web wasm32): header-aware hashing (streamed > 32 MiB), single-ROM ZIP, disc identity, DS code, GC/Wii game ID, DAT parse + match, metadat index + metadata lookup, multi-file disc grouping (pure over content-file-source), state content tag [M16]
+│   ├── content-file-source/   # std-only: every identity file read + `canonical` path form (OS by default; the web installs a virtual File System Access source per call, case-insensitive like Windows) [M16]
+│   ├── web-bindings/          # wasm-bindgen surface for the web edition (catalog + DAT/thumbnail names, scan verdicts, identify + DAT facts + metadat, disc grouping, zip, patch, naming, config text); built by scripts/build-web-wasm.* [M16]
 │   ├── rom-patch/             # IPS/UPS/BPS soft-patching (in memory)           [M2]
 │   ├── core-manager/          # buildbot core download + atomic install; core system files (all or nothing) [M1/M12]
 │   ├── runner-session/        # Tauri-free runner spawn/events/play-time import [M1]
 │   ├── http-download-util/    # shared HTTPS client (offline switch), capped copy [M2]
 │   ├── artwork-cache/         # libretro-thumbnails index, download, re-encode   [M2]
-│   ├── config-layers/         # TOML layers global→system→core→game, merge, write; binding names; staged dir replace [M3/M4/M12]
-│   ├── system-catalog/        # std-only registry: systems, cores, ROM classification, header rules, BIOS status, touch-screen / aiming-pointer rule [M6, M8, M13, M14]
+│   ├── config-layers/         # TOML layers global→system→core→game, merge, write; binding names; staged dir replace; feature `fs` = file I/O, pure parse/merge/edit builds for wasm32 [M3/M4/M12/M16]
+│   ├── system-catalog/        # std-only registry: systems, cores, ROM classification, header rules, BIOS status, touch-screen / aiming-pointer rule, web (EmulatorJS) core per system [M6, M8, M13, M14, M16]
 │   ├── disc-image/            # cue/gdi/m3u, CHD (CD + GD-ROM + DVD), CDI, CSO, sector reader, ISO9660 paths, PARAM.SFO, PS1 id + serial, DC IP.BIN, PSP disc id, GC/Wii disc headers (ISO/GCM/CISO/GCZ/WIA/RVZ/WBFS) + DOL/ELF HID4 scan, serial rules, DiscImageProbe, track list + absolute-LBA reads [M8/M11/M12/M14/M15]
 │   └── achievements/          # rcheevos FFI (private `ffi`, the only unsafe), safe single-thread rc_client wrapper, transports (ureq | fake), credentials, offline journal, hashing readers, memory regions, hardcore rules, snapshot schema [M15]
 ├── assets/fonts/              # Noto Sans Regular + Bold (OFL-1.1), embedded in the runner for the achievement overlay [M15]
@@ -139,6 +168,7 @@ Call order: `retro_set_environment` → `retro_init` → `retro_set_video_refres
 - System id = the game's registry system (runner `--system`, launcher `games.platform_id`). Core id = `core_layer_id()` (lower-cased `library_name` on the runner, the registry `CoreSpec.id` of the game's system on the launcher: `snes9x`, `mesen`, `mgba`; a launcher/runner parity test per core keeps them equal). A core that plays several systems shares one `core/<id>.toml`; per-system settings go in `system/<id>.toml`. The game layer path has one owner, `ipc_protocol::game_config_path_for_game`.
 - Writes (`set_layer_value`): atomic, unknown keys kept, empty tables pruned, comments **not** preserved (plain `toml`). The runner reads the layers only at start; the pause menu writes the game / global layer, the launcher writes global (Settings) and game (Detail → Settings). Concurrent writes: last write wins.
 - Achievements (M15, `achievements_config.rs`): `[achievements]` `enabled` (true), `hardcore` (false), `sound` (true), `leaderboard_popups` (true), `patched_rom_fallback` (true, follow-up §3.7). **Global layer only**: `resolve_layers_with_warnings` strips the table from every system / core / game layer (warning); the launcher refuses a game-scope write and hides the keys from the game view. `hardcore` is honoured only while `achievements::hardcore_ui_enabled()` (§3.7).
+- Shared with the web edition (M16 phase 07, pure, no `fs`): `input_catalog()` (Controls catalog), `plan_assign` (assign with steal, `BindingRefused`), `gameplay_config_view` (gameplay / controls split of a scope), `settable_key_refusal`, `reset_controls_edits`; the launcher commands are thin file adapters over them, `web-bindings` the text adapters.
 - `nostyra-runner --print-config` prints the resolved JSON incl. binding sections and `resume` (needs `--core` + `--rom`); a launcher test asserts its own resolution (gameplay view ∪ input view) equals it, with a game override and a hand-made hotkey/game conflict.
 
 ### 3.7 RetroAchievements (M15, `crates/achievements` + runner `achievement_session/`, `achievement_overlay/`)
@@ -293,6 +323,7 @@ their artwork files first**, or a reused id would show another game's art.
   joined via `DatEntry.metadata_crc32` (the headered `.nes` CRC of the game name). DAT + metadat load
   lazily per system (`game_library::SystemCatalogs`); startup warms the systems already in the library.
 - **Two-pass scan** (`scan_library`): pass A walks every folder and flags vanished files missing, pass B
+- **Single-ROM ZIPs** (opt-in, 2026-11-04, contributed in PR #1 by jnovax): DB setting `scan_zip_archives` (`library_scan_options`; Settings → ROM folders toggle, changing it rescans). `rom_archive` reads a ZIP holding exactly one NES / SNES / Mega Drive / Master System / Game Gear / SG-1000 / GBA ROM (documents, `__MACOSX`, `._*` ignored): discovery decodes only the ROM head (`PROBE_BYTES`) for `classify_with_head`; hashing / play decode the whole member capped at `max_bytes + 1` and must match the declared size (zip-bomb guard). `io::ErrorKind::Unsupported` = not a single-ROM ZIP of a supported system (several ROMs, other system, no ROM, nested ZIP, out of size) → skipped like a non-ROM file; damaged archives, unsafe member names (`..`, `\`, `:`), bad dumps and undecodable compression (the workspace `zip` build has Store / Deflate only; encrypted members too) → scan problems. Identity: the archive path is the file row; content sha1 = hash of the ROM bytes (a ZIP and the same loose ROM share saves). Turning the option off keeps ZIP games (only vanished archives are flagged missing). Runner: `archived_content::PreparedContent` writes the ROM to `<data>/staged-content/<pid>/archive-*/content.<ext>` (never a member-controlled path, `TempDir` removed after the session, stale dirs by `staged_content_cleanup`); core, soft patches (looked up beside the ZIP) and achievement hashing use the extracted file, saves / config / session records the ZIP path.
   hashes/upserts per folder — a file moved between folders relinks whatever the folder order. A missing
   folder root is reported and its rows are left untouched.
 - **Per-game file names** (`ipc_protocol::game_folder_key`): save folder `saves/<system>/<rom key> [<ID>]/`
@@ -540,22 +571,127 @@ their artwork files first**, or a reused id would show another game's art.
   older than 1 h are removed at the next runner start. A staged path of 256+ bytes itself fails with
   `HostError::StageContent` (exit 4). Discs are never preloaded.
 
+### 5.2 Web edition library and player (M16, `apps/launcher/src/backend/web/`)
+The browser build (`vite --mode web`) runs the same React launcher over in-page
+commands named like the Rust ones. Library data lives in its own SQLite (sqlite-wasm,
+OPFS, desktop migrations unchanged); the desktop `nostyra.db` is never opened.
+- **Folders:** `open({directory})` → `showDirectoryPicker` → opaque ref → `add_library_folder`
+  stores row `library_folders.path = web:<token>` + the handle in IndexedDB (token = random
+  8 hex). `games.rom_path = web:<token>/<relative path>`; wasm reads it as `/web/<token>/…`.
+- **Scan** (`scan/`): page side `scan-command.ts` (one scan, rerun queue, DB writes, events
+  `scan-progress`/`scan-finished` with desktop payloads + `desktopOnly`), module worker
+  `scan-worker.ts`: pass A per folder = walk (dot-folders and Windows system folders skipped)
+  → register every file in wasm (`FileReaderSync` `read_at`, 64 KiB read-ahead) → classify
+  (`classify_for_scan` / `zip_single_rom`; unchanged cartridges keep their stored system)
+  → `group_disc_files` → non-web systems counted only; page marks vanished rows missing.
+  Pass B = changed entries → `identify` (hash + DAT + metadat, desktop rules) → upsert in
+  batches of 50 (guarded statements: update / sha1 relink / insert). Fingerprint = size +
+  `File.lastModified` (ms, stored in `file_mtime_ns`). Cancel terminates the worker.
+- **DAT/metadat:** `scripts/copy-web-libretro-database.*` copies the web systems' files
+  (registry-driven via the wasm catalog, ~21 MB) to `public/libretro-database/`
+  (`publicDir` only in web mode), fetched lazily per system (`catalog/system-dat.ts`).
+- **Artwork** (`artwork/`): TS port of the thumbnail name rules (tests = desktop table);
+  GitHub tree index per repo cached 7 d in OPFS `artwork/index/` (+ETag); images from
+  `raw.githubusercontent.com` only; covers → ≤ 600 px JPEG q0.85, heroes = validated PNG,
+  in OPFS `artwork/<gameId>-cover.jpg|-hero.png`; refs `opfs:artwork/…` → `nostyra-asset:`
+  tokens → object URLs. Same job rules as desktop (4 parallel, 7-day retry, transient breaker,
+  auto-fetch after scan).
+- **Missing removal:** web DB rows + cached art only; shared saves/config are never deleted.
+- **Player** (`player/`, `play/`, phase 06): EmulatorJS 4.2.3 vendored by
+  `scripts/fetch-emulatorjs.*` (sha256 pinned per file; runtime from the EJS CDN, core builds
+  from npm `@emulatorjs/core-*`, core list checked against the registry's `web_core`) into
+  `public/emulatorjs/4.2.3/` (git-ignored; `-legacy-wasm.data` per core + PCSX `-wasm.data`,
+  reports, 7z/zip extractors, LICENSE, SOURCE.txt). Play opens one same-origin
+  `public/player.html` iframe (plain `player-boot.js`, no inline code; z 45 above the launcher,
+  React Exit button + slot picker above it) and posts `boot` (content `File`, BIOS bytes,
+  SRAM bytes, state to load); the iframe sets the `EJS_*` globals (no core options, D6;
+  netplay/cheats/export/quick-slot/settings buttons hidden; `checkForUpdates` no-op) and, in
+  `saveDatabaseLoaded`, wipes IDBFS `/data/saves` and writes `<save dir>/game.srm|.rtc` and the
+  BIOS files (content dir = RetroArch system dir). Every content file is named `game.<ext>`
+  so the save path is known; after `start` it must equal `/data/saves/<dir>/game.srm`, else
+  write-back is off for the session. Content prep (`content-prepare.ts`): cartridge File;
+  single-ROM ZIP → wasm `read_zip_rom`; patch chain beside the ROM (desktop lookup rules) →
+  wasm `apply_patch` (failure → unpatched); PS1 cue with one track → its `.bin` directly (D10),
+  more tracks → store-only zip `Blob` of `game.cue` + the original track Files (streamed
+  CRC); m3u → first disc; CHD/others as is.
+- **Saves:** `saves/<sys>/<rom key> [ID]/` found/created via wasm `find_entry_name` /
+  `new_entry_name`. SRAM rule (D7, `sram-rule.ts`): load `save.web.srm` if present else
+  `save.srm`; write `save.srm` unless an existing one has another length → `save.web.srm`
+  (desktop never reads it). Write-back (`sram-sync.ts`): player `saveSaveFiles` bytes on the
+  30 s flush, tab hidden, EJS menu and exit; CRC-compared, atomic `DataDir.writeFile`; failures
+  retried 1 s / 5 s / next flush, still failing at exit → OPFS `pending-saves/saves/…` +
+  launcher banner (Retry; also retried at every start). mGBA `.rtc` ↔ `rtc.bin`.
+- **States / resume:** `web-slot0..9` / `web-auto` `.state/.json/.png` in the same folder
+  (wasm `web_state_stem`, sidecar `web_state_sidecar` with `build:"web"`, `core_version
+  emulatorjs-4.2.3`, SRAM + patch CRCs); `web_state_refusal` refuses another core/build
+  ("Made by another EmulatorJS version"). EJS Save/Load buttons → `web-slot-picker` event →
+  React picker → `web_slot_picker_choose`. Exit with `resume.auto_save` (config layers via
+  wasm `config_resolve`) writes `web-auto.*`; `get_resume_info` gives the desktop warnings
+  (`sram-newer`, `patch-changed`, `state-incompatible`). Thumbnails are `datadir:` asset refs.
+- **Sessions:** `session-started` / `session-launch-timeout` (60 s) / `session-ended` with the
+  desktop payloads (start failure → `{kind: core}`, disc hint "CHD needs much less memory");
+  play time → web `play_sessions` (source key = pending file name) and, for a picked Data
+  folder, `sessions/pending/<ms>-web.json` (wasm `web_pending_session_json`, with
+  `content_sha1`). BIOS: Settings → BIOS lists `system/` files (size, signature, known names;
+  no md5 on the web) and "Add BIOS file…" copies a picked file (`showOpenFilePicker`).
+- **Settings + controls** (`config/`, `controls/`, phase 07): the same TOML layers as the desktop,
+  read from the Data folder (`config-scope.ts`: global scope = `config/global.toml` alone; a game =
+  global, `system/<sys>`, `core/<coreLayerId>` only when non-null (NES: none, Q9),
+  `game/<sys>/<entry>.toml`) and edited by the shared Rust rules through wasm:
+  `gameplay_settings_view` (= `config_layers::gameplay_config_view`, the desktop's view),
+  `config_set_known_value` (unknown / global-only-in-game keys refused), `config_assign_binding`
+  (`config_layers::plan_assign`, steal on the scope's resolved binds), `config_reset_controls`,
+  `input_catalog_json`; the edited text is written atomically (refused while the picked folder
+  needs Reconnect), unknown keys survive → the desktop reads the same file. The web catalog
+  lists only the hotkeys the browser player has (`WEB_HOTKEYS`: pause, save/load state via the
+  slot picker, fast-forward); shader, scaling, run-ahead and rewind rows are hidden
+  (capabilities). Keyboard capture = DOM `code` (= stored winit name, `Meta*` ↔ `Super*`);
+  gamepad capture polls `navigator.getGamepads()` per frame (standard layout only; index ↔
+  positional name in `lib/web-input-map.ts`; label style from the pad id).
+  In the player: `lib/web-input-map.ts` `playerInput` builds `EJS_defaultControls` for pads
+  (first standard-button bind per game button, all 4 players; stick actions keep EJS's axes;
+  other pad binds shown "Not used in the browser" in the editor, kept in the TOML) and the
+  tables `public/player-input.js` reads: port-1 keyboard by physical `KeyboardEvent.code`
+  (both binds, `simulateInput`), web hotkeys for keyboard and pads, fixed Esc / Guide (tap =
+  pause/resume, hold 1 s = `exit-request` → Exit), Select+Start held = pause/resume. EJS's
+  control-remap menu is hidden (`EJS_Buttons.gamepad = false`).
+- **Packaging + hosting** (phase 09): `scripts/build-web.{ps1,sh}` → `build-web.mjs` runs the
+  wasm build, EmulatorJS fetch (sha256), DAT copy, licence notices (`public/notices/`: Nostyra
+  GPL-3.0, cargo-about over `crates/web-bindings` for `wasm32` with `about-web.hbs`, npm notices
+  `--web` without Tauri), `npm run build:web`, `check-web-bundle`, then writes
+  `dist/nostyra-web-<version>/` = `online/` (served at nostyra.com/online/, ~32 MB / 125 files),
+  `vercel.headers.json`, `DEPLOY.md` (= `docs/web-edition-deploy-guide.md`), `build-info.json`,
+  + zip; prints bytes per part and checks Vercel's 100 MB / 15,000-file CLI upload limits.
+  Headers have one source, `apps/launcher/web-headers.mjs` (rules never set one key twice on a
+  path): launcher CSP (no `'unsafe-eval'`; artwork from api.github.com / raw.githubusercontent.com)
+  and `/online/player.html` CSP with `'unsafe-eval'` (EJS asm.js extractors, D3), `no-cache`
+  pages, `immutable` `assets/` + `emulatorjs/`, 1 day `libretro-database/`, wasm / data
+  Content-Type, `nosniff`, `Referrer-Policy: no-referrer`, no COOP/COEP. The web-only Vite
+  plugin `web-vite-plugin.mjs` serves them per path in `vite preview --mode web`, injects the
+  classic `public/browser-gate.js` before the module entry (no `showDirectoryPicker` or mobile →
+  static "needs Chrome or Edge on a computer" page; `main.tsx` does not start the app when
+  `<html data-unsupported-browser>` is set) and stamps the version into `public/licences.html`
+  (`static-page.css`; Nostyra source link = tag `v<version>`). Web mode uses `appType: "mpa"`
+  (a missing file is a 404, as on the host). Deploy is manual into the separate nostyra.com
+  Vercel project (no Git-triggered builds / CI).
+
 ## 6. File Locations (per-user, via `directories` crate)
-Root = `ipc_protocol::data_root()`: the folder chosen in Settings → Data folder, stored as one UTF-8 path in `ProjectDirs.config_dir()/data-location.txt` (`%APPDATA%\Nostyra\config\data-location.txt`, outside the root so it survives a move), while that folder exists; else the default: `<exe dir>/data` in a portable copy (`portable.txt` beside the exe, `ipc_protocol::portable_dir`; the location file then also lives beside the exe), otherwise `ProjectDirs("", "", "Nostyra").data_dir()` (`%APPDATA%\Nostyra\data`, `~/Library/Application Support/Nostyra`, `~/.local/share/nostyra`). Runner `--data-dir` overrides it (the launcher always passes it). Changing the folder (`data_folder_commands`) refuses while a game/scan/artwork fetch/core download runs, optionally moves the entries below (`data_folder_move::DATA_ENTRIES` only, so a shared folder keeps other files): DB connection closed, everything copied first (a failed copy reopens the old DB, nothing changes), location written, copied originals deleted; existing target files are overwritten only on request (else kept, their originals stay behind). The app then restarts. `cores.library_path` (absolute, unread) goes stale after a move. `<rom>` = ROM file stem, Unicode kept, Windows-forbidden chars → `_`, reserved device names suffixed; the per-game folder/file is `<rom> [<ID>]` where `<ID>` is the content id (see 5.1 "Per-game file names"), so same-named ROMs with different content do not share saves. The name is computed by `ipc_protocol::game_folder_key` and `rom_key` (shared by runner and launcher: `saves_dir_for_game`, `game_config_path_for_game`). M0 creates only `saves/` and `system/`.
+Root = `ipc_protocol::data_root()`: the folder chosen in Settings → Data folder, stored as one UTF-8 path in `ProjectDirs.config_dir()/data-location.txt` (`%APPDATA%\Nostyra\config\data-location.txt`, outside the root so it survives a move), while that folder exists; else the default: `<exe dir>/data` in a portable copy (`portable.txt` beside the exe, `ipc_protocol::portable_dir`; the location file then also lives beside the exe), otherwise (`ipc_protocol::default_data_root` → pure `choose_default_data_root`, M16) the legacy `ProjectDirs("", "", "Nostyra").data_dir()` (`%APPDATA%\Nostyra\data`, `~/Library/Application Support/Nostyra`, `~/.local/share/nostyra`) **while it holds `nostyra.db`** (an install from before M16: never moved silently), else `<Documents>/Nostyra` (`UserDirs::document_dir()`; new installs, so the web edition can share the folder: Chrome refuses AppData), else (no Documents folder) the legacy folder. Settings → Data folder shows a hint to move a root under AppData to share it with Nostyra Online. Runner `--data-dir` overrides it (the launcher always passes it). Changing the folder (`data_folder_commands`) refuses while a game/scan/artwork fetch/core download runs, optionally moves the entries below (`data_folder_move::DATA_ENTRIES` only, so a shared folder keeps other files): DB connection closed, everything copied first (a failed copy reopens the old DB, nothing changes), location written, copied originals deleted; existing target files are overwritten only on request (else kept, their originals stay behind). The app then restarts. `cores.library_path` (absolute, unread) goes stale after a move. `<rom>` = ROM file stem, Unicode kept, Windows-forbidden chars → `_`, reserved device names suffixed; the per-game folder/file is `<rom> [<ID>]` where `<ID>` is the content id (see 5.1 "Per-game file names"), so same-named ROMs with different content do not share saves. The name is computed by `ipc_protocol::game_folder_key` and `rom_key` (shared by runner and launcher: `saves_dir_for_game`, `game_config_path_for_game`). M0 creates only `saves/` and `system/`.
 ```
 <root>/
 ├── nostyra.db    # M1+
 ├── cores/        # M1+: downloaded/bundled cores
 ├── config/       # M3: global.toml, system/<id>.toml, core/<id>.toml, game/<platform>/<rom> [<ID>].toml
-├── sessions/pending/ # M1: runner play-session records awaiting import by the launcher
+├── sessions/pending/ # M1: runner play-session records awaiting import by the launcher; M16: <ms>-web.json from the web edition (rom_path = web:<folder>/<path>, matched by content_sha1 = games.sha1, any case; kept up to 30 days while no game has that sha1, then dropped)
 ├── temp/staged-content/<pid>/ # M9: content.<ext> staged for a path-loading core while a game runs
-├── saves/        # <platform>/<rom> [<ID>]/ = one folder per game: save.srm, rtc.bin (cartridge clock, M7), slotN.state + slotN.json {core_name, core_version, created_at, sram_crc32?, rom_patch_crc32?, state_len?, state_crc32?, content_tag? (M14)} + slotN.png thumbnail (clean core frame); auto.* = resume point (M4); User/ = Dolphin's GCI memory card, Wii NAND and shader cache (gc / wii, M14)
+├── saves/        # <platform>/<rom> [<ID>]/ = one folder per game: save.srm, rtc.bin (cartridge clock, M7), slotN.state + slotN.json {core_name, core_version, created_at, sram_crc32?, rom_patch_crc32?, state_len?, state_crc32?, content_tag? (M14)} + slotN.png thumbnail (clean core frame); auto.* = resume point (M4); M16 web edition files in the same folder: web-slot0..9.* / web-auto.* (never listed, loaded or deleted by the desktop; removing a missing game deletes them with the folder), save.web.srm (web-only SRAM, never read by the desktop); User/ = Dolphin's GCI memory card, Wii NAND and shader cache (gc / wii, M14)
 ├── achievements/ # M15: credentials.json {user, token} (plaintext, 0600 on Unix), pending/<ms>-<rand>.json offline journal, games/<sha1>.json runner snapshot for the launcher tab, offline-cache/<user>/ last server answers (login2.json incl. the token, sets/<hash>.json, sessions/<hash>.json; removed on logout / login expiry / account switch)
 ├── cache/achievement-badges/ # M15: <badge>.png, <badge>_lock.png, game_<icon>.png (shared by runner and launcher)
 ├── logs/         # v0.1.0: launcher-<YYYYMMDD-HHMMSS>.log per launcher start, runner-<stamp>-<system>.log per game session (10 MiB cap), nostyra-bug-report-<stamp>.zip; cleanup at every start keeps 10 launcher + 30 runner logs, drops logs > 14 days and zips > 7 days (`ipc_protocol::log_files`); not moved by a data-folder change
 ├── artwork/      # M2: <game_id>-cover.jpg (≤ 600 px, JPEG q85), <game_id>-hero.png (snap/title), index/<system>-tree.json(+.etag) per system; served via asset:// (scope = this folder + `saves/` for state thumbnails); clearable in Settings
 └── system/       # core system dir (BIOS/firmware if a core needs it); dolphin-emu/Sys/ = Dolphin's system files, copied from <cores>/dolphin-emu/ (M14); melonDS DS/ = wfcsettings.bin written by melonDS DS (M13); PPSSPP/ = PPSSPP's system files, copied from <cores>/PPSSPP/ (M12); dc/ = dc_boot.bin + dc_nvmem.bin (Flycast, M11); Mupen64plus/ = Mupen64Plus-Next's mupen64plus.ini + GLideN64 shader cache (M10)
 ```
+Chrome swap files (`*.crswap`, `ipc_protocol::is_browser_swap_file`) are what an interrupted web write leaves beside its target: the desktop skips them (state listing, pending-session import, legacy-entry copies), the runner removes ones older than 1 day (`STALE_BROWSER_SWAP_AGE`) in the game's folder when a game starts, the import does the same in `sessions/pending/`, and a data-folder move drops them instead of copying.
 
 ## 7. Platform Notes
 - **Windows**: DX12/Vulkan via wgpu; MSI/NSIS via Tauri bundler.

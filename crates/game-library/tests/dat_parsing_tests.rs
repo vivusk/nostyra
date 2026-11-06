@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use game_library::{
-    display_region, display_title, hash_rom_bytes, parse_clrmamepro_dat, DatIndex, LibraryError,
+    display_region, display_title, hash_rom_bytes, parse_clrmamepro_dat, DatIndex, DatLoadError,
     RomHashes,
 };
 
@@ -109,7 +109,7 @@ fn titles_and_regions() {
 #[test]
 fn missing_dat_file_is_an_error_and_empty_index_is_the_fallback() {
     let err = DatIndex::load(Path::new("does/not/exist.dat")).unwrap_err();
-    assert!(matches!(err, LibraryError::Io { .. }));
+    assert!(matches!(err, DatLoadError::Io { .. }));
     let index =
         DatIndex::load(Path::new("does/not/exist.dat")).unwrap_or_else(|_| DatIndex::empty());
     assert!(index.is_empty());

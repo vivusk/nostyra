@@ -1,5 +1,6 @@
 //! Layer resolution and writing against real files in a scratch data root.
 
+#![cfg(feature = "fs")]
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test code: panics are the failure signal
 
 use std::path::{Path, PathBuf};

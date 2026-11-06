@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { GameDetail } from "../../api/tauri-commands-artwork";
 import { useArtworkProgress, useStartArtworkFetch } from "../../hooks/use-artwork-queries";
+import { capabilities } from "../../backend";
 import { useRevealRomInFolder } from "../../hooks/use-game-detail-queries";
 import { useRemoveMissingGames } from "../../hooks/use-library-queries";
 import { formatDateTime, formatPlayTime } from "../../lib/game-display";
@@ -64,9 +65,11 @@ export function DetailInfoPanel({ game, onEdit, onRemoved }: DetailInfoPanelProp
         <button type="button" onClick={onEdit} className={BUTTON}>
           Edit metadata
         </button>
-        <button type="button" onClick={() => reveal.mutate(game.id)} disabled={game.missing} className={BUTTON}>
-          Open folder
-        </button>
+        {capabilities.revealInFolder && (
+          <button type="button" onClick={() => reveal.mutate(game.id)} disabled={game.missing} className={BUTTON}>
+            Open folder
+          </button>
+        )}
         {game.datName !== null && (
           <button type="button" onClick={() => startFetch.mutate(game.id)} disabled={fetching} className={BUTTON}>
             {fetching ? "Fetching artwork…" : "Fetch artwork"}

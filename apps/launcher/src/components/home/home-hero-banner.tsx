@@ -1,5 +1,5 @@
 import type { Game } from "../../api/tauri-commands";
-import { assetUrl } from "../../lib/asset-url";
+import { assetUrl, useResolvedAsset } from "../../lib/asset-url";
 import { useResumeInfo } from "../../hooks/use-resume-info-query";
 import { systemLabel, useSystems } from "../../hooks/use-system-queries";
 import { formatPlayTime, homeMetaLine, monogram, tileColor } from "../../lib/game-display";
@@ -21,8 +21,9 @@ interface HomeHeroBannerProps {
 export function HomeHeroBanner({ game, reason, sessionBusy, onPlay, onOpen }: HomeHeroBannerProps) {
   const { data: systems } = useSystems();
   const { data: resume } = useResumeInfo(game.id);
-  const snap =
-    (resume?.available ? assetUrl(resume.thumbnailPath, resume.createdAt) : null) ?? assetUrl(game.heroPath);
+  const snap = useResolvedAsset(
+    (resume?.available ? assetUrl(resume.thumbnailPath, resume.createdAt) : null) ?? assetUrl(game.heroPath),
+  );
   const color = tileColor(game.title);
   const played = game.lastPlayedAt !== null;
   return (

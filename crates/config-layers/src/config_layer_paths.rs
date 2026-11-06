@@ -22,7 +22,21 @@ pub struct ConfigLayerPaths {
 }
 
 impl ConfigLayerPaths {
-    /// `content_sha1` = the game's stored sha1 (names the game layer file).
+    /// The layers of one game whose game layer file is `game` (the web edition finds
+    /// it by listing the folder itself; see `ipc_protocol::pick_game_entry_name`).
+    pub fn with_game_layer(data_root: &Path, system: &str, core_id: &str, game: PathBuf) -> Self {
+        let config_dir = ipc_protocol::config_dir(data_root);
+        Self {
+            global: global_config_path(data_root),
+            system: config_dir.join("system").join(format!("{system}.toml")),
+            core: config_dir.join("core").join(format!("{core_id}.toml")),
+            game,
+        }
+    }
+
+    /// `content_sha1` = the game's stored sha1 (names the game layer file, looked up
+    /// on disk).
+    #[cfg(feature = "fs")]
     pub fn new(
         data_root: &Path,
         system: &str,
@@ -30,18 +44,9 @@ impl ConfigLayerPaths {
         rom_path: &Path,
         content_sha1: &str,
     ) -> Self {
-        let config_dir = ipc_protocol::config_dir(data_root);
-        Self {
-            global: global_config_path(data_root),
-            system: config_dir.join("system").join(format!("{system}.toml")),
-            core: config_dir.join("core").join(format!("{core_id}.toml")),
-            game: ipc_protocol::game_config_path_for_game(
-                data_root,
-                system,
-                rom_path,
-                content_sha1,
-            ),
-        }
+        let game =
+            ipc_protocol::game_config_path_for_game(data_root, system, rom_path, content_sha1);
+        Self::with_game_layer(data_root, system, core_id, game)
     }
 
     /// Merge order: each later layer overrides the earlier ones.
@@ -51,6 +56,7 @@ impl ConfigLayerPaths {
 }
 
 #[cfg(test)]
+#[cfg(feature = "fs")]
 mod tests {
     use super::*;
 

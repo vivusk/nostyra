@@ -23,3 +23,18 @@ Nostyra ships as a Windows x64 portable zip on GitHub Releases: <https://github.
 
 ## If something went wrong before pushing
 The release commit and tag exist only locally until step 6: delete the tag (`git tag -d v<version>`) and move `main` back (`git update-ref refs/heads/main <previous release commit>`), fix on `dev`, run the script again.
+
+## Web edition (nostyra.com/online)
+The web edition is a static build deployed by hand into the **separate nostyra.com website
+project on Vercel** — never by Git-triggered builds or GitHub Actions.
+1. Release first (above) so the tag `v<version>` holds this source: the web licences page links
+   `https://github.com/vivusk/nostyra/tree/v<version>` (GPL-3.0). The build warns when it does not.
+2. `powershell -File scripts/build-web.ps1` (or `bash scripts/build-web.sh`; needs wasm-pack
+   0.15.0, cargo-about 0.9.2, `npm ci` in `apps/launcher`, network for the first EmulatorJS
+   fetch) → `dist/nostyra-web-<version>/` + `.zip`, size per part printed.
+3. Optional local check under the production headers: `cd apps/launcher && npx vite preview
+   --mode web --port 4174 --strictPort` → `http://localhost:4174/online/`.
+4. Hand the package to whoever works in the website repo: its `DEPLOY.md`
+   ([web-edition-deploy-guide.md](web-edition-deploy-guide.md)) says where `online/` goes, how to
+   merge `vercel.headers.json`, what must not happen (SPA fallback over `/online`, rebuilding or
+   minifying the files, CI) and the post-deploy `curl` + browser checklist.

@@ -3,7 +3,6 @@
 //! stored back to back from byte 0 (pregap + track per entry). Layout as read by
 //! Flycast's `cdipsr` (versions 2, 3 and 3.5); other versions are rejected.
 
-use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
@@ -59,8 +58,8 @@ pub struct CdiImage {
 impl CdiImage {
     /// Reads the track table of `path` (only the footer and the table are read).
     pub fn read(path: &Path) -> Result<Self, DiscError> {
-        let mut file = File::open(path)?;
-        let len = file.metadata()?.len();
+        let mut file = content_file_source::open(path)?;
+        let len = content_file_source::stream_len(file.as_mut())?;
         if len < 8 {
             return Err(DiscError::Format(BAD_CDI));
         }

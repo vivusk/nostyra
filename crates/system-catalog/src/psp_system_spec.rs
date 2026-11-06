@@ -61,6 +61,7 @@ pub const PSP: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(41),
+    web_core: None,
 };
 
 #[cfg(test)]

@@ -26,7 +26,7 @@ pub(crate) fn cue_tracks(path: &Path) -> Result<Vec<TrackInfo>, DiscError> {
             in_high = true;
             file_lba = file_lba.max(u64::from(HIGH_DENSITY_LBA));
         }
-        let bytes = std::fs::metadata(&file_path).map(|m| m.len()).unwrap_or(0);
+        let bytes = content_file_source::len(&file_path).unwrap_or(0);
         let file_sectors = bytes / stored_sector_bytes(first.mode);
         for (i, track) in file.tracks.iter().enumerate() {
             let start = u64::from(track.index01.unwrap_or(0));
@@ -67,7 +67,7 @@ pub(crate) fn gdi_tracks(path: &Path) -> Result<Vec<TrackInfo>, DiscError> {
         .iter()
         .zip(sheet.referenced_paths(path))
         .map(|(track, file)| {
-            let bytes = std::fs::metadata(file).map(|m| m.len()).unwrap_or(0);
+            let bytes = content_file_source::len(&file).unwrap_or(0);
             TrackInfo {
                 number: track.number,
                 session: u16::from(track.lba >= HIGH_DENSITY_LBA),

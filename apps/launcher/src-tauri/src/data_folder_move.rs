@@ -34,6 +34,9 @@ pub const DATA_ENTRIES: [&str; 13] = [
 pub struct MovePlan {
     pub files: Vec<PathBuf>,
     pub conflicts: usize,
+    /// Browser swap files (`*.crswap`, a web edition write cut short): not copied,
+    /// deleted with the moved originals.
+    pub swap_files: Vec<PathBuf>,
 }
 
 /// Lists the files under `from`'s data entries and counts those present under `to`.
@@ -42,8 +45,17 @@ pub fn plan_move(from: &Path, to: &Path) -> io::Result<MovePlan> {
     for entry in DATA_ENTRIES {
         collect_files(from, Path::new(entry), &mut files)?;
     }
+    let (swap_files, files): (Vec<_>, Vec<_>) = files.into_iter().partition(|rel| {
+        rel.file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(ipc_protocol::is_browser_swap_file)
+    });
     let conflicts = files.iter().filter(|rel| to.join(rel).exists()).count();
-    Ok(MovePlan { files, conflicts })
+    Ok(MovePlan {
+        files,
+        conflicts,
+        swap_files,
+    })
 }
 
 fn collect_files(root: &Path, rel: &Path, out: &mut Vec<PathBuf>) -> io::Result<()> {
@@ -92,10 +104,11 @@ pub fn copy_planned_files(
     Ok(copied)
 }
 
-/// Deletes the copied originals, then the data-entry folders left empty. Best effort:
-/// the data already lives in the new root, so a leftover only wastes space.
-pub fn remove_moved_originals(from: &Path, copied: &[PathBuf]) {
-    for rel in copied {
+/// Deletes the copied originals and the plan's swap files, then the data-entry
+/// folders left empty. Best effort: the data already lives in the new root, so a
+/// leftover only wastes space.
+pub fn remove_moved_originals(from: &Path, plan: &MovePlan, copied: &[PathBuf]) {
+    for rel in copied.iter().chain(&plan.swap_files) {
         if let Err(err) = fs::remove_file(from.join(rel)) {
             tracing::warn!(file = %rel.display(), %err, "moved file left in the old data folder");
         }

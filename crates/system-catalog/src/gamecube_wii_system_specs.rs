@@ -82,6 +82,7 @@ pub const GC: SystemSpec = SystemSpec {
     analog_triggers: true,
     touch_screen: None,
     ra_console_id: None,
+    web_core: None,
 };
 
 /// Nintendo Wii: plain `.iso`, `.ciso` / `.gcz` / `.wia` / `.rvz` / `.wbfs`
@@ -159,6 +160,7 @@ pub const WII: SystemSpec = SystemSpec {
     // IR pointer = the mouse over the whole picture (`MousePointer` in the runner).
     touch_screen: Some(TouchScreenRule::WiiRemoteIr),
     ra_console_id: None,
+    web_core: None,
 };
 
 #[cfg(test)]

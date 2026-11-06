@@ -3,6 +3,7 @@
 use crate::disc_probe::Media;
 use crate::rom_header_rules::{ContentProbe, HeaderRule};
 use crate::system_specs::{AnalogSticks, SystemSpec};
+use crate::web_core_specs::{WEB_FCEUMM, WEB_SNES9X};
 
 /// Super Nintendo: `.sfc` / `.smc`, 32 KiB .. 16 MiB, optional 512-byte copier header.
 pub const SNES: SystemSpec = SystemSpec {
@@ -28,6 +29,7 @@ pub const SNES: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(3),
+    web_core: Some(WEB_SNES9X),
 };
 
 /// NES / Famicom: `.nes` with an iNES header (libretro NES cores need it for the
@@ -57,4 +59,5 @@ pub const NES: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(7),
+    web_core: Some(WEB_FCEUMM),
 };

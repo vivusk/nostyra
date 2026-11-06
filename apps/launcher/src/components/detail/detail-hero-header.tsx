@@ -1,6 +1,6 @@
 import type { GameDetail } from "../../api/tauri-commands-artwork";
 import { useResumeInfo } from "../../hooks/use-resume-info-query";
-import { assetUrl } from "../../lib/asset-url";
+import { assetUrl, useResolvedAsset } from "../../lib/asset-url";
 import { detailMetaLine, monogram, tileColor } from "../../lib/game-display";
 import { CoverImage } from "../cover-image";
 import { DetailBadges } from "./detail-badges";
@@ -19,7 +19,7 @@ interface DetailHeroHeaderProps {
 /** 460 px header per mockup: blurred snap (else tile colour + big monogram), back pill,
  *  overlapping 150 px cover (letterboxed), badges, 52 px title, meta, Play + heart. */
 export function DetailHeroHeader({ game, backLabel, onBack, sessionGameId, onPlay }: DetailHeroHeaderProps) {
-  const snap = assetUrl(game.heroPath);
+  const snap = useResolvedAsset(assetUrl(game.heroPath));
   const meta = game.metadata;
   const metaLine = detailMetaLine({
     developer: meta?.developer ?? null,

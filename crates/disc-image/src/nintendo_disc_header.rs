@@ -6,7 +6,6 @@
 //! Wii headers are unencrypted. Bounded I/O: ≤ [`MAX_HEADER_READ_BYTES`] and at most
 //! two seeks per image, whatever its size (discs are 1.4–8 GB).
 
-use std::fs::File;
 use std::io::{Read, Seek};
 use std::path::Path;
 
@@ -65,8 +64,8 @@ pub fn read_nintendo_disc_header(path: &Path) -> Result<Option<NintendoDiscHeade
     if !is_nintendo_disc_ext(ext) {
         return Ok(None);
     }
-    let mut file = File::open(path)?;
-    let file_len = file.metadata()?.len();
+    let mut file = content_file_source::open(path)?;
+    let file_len = content_file_source::stream_len(file.as_mut())?;
     read_nintendo_disc_header_from(&mut file, ext, file_len)
 }
 

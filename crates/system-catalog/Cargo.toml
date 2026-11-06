@@ -9,6 +9,8 @@ publish = false
 
 # std only: the runner, launcher and library crates all read this registry.
 [dependencies]
+# Content reads (OS files, or the web edition's virtual source).
+content-file-source.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

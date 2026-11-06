@@ -10,6 +10,8 @@ publish = false
 [dependencies]
 crc32fast.workspace = true
 rayon.workspace = true
+# Identity (hashing, zip, discs, DATs), shared with the web edition.
+rom-identity.workspace = true
 sha1.workspace = true
 storage-db.workspace = true
 system-catalog.workspace = true
@@ -17,6 +19,7 @@ disc-image.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 walkdir.workspace = true
+zip.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

@@ -1,0 +1,66 @@
+/* Static pages of Nostyra Online (licences.html, the browser-gate page): app colours
+   (src/theme/design-tokens.css), system fonts, no build step. */
+html {
+  background: #0f0f12;
+  color: #f4f4f6;
+  font: 15px/1.55 system-ui, "Segoe UI", Roboto, sans-serif;
+}
+body {
+  margin: 0;
+}
+.static-page {
+  box-sizing: border-box;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 20px;
+}
+.gate {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.brand {
+  margin: 0 0 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #9c9ca8;
+}
+h1 {
+  margin: 0 0 16px;
+  font-size: 30px;
+  line-height: 1.2;
+}
+h2 {
+  margin: 32px 0 8px;
+  font-size: 19px;
+}
+p,
+li {
+  color: #c9c9d2;
+}
+a {
+  color: #f4f4f6;
+}
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+th,
+td {
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid #23232b;
+  text-align: left;
+  vertical-align: top;
+  color: #c9c9d2;
+}
+th {
+  color: #9c9ca8;
+  font-weight: 600;
+}

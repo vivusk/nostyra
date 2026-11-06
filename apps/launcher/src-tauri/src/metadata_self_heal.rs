@@ -50,7 +50,7 @@ pub fn spawn_catalog_warmup(app: &AppHandle) {
                     &work.crc32,
                     work.serial.as_deref(),
                 )
-                .map(|(record, _)| record.clone())
+                .map(|(record, _)| record)
         };
         let complete = catalogs.loaded_complete();
         let result = heal_metadata(&mut state.db(), &lookup, complete, unix_now());

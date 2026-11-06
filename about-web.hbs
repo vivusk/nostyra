@@ -1,0 +1,25 @@
+Nostyra Online - third-party Rust crates
+========================================
+
+The web edition's WebAssembly module (nostyra_web_bg.wasm, built from
+crates/web-bindings) contains the open-source Rust crates listed below, built from
+their unmodified crates.io releases (source: https://crates.io/crates/<name>/<version>).
+Each licence text follows the list of crates that use it.
+
+Overview
+--------
+{{#each overview}}
+{{{name}}} ({{{id}}}): {{count}} crate(s)
+{{/each}}
+
+{{#each licenses}}
+================================================================================
+{{{name}}} ({{{id}}})
+Used by:
+{{#each used_by}}
+  - {{{crate.name}}} {{{crate.version}}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}
+{{/each}}
+--------------------------------------------------------------------------------
+{{{text}}}
+
+{{/each}}

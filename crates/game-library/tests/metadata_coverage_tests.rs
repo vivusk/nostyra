@@ -20,7 +20,7 @@ fn vendored_metadat_covers_the_bundled_dat() {
 
     let index = MetadataIndex::load(&db_dir.join("metadat"), system_catalog::SNES.metadat_file);
     assert!(index.is_complete(), "all five metadat files load");
-    let share = |field: &dyn Fn(&storage_db::GameMetadataRecord) -> bool| {
+    let share = |field: &dyn Fn(&game_library::MetadataRecord) -> bool| {
         let hits = crcs
             .iter()
             .filter(|crc| index.lookup(crc).is_some_and(field))

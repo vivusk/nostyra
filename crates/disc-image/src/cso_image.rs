@@ -4,7 +4,7 @@
 //! with one decompressed block cached; the index is read entry by entry (a UMD's
 //! index is a few MB).
 
-use std::fs::File;
+use content_file_source::ContentFile;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
@@ -19,7 +19,7 @@ const PLAIN_BIT: u32 = 0x8000_0000;
 const MAX_BLOCK_BYTES: u32 = 1024 * 1024;
 
 pub struct CsoReader {
-    file: BufReader<File>,
+    file: BufReader<ContentFile>,
     block_bytes: u64,
     align: u32,
     total_bytes: u64,
@@ -29,7 +29,7 @@ pub struct CsoReader {
 
 impl CsoReader {
     pub fn open(path: &Path) -> Result<Self, DiscError> {
-        let mut file = BufReader::new(File::open(path)?);
+        let mut file = BufReader::new(content_file_source::open(path)?);
         let mut header = [0u8; HEADER_BYTES as usize];
         file.read_exact(&mut header)
             .map_err(|_| DiscError::Format("file too short for a CSO header"))?;

@@ -1,9 +1,8 @@
 //! Config command logic against a scratch data dir (no Tauri runtime needed).
 
-use config_layers::resolve_config;
+use config_layers::{is_input_key, resolve_config};
 
 use super::*;
-use crate::commands::input_config_view::is_input_key;
 
 fn scratch(name: &str) -> tempfile::TempDir {
     let prefix = format!("nostyra-gpcfg-{name}-");
@@ -182,8 +181,4 @@ fn achievements_keys_are_refused_for_a_game_and_hidden_from_its_layer() {
         "achievements.enabled"
     )
     .is_ok());
-    let mut layer = Table::new();
-    layer.insert("achievements.sound".into(), Value::Boolean(false));
-    let (gameplay, input) = split_game_layer(layer);
-    assert!(gameplay.is_empty() && input.is_empty());
 }

@@ -66,6 +66,10 @@ pub struct StateSidecar {
     /// an achievement session was active (M15); `None` = restore resets progress.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub achievements_progress: Option<String>,
+    /// Which build of the core wrote the state: `Some("web")` for the web edition's
+    /// EmulatorJS cores (`web-*` stems); `None` = desktop runner.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build: Option<String>,
 }
 
 #[cfg(test)]
@@ -117,6 +121,7 @@ mod tests {
         );
         assert!(!json.contains("content_tag"), "{json}");
         assert!(!json.contains("achievements_progress"), "{json}");
+        assert!(!json.contains("build"), "{json}");
 
         let full = StateSidecar {
             sram_crc32: Some(7),
@@ -125,6 +130,7 @@ mod tests {
             state_crc32: Some(11),
             content_tag: Some("GALE01:0:0".into()),
             achievements_progress: Some("00ff".into()),
+            build: Some("web".into()),
             ..sidecar
         };
         let json = serde_json::to_string(&full).unwrap();
@@ -132,6 +138,7 @@ mod tests {
         assert!(json.contains("\"state_len\":4") && json.contains("\"state_crc32\":11"));
         assert!(json.contains("\"content_tag\":\"GALE01:0:0\""));
         assert!(json.contains("\"achievements_progress\":\"00ff\""));
+        assert!(json.contains("\"build\":\"web\""));
         assert_eq!(serde_json::from_str::<StateSidecar>(&json).unwrap(), full);
     }
 }

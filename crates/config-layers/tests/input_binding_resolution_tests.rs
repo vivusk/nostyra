@@ -1,6 +1,7 @@
 //! Binding, hotkey and resume keys across real layer files: defaults layer,
 //! per-action inheritance, invalid values, conflicts and the flat views.
 
+#![cfg(feature = "fs")]
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test code: panics are the failure signal
 
 use std::path::{Path, PathBuf};

@@ -41,7 +41,10 @@ fn check(signature: DiscSignature, path: &Path) -> Result<(), String> {
     }
     if is_m3u_ext(ext) {
         let entries = playlist_entries(path).map_err(|e| e.to_string())?;
-        if let Some(missing) = entries.iter().find(|entry| !entry.is_file()) {
+        if let Some(missing) = entries
+            .iter()
+            .find(|entry| !content_file_source::is_file(entry))
+        {
             return Err(format!(
                 "disc '{}' not found — fix the playlist line or rename the file",
                 display_name(missing)

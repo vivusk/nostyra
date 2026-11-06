@@ -1,11 +1,11 @@
 import type { AchievementRow as Row } from "../../api/tauri-commands-achievements";
-import { assetUrl } from "../../lib/asset-url";
+import { assetUrl, useResolvedAsset } from "../../lib/asset-url";
 
 /** One achievement: 64 px badge (cached file; locked = `_lock` file or greyed colour
  *  badge; none yet = trophy tile), title, description, points, unlock date / mode,
  *  measured progress for locked ones. */
 export function AchievementRow({ row }: { row: Row }) {
-  const badge = assetUrl(row.badgePath);
+  const badge = useResolvedAsset(assetUrl(row.badgePath));
   const unlockedOn =
     row.unlocked && row.unlockTime > 0
       ? new Date(row.unlockTime * 1000).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })

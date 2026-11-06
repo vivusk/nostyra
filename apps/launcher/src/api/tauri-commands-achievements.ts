@@ -1,6 +1,6 @@
 // RetroAchievements commands (src-tauri/src/commands/achievements_{commands,game_view,mode}.rs).
 // The password goes to `raLogin` once; only username + token are stored by the backend.
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "../backend";
 
 /** The logged-in account; points are known only after a login in this launcher run. */
 export interface RaAccount {

@@ -1,5 +1,8 @@
 import { useLayoutEffect } from "react";
+import { WebPlayerControls } from "./components/gameplay/web-player-controls";
 import { LaunchingOverlay } from "./components/launching-overlay";
+import { PendingSavesBanner } from "./components/pending-saves-banner";
+import { ReconnectFoldersBanner } from "./components/reconnect-folders-banner";
 import { ScanProblemsHost } from "./components/scan-problems-dialog";
 import { SidebarNavigation } from "./components/sidebar-navigation";
 import { useBackendEventSync } from "./hooks/use-backend-event-sync";
@@ -24,7 +27,7 @@ export function AppShell() {
   const { data: setup, isPending } = useSetupState();
 
   if (isPending) return null; // local IPC: resolves within a frame
-  if (!setup?.hasFolders) return <FirstRunSetupPage />;
+  if (!setup?.hasFolders || setup.dataFolderChosen === false) return <FirstRunSetupPage />;
   return (
     <NavigationProvider initial={INITIAL_ROUTE}>
       <ShellLayout />
@@ -67,9 +70,12 @@ function ShellLayout() {
         onOpenSystem={openSystem}
       />
       <main ref={scrollRef} className="min-w-0 flex-1 overflow-y-auto px-10 pt-8 pb-14">
+        <ReconnectFoldersBanner />
+        <PendingSavesBanner />
         <RoutedPage route={route} />
       </main>
       <LaunchingOverlay />
+      <WebPlayerControls />
       <ScanProblemsHost />
     </div>
   );

@@ -8,7 +8,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-config-layers.workspace = true
+config-layers = { workspace = true, features = ["fs"] }
 http-download-util.workspace = true
 serde.workspace = true
 sha2.workspace = true

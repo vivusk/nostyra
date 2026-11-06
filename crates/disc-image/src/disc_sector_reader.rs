@@ -2,7 +2,7 @@
 //! raw 2352-byte sectors (MODE1 data at byte 16, MODE2 at 24), plain 2048-byte ISO
 //! sectors, CSO, or CHD (CD/GD tracks or DVD). Only the sectors asked for are read (no whole-image loads).
 
-use std::fs::File;
+use content_file_source::{stream_len, ContentFile};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
@@ -33,7 +33,7 @@ pub trait DiscReader {
 
 /// A file of fixed-size sectors with user data at a fixed offset inside each.
 pub struct FileTrackReader {
-    file: File,
+    file: ContentFile,
     sector_bytes: u64,
     data_offset: u64,
     /// Byte offset of track sector 0 (a cue `INDEX 01` past a stored pregap, a later
@@ -44,8 +44,8 @@ pub struct FileTrackReader {
 }
 
 impl FileTrackReader {
-    fn new(file: File, sector_bytes: u64, data_offset: u64) -> Result<Self, DiscError> {
-        let sectors = file.metadata()?.len() / sector_bytes;
+    fn new(mut file: ContentFile, sector_bytes: u64, data_offset: u64) -> Result<Self, DiscError> {
+        let sectors = stream_len(file.as_mut())? / sector_bytes;
         Ok(Self {
             file,
             sector_bytes,
@@ -64,8 +64,8 @@ impl FileTrackReader {
         base: u64,
         sectors: Option<u64>,
     ) -> Result<Self, DiscError> {
-        let file = open_track_file(path)?;
-        let available = file.metadata()?.len().saturating_sub(base) / sector_bytes;
+        let mut file = open_track_file(path)?;
+        let available = stream_len(file.as_mut())?.saturating_sub(base) / sector_bytes;
         Ok(Self {
             file,
             sector_bytes,
@@ -79,7 +79,7 @@ impl FileTrackReader {
     /// raw sync pattern means 2352-byte sectors (mode byte 15 picks the data offset),
     /// otherwise 2048-byte ISO sectors.
     pub fn open_auto(path: &Path) -> Result<Self, DiscError> {
-        let mut file = File::open(path)?;
+        let mut file = content_file_source::open(path)?;
         let mut head = [0u8; 16];
         let raw = file.read_exact(&mut head).is_ok() && head[..12] == SYNC;
         file.seek(SeekFrom::Start(0))?;
@@ -93,7 +93,7 @@ impl FileTrackReader {
         Self::open_with_mode(file, mode)
     }
 
-    fn open_with_mode(file: File, mode: TrackMode) -> Result<Self, DiscError> {
+    fn open_with_mode(file: ContentFile, mode: TrackMode) -> Result<Self, DiscError> {
         let (sector_bytes, data_offset) = mode_layout(mode)?;
         Self::new(file, sector_bytes, data_offset)
     }
@@ -157,8 +157,8 @@ pub(crate) fn open_cue_track(file: &Path, entry: &CueTrack) -> Result<FileTrackR
 }
 
 /// Opens a track file named by a sheet: a missing file is [`DiscError::MissingFile`].
-pub(crate) fn open_track_file(path: &Path) -> Result<File, DiscError> {
-    File::open(path).map_err(|e| match e.kind() {
+pub(crate) fn open_track_file(path: &Path) -> Result<ContentFile, DiscError> {
+    content_file_source::open(path).map_err(|e| match e.kind() {
         std::io::ErrorKind::NotFound => {
             DiscError::MissingFile(crate::m3u_playlist::display_name(path))
         }

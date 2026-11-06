@@ -10,6 +10,9 @@ use disc_image::DiscImageProbe;
 use system_catalog::{classify_among, ClassifyError, Media, SystemSpec};
 
 use crate::disc_file_grouping::group_disc_files;
+use crate::library_scan_options::ScanOptions;
+use crate::rom_archive::is_rom_archive;
+use rom_identity::{scan_zip, ZipScan};
 use walkdir::WalkDir;
 
 /// A ROM file of a known system within its size limits.
@@ -47,6 +50,15 @@ pub struct DiscoveredFiles {
 /// loops); errors are collected per entry, never abort the walk. Disc games made of
 /// several files (`.cue` + tracks, `.m3u` + discs) come out as one entry.
 pub fn discover_rom_files(folder: &Path, systems: &[&'static SystemSpec]) -> DiscoveredFiles {
+    discover_rom_files_with_options(folder, systems, ScanOptions::default())
+}
+
+/// Like [`discover_rom_files`], optionally inspecting single-ROM ZIP archives.
+pub fn discover_rom_files_with_options(
+    folder: &Path,
+    systems: &[&'static SystemSpec],
+    options: ScanOptions,
+) -> DiscoveredFiles {
     let mut found = DiscoveredFiles::default();
     for entry in WalkDir::new(folder).follow_links(false) {
         let entry = match entry {
@@ -65,7 +77,8 @@ pub fn discover_rom_files(folder: &Path, systems: &[&'static SystemSpec]) -> Dis
         let Some(ext) = entry.path().extension().and_then(|ext| ext.to_str()) else {
             continue;
         };
-        if !systems.iter().any(|spec| spec.has_extension(ext)) {
+        let archived = options.scan_zip_archives && is_rom_archive(entry.path());
+        if !archived && !systems.iter().any(|spec| spec.has_extension(ext)) {
             continue;
         }
         let failure = |reason: String| ScanFailure {
@@ -87,23 +100,31 @@ pub fn discover_rom_files(folder: &Path, systems: &[&'static SystemSpec]) -> Dis
         };
         // The classifier opens the file only when a size-fitting candidate checks
         // content (one small head read per `.nes`, a few sectors per disc image).
-        let system =
-            match classify_among(systems, ext, metadata.len(), entry.path(), &DiscImageProbe) {
-                Ok(system) => system,
-                // `NotRom`: content shows no ROM at all (a `README.md`), not a problem.
-                Err(
-                    ClassifyError::OutOfSize
-                    | ClassifyError::NoCandidate
-                    | ClassifyError::NotRom(_),
-                ) => {
-                    found.skipped += 1;
-                    continue;
-                }
-                Err(err) => {
-                    found.failures.push(failure(err.to_string()));
-                    continue;
-                }
-            };
+        let classified = if archived {
+            // Another system or not a single-ROM ZIP (arcade set, several ROMs):
+            // skipped quietly like any non-ROM file.
+            match scan_zip(entry.path(), systems) {
+                ZipScan::Rom(system) => Ok(system),
+                ZipScan::Skip => Err(ClassifyError::NoCandidate),
+                ZipScan::Problem(reason) => Err(ClassifyError::Io(reason)),
+            }
+        } else {
+            classify_among(systems, ext, metadata.len(), entry.path(), &DiscImageProbe)
+        };
+        let system = match classified {
+            Ok(system) => system,
+            // `NotRom`: content shows no ROM at all (a `README.md`), not a problem.
+            Err(
+                ClassifyError::OutOfSize | ClassifyError::NoCandidate | ClassifyError::NotRom(_),
+            ) => {
+                found.skipped += 1;
+                continue;
+            }
+            Err(err) => {
+                found.failures.push(failure(err.to_string()));
+                continue;
+            }
+        };
         let mtime_ns = metadata
             .modified()
             .ok()

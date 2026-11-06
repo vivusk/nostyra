@@ -25,7 +25,7 @@ interface ControlsBindingRowProps {
 /** One action / hotkey: label, up to two input chips (each removable), Add, Clear;
  *  in game scope an inherited row is muted with "Default" and an "Override" button. */
 export function ControlsBindingRow({ row, device, catalog, labelStyle, gameScope, busy, addDisabledReason, onAdd, onSetBinds }: ControlsBindingRowProps) {
-  const { label, binds, inherited } = row;
+  const { label, binds, inherited, unused } = row;
   const full = binds.length >= catalog.maxBinds;
   const addReason = addDisabledReason ?? (full ? `Up to ${catalog.maxBinds} inputs; remove one first` : null);
 
@@ -58,6 +58,11 @@ export function ControlsBindingRow({ row, device, catalog, labelStyle, gameScope
             </span>
           );
         })}
+        {unused.length > 0 && (
+          <span className="text-xs text-warning" title="Kept for the desktop app">
+            Not used in the browser: {unused.map((input) => inputLabel(device, input, catalog, labelStyle)).join(", ")}
+          </span>
+        )}
         {inherited ? (
           <>
             <span className="text-xs text-muted">Default</span>

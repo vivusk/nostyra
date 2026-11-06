@@ -4,6 +4,7 @@
 use crate::disc_probe::Media;
 use crate::rom_header_rules::{ContentProbe, HeaderRule};
 use crate::system_specs::{AnalogSticks, SystemSpec};
+use crate::web_core_specs::WEB_MGBA;
 
 /// Game Boy: `.gb` (the No-Intro naming; `.gbc` is its own system), 32 KiB .. 8 MiB.
 /// mGBA only loads files with the first 4 Nintendo logo bytes at 0x104.
@@ -28,6 +29,7 @@ pub const GB: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(4),
+    web_core: Some(WEB_MGBA),
 };
 
 /// Game Boy Color: `.gbc`, same cartridge header and limits as the Game Boy.
@@ -52,6 +54,7 @@ pub const GBC: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(6),
+    web_core: Some(WEB_MGBA),
 };
 
 /// Game Boy Advance: `.gba`, 1 KiB (homebrew) .. 32 MiB. mGBA wants an ARM branch
@@ -84,6 +87,7 @@ pub const GBA: SystemSpec = SystemSpec {
     analog_triggers: false,
     touch_screen: None,
     ra_console_id: Some(5),
+    web_core: Some(WEB_MGBA),
 };
 
 /// GB / GBC cartridge check: the first 4 logo bytes at 0x104 (what mGBA checks).

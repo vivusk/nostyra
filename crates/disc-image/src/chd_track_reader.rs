@@ -3,7 +3,7 @@
 //! which fixes where the user data sits inside a frame. Only track 1 is read (the
 //! PlayStation data track).
 
-use std::fs::File;
+use content_file_source::ContentFile;
 use std::io::BufReader;
 use std::path::Path;
 
@@ -21,7 +21,7 @@ pub const CHD_FRAME_BYTES: u64 = 2448;
 const MAX_HUNK_BYTES: u64 = 1024 * 1024;
 
 pub struct ChdTrackReader {
-    chd: Chd<BufReader<File>>,
+    chd: Chd<BufReader<ContentFile>>,
     hunk_bytes: u64,
     data_offset: u64,
     /// Image frame of the track's sector 0 (after a stored pregap).
@@ -43,7 +43,7 @@ impl ChdTrackReader {
         path: &Path,
         pick: impl FnOnce(&[ChdTrackEntry]) -> Option<&ChdTrackEntry>,
     ) -> Result<Self, DiscError> {
-        let mut chd = Chd::open(BufReader::new(File::open(path)?), None)?;
+        let mut chd = Chd::open(BufReader::new(content_file_source::open(path)?), None)?;
         let hunk_bytes = u64::from(chd.header().hunk_size());
         if hunk_bytes == 0 || hunk_bytes > MAX_HUNK_BYTES || hunk_bytes % CHD_FRAME_BYTES != 0 {
             return Err(DiscError::Format("CHD is not a CD image (hunk size)"));

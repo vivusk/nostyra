@@ -5,6 +5,7 @@ import { saveSlotLabel } from "../../lib/save-slot-label";
 import { useGameSession, useLaunchGame } from "../../hooks/use-game-session";
 import { useDeleteSaveState, useSaveStates } from "../../hooks/use-save-state-queries";
 import { ConfirmDialog } from "../confirm-dialog";
+import { capabilities } from "../../backend";
 import { MemoryCardsPanel } from "./memory-cards-panel";
 import { SaveStateCard } from "./save-state-card";
 
@@ -52,7 +53,7 @@ export function SaveStatesTab({ game }: { game: GameDetail }) {
           ))}
         </div>
       )}
-      <MemoryCardsPanel gameId={game.id} running={running} missing={game.missing} />
+      {capabilities.memoryCards && <MemoryCardsPanel gameId={game.id} running={running} missing={game.missing} />}
       {confirmSlot !== null && (
         <ConfirmDialog
           title={`Delete ${saveSlotLabel(confirmSlot).toLowerCase()}?`}
