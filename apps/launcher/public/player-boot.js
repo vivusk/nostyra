@@ -4,7 +4,7 @@
 // EmulatorJS 4.2.3 globals, injects the saves into EmulatorJS's file system before
 // the game starts, and relays SRAM, save-state and exit events back. Messages:
 // parent → player: boot, flush, exit {autoState}, load-state {state}, message {text},
-//                  pause, resume
+//                  pause, resume, key {code, down, repeat}
 // player → parent: ready, started {saveFilePath}, sram {sram, rtc}, save-state-request
 //                  {state, screenshot}, load-state-request, auto-state {state,
 //                  screenshot}, error {message, fatal}, exited, exit-request
@@ -20,6 +20,7 @@
   let emu = null;
   let started = false;
   let exiting = false;
+  let keyboard = null; // player-input.js, once started
 
   const post = (type, data) => parent.postMessage({ from: "player", type, data: data || {} }, location.origin);
   // `fatal`: the game cannot start (EmulatorJS's own start error, or the browser ran
@@ -104,7 +105,7 @@
       post("started", { saveFilePath: instance.gameManager.getSaveFilePath() });
       if (boot.loadState) setTimeout(() => instance.gameManager.loadState(boot.loadState), 10);
       if (boot.notice) instance.displayMessage(boot.notice, 5000);
-      window.NostyraPlayerInput.install(boot.input, {
+      keyboard = window.NostyraPlayerInput.install(boot.input, {
         simulate: (player, id, value) => instance.gameManager.simulateInput(player, id, value),
         togglePause,
         save: () => requestSave(instance.gameManager.getState()),
@@ -188,6 +189,9 @@
     },
     resume() {
       if (started) emu.play();
+    },
+    key({ code, down, repeat }) {
+      if (keyboard && !exiting) keyboard.forwardedKey(code, down, repeat);
     },
   };
 

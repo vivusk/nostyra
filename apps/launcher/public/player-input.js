@@ -14,6 +14,7 @@
   const PRESSED_VALUE = 0.5;
 
   // `input`: PlayerInput; `actions`: {simulate(player, id, value), togglePause(), save(), load(), exit()}.
+  // Returns {forwardedKey(code, down, repeat)}.
   function install(input, actions) {
     let exiting = false;
     const exit = () => {
@@ -51,20 +52,31 @@
     const keyHotkeys = {};
     for (const [name, codes] of Object.entries(input.hotkeys.keyboard)) for (const code of codes) keyHotkeys[code] = name;
     const escape = holdToExit();
-    const onKey = (event) => {
-      const down = event.type === "keydown";
-      const ids = input.keys[event.code];
-      const name = keyHotkeys[event.code];
-      if (event.code !== "Escape" && !ids && !name) return;
-      event.preventDefault();
-      event.stopPropagation(); // EmulatorJS's own key handling stays out (no keyboard binds there)
-      if (event.repeat) return;
-      if (event.code === "Escape") return escape(down);
+    // Returns whether the key is Nostyra's (bound, or Esc).
+    const handleKey = (code, down, repeat) => {
+      const ids = input.keys[code];
+      const name = keyHotkeys[code];
+      if (code !== "Escape" && !ids && !name) return false;
+      if (repeat) return true;
+      if (code === "Escape") {
+        escape(down);
+        return true;
+      }
       for (const id of ids || []) actions.simulate(0, id, down ? pressValue(id) : 0);
       if (name) hotkey(name, down);
+      return true;
+    };
+    const onKey = (event) => {
+      if (!handleKey(event.code, event.type === "keydown", event.repeat)) return;
+      event.preventDefault();
+      event.stopPropagation(); // EmulatorJS's own key handling stays out (no keyboard binds there)
     };
     window.addEventListener("keydown", onKey, true);
     window.addEventListener("keyup", onKey, true);
+    // Keys need this window focused (Safari / macOS does not move focus into the
+    // frame on its own): take it at start and on every click into the game.
+    window.focus();
+    window.addEventListener("pointerdown", () => window.focus(), true);
 
     const padHotkeys = {};
     for (const [name, indices] of Object.entries(input.hotkeys.gamepad)) for (const index of indices) padHotkeys[index] = name;
@@ -99,6 +111,8 @@
       requestAnimationFrame(poll);
     };
     requestAnimationFrame(poll);
+    // Keys the launcher page caught and forwarded (player-frame.ts).
+    return { forwardedKey: (code, down, repeat) => void handleKey(code, down, repeat) };
   }
 
   window.NostyraPlayerInput = { install };

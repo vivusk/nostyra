@@ -11,7 +11,9 @@ export type ToPlayer =
   | { type: "load-state"; state: Uint8Array }
   | { type: "message"; text: string }
   | { type: "pause" }
-  | { type: "resume" };
+  | { type: "resume" }
+  /** A key that reached the launcher page instead of the player (focus lost). */
+  | { type: "key"; code: string; down: boolean; repeat: boolean };
 
 /** What the player needs to start a game. */
 export interface PlayerBoot {

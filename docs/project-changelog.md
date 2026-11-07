@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+## 2026-11-07 — v0.3.2
+- Release v0.3.2 (`docs/release-notes-v0.3.2.md`): web player keyboard on macOS. `player-frame.ts` focuses the iframe's window on load (focusing the element before load left keys on the launcher page) and forwards bound keys / Esc that still reach the page as a `key` message (not while a `<dialog>` is open), then refocuses the player; `player-input.js` focuses its window at start and on pointerdown and handles forwarded keys. Desktop app unchanged.
+
 ## 2026-11-06 — v0.3.1
 - Release v0.3.1 (`docs/release-notes-v0.3.1.md`): Nostyra Online is served at `https://nostyra.com/play/` (was `/online/`). One base path `WEB_BASE_PATH` in `apps/launcher/web-headers.mjs` (default `/play`, `NOSTYRA_WEB_BASE` overrides) drives Vite `base`, every response-header rule and the package folder; `build-info.json` gains `basePath`; `browser-gate.js` falls back to the page folder. Deploy guide: `/play` paths + "Migrating from /online/" (308 redirect `/online/:path*` → `/play/:path*`, data kept: OPFS, IndexedDB `nostyra-online`, Web Lock and folder permissions are per origin). Desktop app unchanged.
 

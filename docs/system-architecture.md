@@ -654,7 +654,10 @@ OPFS, desktop migrations unchanged); the desktop `nostyra.db` is never opened.
   tables `public/player-input.js` reads: port-1 keyboard by physical `KeyboardEvent.code`
   (both binds, `simulateInput`), web hotkeys for keyboard and pads, fixed Esc / Guide (tap =
   pause/resume, hold 1 s = `exit-request` → Exit), Select+Start held = pause/resume. EJS's
-  control-remap menu is hidden (`EJS_Buttons.gamepad = false`).
+  control-remap menu is hidden (`EJS_Buttons.gamepad = false`). Keyboard focus (0.3.2, macOS):
+  `player-frame.ts` focuses the iframe's window on `load` and forwards bound keys / Esc that
+  land on the launcher page as `{type: "key"}` (skipped while a `<dialog>` is open), then
+  refocuses the player; `player-input.js` focuses its window at start and on pointerdown.
 - **Packaging + hosting** (phase 09): `scripts/build-web.{ps1,sh}` → `build-web.mjs` runs the
   wasm build, EmulatorJS fetch (sha256), DAT copy, licence notices (`public/notices/`: Nostyra
   GPL-3.0, cargo-about over `crates/web-bindings` for `wasm32` with `about-web.hbs`, npm notices
