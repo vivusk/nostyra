@@ -74,7 +74,7 @@ function ShellLayout() {
         activeSystem={library.system}
         onOpenSystem={openSystem}
       />
-      <main ref={scrollRef} className="min-w-0 flex-1 overflow-y-auto px-10 pt-8 pb-14">
+      <main ref={scrollRef} className="relative min-w-0 flex-1 overflow-y-auto px-10 pt-8 pb-14">
         <ReconnectFoldersBanner />
         <PendingSavesBanner />
         <UpdateAvailableBanner />

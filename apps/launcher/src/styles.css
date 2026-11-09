@@ -8,6 +8,14 @@
     height: 100%;
   }
 
+  /* The app scrolls inside <main> only. Without this, WebKit (macOS) chains a scroll
+     that reaches the end of <main> to the document and drags the whole UI off-screen. */
+  html,
+  body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   body {
     margin: 0;
     background: var(--color-app-bg);
