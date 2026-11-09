@@ -1,8 +1,8 @@
 //! Process-wide launcher state managed by Tauri: the database, the per-system DAT
 //! and metadata catalogs, data paths, the HTTP client and the handles of the (at most
-//! one each) running scan, artwork fetch, core download and game.
+//! one each) running scan, artwork fetch, core download, game and cloud sync job.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -15,6 +15,7 @@ use storage_db::Connection;
 use tauri::{AppHandle, Manager};
 
 use crate::app_events::{ArtworkProgressPayload, ScanProgressPayload};
+use crate::cloud_sync_state::CloudSyncState;
 use crate::dat_file_path::libretro_database_dir;
 use crate::runner_binary_path::runner_binary_path;
 
@@ -29,9 +30,12 @@ pub struct AppPaths {
 }
 
 /// The running game, if any (M1: one session at a time).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ActiveSession {
     pub game_id: i64,
+    /// Cloud sync units the runner may write (`cloud_unit_guard::session_unit_keys`):
+    /// no sync touches them until the session ends.
+    pub unit_keys: BTreeSet<String>,
 }
 
 pub struct AppState {
@@ -60,6 +64,8 @@ pub struct AppState {
     /// Cancel flag of the running core download; `None` = idle.
     pub core_download: Mutex<Option<Arc<AtomicBool>>>,
     pub session: Mutex<Option<ActiveSession>>,
+    /// Cloud saves: job slot, cached account, last results (lock order session → job).
+    pub cloud: CloudSyncState,
 }
 
 impl AppState {
@@ -105,6 +111,7 @@ impl AppState {
             artwork_progress: Mutex::new(None),
             core_download: Mutex::new(None),
             session: Mutex::new(None),
+            cloud: CloudSyncState::default(),
         })
     }
 

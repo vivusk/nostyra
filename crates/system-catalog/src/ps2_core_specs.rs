@@ -16,6 +16,10 @@ pub const PS2_BIOS_RULE: FirmwareRule = FirmwareRule::Ps2Romdir {
     option: "pcsx2_bios",
 };
 
+/// Folder under `<data>/system/` where PCEE2 keeps the shared memory cards
+/// (`Mcd001.ps2` / `Mcd002.ps2`, all PS2 games): cloud sync treats it as one unit.
+pub const PS2_MEMCARD_SUBDIR: &str = "pcsx2/memcards";
+
 /// No firmware list (the ROMDIR rule validates any dump), no memory-card slots in
 /// the save folder (shared `Mcd001.ps2` / `Mcd002.ps2` under `system/pcsx2/memcards`,
 /// as on a real console). States: a constant 96 MiB from before frame 1 (no requery,

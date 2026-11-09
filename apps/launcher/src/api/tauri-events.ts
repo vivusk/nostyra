@@ -16,7 +16,23 @@ export const EVENTS = {
   achievementsChanged: "achievements-changed",
   /** The stored RetroAchievements login was rejected and deleted. */
   raLoggedOut: "ra-logged-out",
+  /** Cloud library pass progress: `{ done, total }` units (startup, Sync now, "for all"). */
+  cloudSyncProgress: "cloud-sync-progress",
+  /** `{ gameId? }`: cloud status / one game's sync state changed (refetch). */
+  cloudStatusChanged: "cloud-status-changed",
+  /** Window close held until a cloud upload ends (no payload). */
+  cloudClosingWait: "cloud-closing-wait",
 } as const;
+
+export interface CloudSyncProgressEvent {
+  done: number;
+  total: number;
+}
+
+export interface CloudStatusChangedEvent {
+  /** Set by single-game jobs; absent after a pass, sign-out or a pushed session. */
+  gameId?: number;
+}
 
 export type ScanProgressEvent = ScanProgress;
 

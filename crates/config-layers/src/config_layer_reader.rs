@@ -7,6 +7,7 @@ use std::path::Path;
 use toml::Table;
 
 use crate::achievements_config::strip_global_only;
+use crate::cloud_config::strip_cloud_section;
 use crate::input_binding_schema::defaults_table;
 use crate::input_conflicts::resolve_input_conflicts;
 use crate::known_key_checks::drop_invalid_keys;
@@ -23,7 +24,7 @@ pub fn parse_layer_text(text: &str, source: &Path) -> Result<Table, ConfigError>
 }
 
 /// Merges parsed layers (lowest first, the global layer first; `None` = missing
-/// layer) over the built-in defaults: global-only sections (`[achievements]`) come
+/// layer) over the built-in defaults: global-only sections (`[achievements]`, `[cloud]`) come
 /// from the first layer alone, invalid values are dropped (logged via `tracing`),
 /// binding conflicts are resolved and returned as warnings. `system_actions` = the
 /// game system's pad actions (`None` for no-game views).
@@ -36,6 +37,7 @@ pub fn resolve_layer_tables_with_warnings(
         let Some(mut layer) = layer else { continue };
         if index > 0 {
             strip_global_only(&mut layer, source);
+            strip_cloud_section(&mut layer, source);
         }
         drop_invalid_keys(&mut layer, source);
         deep_merge(&mut merged, layer);

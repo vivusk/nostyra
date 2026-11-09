@@ -67,8 +67,9 @@ mod tests {
     #[test]
     fn known_keys_cover_the_whole_schema() {
         let keys: Vec<String> = known_keys().collect();
-        // 5 menu options + 2 resume + 5 achievements + 2 × 24 actions + 2 × 8 hotkeys.
-        assert_eq!(keys.len(), 5 + 2 + 5 + 48 + 16);
+        // 5 menu options + 2 resume + 5 achievements + 4 cloud + 2 × 24 actions +
+        // 2 × 8 hotkeys.
+        assert_eq!(keys.len(), 5 + 2 + 5 + 4 + 48 + 16);
         for key in [
             "rewind.buffer_mb",
             "resume.mode",

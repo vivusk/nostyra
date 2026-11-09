@@ -16,10 +16,11 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager};
 
 use crate::app_state::{lock, AppState};
+use crate::cloud_unit_guard::ensure_unit_idle;
 use crate::command_error::{CommandError, CommandResult};
 use crate::commands::achievements_mode::{block_loads_in_hardcore, hardcore_for_game};
 use crate::commands::blocking::run_blocking;
-use crate::commands::game_data_target::{ensure_idle, GameDataTarget};
+use crate::commands::game_data_target::GameDataTarget;
 use crate::commands::state_load_rule::StateLoadRule;
 
 /// One used slot (`slotN.state` or `auto.state` exists).
@@ -62,8 +63,8 @@ pub async fn list_save_states(app: AppHandle, game_id: i64) -> CommandResult<Vec
 }
 
 /// Removes `slotN.*` or `auto.*` (state, sidecar, thumbnail). Refused (`busy`) while
-/// this game runs: the session lock is held throughout, so Play cannot start
-/// mid-delete.
+/// this game runs or a cloud sync holds its folder: the session lock is held
+/// throughout, so neither Play nor a cloud unit can start mid-delete.
 #[tauri::command]
 pub async fn delete_save_state(
     app: AppHandle,
@@ -80,7 +81,7 @@ pub async fn delete_save_state(
             ));
         };
         let session = lock(&state.session);
-        ensure_idle(session.map(|s| s.game_id), game_id)?;
+        ensure_unit_idle(session.as_ref(), &state.cloud, game_id, &target)?;
         delete_slot_files(&dir, slot).map_err(|err| {
             CommandError::new("storage", format!("Cannot delete the save: {err}"))
         })?;

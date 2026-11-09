@@ -26,6 +26,10 @@ export interface Capabilities {
   gamepadCaptureNative: boolean;
   /** Move the whole data folder elsewhere (web: choose a folder instead). */
   dataFolderMove: boolean;
+  /** Check GitHub for a newer desktop release (web: always the deployed build). */
+  updateCheck: boolean;
+  /** Cloud saves (Google Drive / OneDrive / Dropbox / Local folder sync). */
+  cloudSaves: boolean;
 }
 
 /** Which edition this build is. */

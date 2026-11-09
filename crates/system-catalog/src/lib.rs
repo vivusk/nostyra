@@ -100,7 +100,7 @@ pub use nds_system_spec::NDS;
 pub use nintendo_64_system_spec::NINTENDO_64;
 pub use per_extension_probe::{dat_identified_candidates, ExtCheck, ExtensionCheck};
 pub use ps2_bios_romdir::{parse_ps2_bios, Ps2BiosVersion, PS2_BIOS_MAX_BYTES, PS2_BIOS_MIN_BYTES};
-pub use ps2_core_specs::{PCEE2, PS2_BIOS_RULE};
+pub use ps2_core_specs::{PCEE2, PS2_BIOS_RULE, PS2_MEMCARD_SUBDIR};
 pub use ps2_system_spec::PS2;
 pub use ps2_video_mode::Ps2VideoMode;
 pub use psp_core_spec::PPSSPP;

@@ -7,6 +7,7 @@
 use serde::Serialize;
 use toml::{Table, Value};
 
+use crate::cloud_config::CLOUD_COMMAND_ONLY_KEYS;
 use crate::core_layer_id::BUNDLED_PRESETS;
 use crate::input_binding_names::INPUT_KEY_PREFIXES;
 use crate::known_values_view::resolved_known_values;
@@ -74,9 +75,9 @@ pub fn is_input_key(key: &str) -> bool {
         .any(|prefix| key.starts_with(prefix))
 }
 
-/// Whether a dotted key is global-layer only (`[achievements]`).
+/// Whether a dotted key is global-layer only (`[achievements]`, `[cloud]`).
 pub fn is_global_only_key(key: &str) -> bool {
-    key.starts_with("achievements.")
+    key.starts_with("achievements.") || key.starts_with("cloud.")
 }
 
 /// Edits removing every binding key (gameplay and resume keys stay): "Reset controls".
@@ -87,9 +88,15 @@ pub fn reset_controls_edits() -> Vec<(String, Option<Value>)> {
         .collect()
 }
 
-/// Why a single-key write of `key` is refused (`None` = allowed): unknown keys, and
-/// global-only keys in a game layer (refused rather than silently ignored).
+/// Why a single-key write of `key` is refused (`None` = allowed): unknown keys,
+/// global-only keys in a game layer (refused rather than silently ignored), and the
+/// cloud provider / folder (only the validating cloud commands set those).
 pub fn settable_key_refusal(key: &str, game_scope: bool) -> Option<String> {
+    if CLOUD_COMMAND_ONLY_KEYS.contains(&key) {
+        return Some(format!(
+            "`{key}` is changed in Settings → Cloud saves only."
+        ));
+    }
     if game_scope && is_global_only_key(key) {
         return Some(format!("`{key}` is global-only."));
     }
@@ -129,8 +136,8 @@ mod tests {
         );
         assert_eq!(
             view.resolved.len(),
-            12,
-            "5 menu options + 2 resume + 5 achievements keys"
+            16,
+            "5 menu options + 2 resume + 5 achievements + 4 cloud keys"
         );
         assert_eq!(
             view.input.resolved.len(),
@@ -157,6 +164,12 @@ mod tests {
         assert_eq!(settable_key_refusal("video.shader", true), None);
         assert_eq!(settable_key_refusal("achievements.enabled", false), None);
         assert!(settable_key_refusal("achievements.enabled", true).is_some());
+        assert!(settable_key_refusal("cloud.provider", true).is_some());
+        assert_eq!(settable_key_refusal("cloud.sync_states", false), None);
+        assert_eq!(settable_key_refusal("cloud.sync_on_start", false), None);
+        for key in ["cloud.provider", "cloud.local_folder"] {
+            assert!(settable_key_refusal(key, false).is_some(), "{key}");
+        }
         assert!(settable_key_refusal("video.future", false).is_some());
         assert_eq!(reset_controls_edits().len(), 64);
     }

@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+## 2026-11-09 — v0.5.0
+- Release v0.5.0 (`docs/release-notes-v0.5.0.md`): cloud saves with Google Drive and a Local folder (M19 phases 01–04, 07, 08; Google app published to production with `drive.file` only; client id + desktop secret embedded at build time from `NOSTYRA_GOOGLE_CLIENT_ID` / `NOSTYRA_GOOGLE_CLIENT_SECRET`, not committed; OneDrive / Dropbox show "not available in this version yet") and the update notice.
+
+### 2026-11-09 — M19 Cloud saves (phases 01–04, 07, 08; manual checks pending)
+- feat(cloud-sync): new `crates/cloud-sync`: manifest, local snapshot, pure three-way planner (no silent overwrite), executor with staged pull / immutable blobs / GC, backups, `index.json`, device identity, `CloudStorageProvider` trait, Local folder + fake providers (`017fc7f`, `ccfd704`).
+- feat(cloud-oauth): OAuth loopback + PKCE sign-in, DPAPI refresh-token store, `http-download-util` generic request + `Retry-After` backoff (`1ff37ad`).
+- feat(cloud-launcher): `[cloud]` config, Tauri commands, pull before play (15 s budget) / push after exit / start pass / Sync now, per-unit guards (`4a1c4f2`); UI: Settings → Cloud saves, conflict + bulk dialogs, Detail status chip, launching overlay (`d96e1f7`, `fcae488`).
+- feat(cloud-gdrive): Google Drive provider (Drive v3 `drive.file`, visible "Nostyra" folder, `headRevisionId` re-check since v3 ignores `If-Match`, 5 MiB resumable uploads); launcher enables it only when `NOSTYRA_GOOGLE_CLIENT_ID` is set at run or build time; `http-download-util` follows redirects for GET only (`a80a11f`). Spike report: `plans/261109-1210-cloud-saves-gdrive-onedrive-dropbox/reports/phase-00-oauth-and-provider-api-spike-report.md`.
+- Pending: OneDrive (05), Dropbox (06), integration + production app publishing (09).
+
+### Update checker
+- feat(update-check): desktop launcher tells you when a newer release exists — GitHub `/releases/latest` (ETag, ≤ 1/day, cached in settings), banner (Open release page / Skip this version / Later), Settings → Updates (version, startup toggle, Check now); only releases with the Windows portable zip count; no download, no telemetry; `NOSTYRA_UPDATE_CURRENT_VERSION` override for manual checks; web edition shows nothing (`add2284`, `3413ccd`). Manual checks pending (`plans/261109-1210-update-checker/reports/update-checker-manual-test-report.md`).
+
 ## 2026-11-09 — v0.4.0
 - Release v0.4.0 (`docs/release-notes-v0.4.0.md`): four new systems — Sony PlayStation 2 on PCEE2 (M18, desktop only, user BIOS required, asked for on Play) and Atari 2600 / 7800 / Lynx on Stella / ProSystem / Handy (M17, also in Nostyra Online); RetroAchievements on 18 systems; `scripts/run-debug.ps1` for a rebuilt debug launcher. Details in the M17 / M18 sections below.
 

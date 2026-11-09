@@ -2,6 +2,7 @@
 //! metadata, favorite, artwork rows cascade) plus the files the app keeps for it —
 //! save folder (SRAM, save states, resume point — the web edition's `web-*` states
 //! and `save.web.srm` in it belong to the game too), game config layer and cached art.
+//! Its cloud base manifests go too (the cloud copy stays: a re-add pulls it back).
 //! Only entries carrying the game's content id are deleted; a legacy `<rom key>`
 //! entry (maybe shared by several ROMs of that file name) is never touched.
 //! A present game is never removed (the Library "Missing" filter lists candidates).
@@ -13,9 +14,10 @@ use storage_db::{ArtworkRecord, Connection, Game};
 use tauri::{AppHandle, Manager};
 
 use crate::app_state::{lock, AppState};
+use crate::cloud_unit_guard::{ensure_unit_idle, remove_unit_bases};
 use crate::command_error::{CommandError, CommandResult};
 use crate::commands::blocking::run_blocking;
-use crate::commands::game_data_target::ensure_idle;
+use crate::commands::game_data_target::GameDataTarget;
 
 /// Removes one missing game; `invalid` when the id is unknown or the ROM is present.
 #[tauri::command]
@@ -40,7 +42,8 @@ pub async fn remove_all_missing_games(app: AppHandle) -> CommandResult<usize> {
 
 /// Files first, then the row: a failed file delete keeps the row so the user can
 /// retry. Holds the scan lock (a rescan could restore or take over a row mid-way)
-/// and the session lock (Play cannot start a game being removed).
+/// and the session lock (neither Play nor a cloud unit can start on a game being
+/// removed).
 fn remove_games(state: &AppState, ids: &[i64], strict: bool) -> CommandResult<usize> {
     let scan = lock(&state.scan_cancel);
     if scan.is_some() {
@@ -64,7 +67,7 @@ fn remove_games(state: &AppState, ids: &[i64], strict: bool) -> CommandResult<us
                 _ => continue,
             }
         };
-        ensure_idle(session.map(|s| s.game_id), game_id)?;
+        ensure_unit_idle(session.as_ref(), &state.cloud, game_id, &plan.target())?;
         plan.delete_files(&state.paths.data_root, &state.paths.artwork_dir)
             .map_err(|err| {
                 CommandError::new("storage", format!("Cannot delete the game's data: {err}"))
@@ -115,6 +118,16 @@ impl RemovalPlan {
         })
     }
 
+    /// The game's data facts (unit guard).
+    fn target(&self) -> GameDataTarget {
+        GameDataTarget {
+            system: self.system.clone(),
+            rom_path: self.rom_path.clone(),
+            content_sha1: self.content_sha1.clone(),
+            missing: true,
+        }
+    }
+
     fn delete_files(&self, data_root: &Path, artwork_dir: &Path) -> io::Result<()> {
         for file in &self.artwork_files {
             remove_file_if_present(&artwork_dir.join(file))?;
@@ -125,6 +138,7 @@ impl RemovalPlan {
         if self.key_shared {
             return Ok(());
         }
+        remove_unit_bases(data_root, &self.system, &self.content_sha1)?;
         let saves = ipc_protocol::saves_system_dir(data_root, &self.system);
         if let Some(dir) = ipc_protocol::find_game_entry(&saves, &id, "") {
             match std::fs::remove_dir_all(&dir) {

@@ -35,6 +35,8 @@ ALLOW=(
   "crates/disc-image/src/test_gd_images.rs" # test-only fixtures (cfg(test) / feature test-images): Redump and TOSEC track file names
   "crates/rom-identity/src/clrmamepro_dat_parser.rs" # DAT format: libretro NES DAT names headered ROMs *.nes
   "crates/ipc-protocol/src/shared_data_paths.rs" # RTC_FILE_NAME = "rtc.bin": RTC save file name, not a ROM extension
+  "crates/cloud-sync/src/token_store_files.rs" # "refresh-token.bin": DPAPI token file name, not a ROM extension
+  "apps/launcher/src/lib/cloud-file-labels.ts" # memory-card extensions ("ps2", "gci") / "GC" folder: file labels in cloud conflict dialog
 )
 
 pattern='"(nes|snes|snes9x|mesen|SNES|NES|gb|gbc|gba|mgba|GB|GBC|GBA|psx|pcsx-rearmed|pcsx_rearmed|PS1|n64|N64|mupen64plus-next|mupen64plus_next|genesis|sms|gg|sg1000|genesis_plus_gx|MD|SMS|GG|SG|dreamcast|flycast|flycast_libretro|DC|ps2|PS2|pcee2|pcee2_libretro|psp|ppsspp|ppsspp_libretro|PSP|nds|NDS|melonds_ds|melondsds_libretro|gc|GC|wii|Wii|dolphin-emu|dolphin_libretro|atari2600|atari7800|lynx|2600|7800|Lynx|stella|prosystem|handy)"|"reicast_[^"]*"|"pcsx2_[^"]*"|"ppsspp_[^"]*"|"melonds_[^"]*"|"dolphin_[^"]*"|"stella_[^"]*"|"prosystem_[^"]*"|"handy_[^"]*"|"[^"]*\.(sfc|nes|gb|gbc|gba|z64|v64|n64|md|gen|smd|sms|gg|sg|cue|bin|iso|chd|pbp|m3u|gdi|cdi|cso|zso|nds|dsi|ids|gcm|ciso|gcz|rvz|wia|wbfs|dol|elf|a26|a78|lnx|lyx|bll)[^"]*"|"[^"]*\.o"'

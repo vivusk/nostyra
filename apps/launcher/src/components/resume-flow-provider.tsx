@@ -2,17 +2,24 @@ import { useCallback, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { gameplayCommands, type ResumeInfo } from "../api/tauri-commands-gameplay";
 import { queryKeys } from "../api/query-keys";
+import { capabilities } from "../backend";
 import { useLaunchGame } from "../hooks/use-game-session";
 import { PlayGameContext, resumeDecision } from "../hooks/use-play-game";
+import { CloudPrePlayContext, useCloudPrePlayState } from "../hooks/use-cloud-pre-play";
+import { CloudConflictDialog } from "./cloud-conflict-dialog";
+import { CloudDialogsHost } from "./cloud-dialogs-host";
 import { CoreInstallDialog } from "./core-install-dialog";
 import { ResumeDialog } from "./resume-dialog";
 
 /** Provides `usePlayGame()` and renders the Resume dialog (Continue / Start fresh) and
  *  the missing-core install prompt once for the whole app, so every Play entry point
- *  behaves the same. (The missing-BIOS prompt lives in `AppShell`: it needs navigation.) */
+ *  behaves the same. (The missing-BIOS prompt lives in `AppShell`: it needs navigation.)
+ *  Cloud saves (desktop): the pre-play pull + its conflict dialog run first, then the
+ *  resume decision on the resulting files; also hosts the other cloud dialogs. */
 export function ResumeFlowProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { mutate: launch } = useLaunchGame();
+  const { syncBeforePlay, pending: cloudConflict } = useCloudPrePlayState();
   const [asking, setAsking] = useState<{ gameId: number; info: ResumeInfo } | null>(null);
   // One decision at a time: a double click must not launch twice.
   const deciding = useRef(false);
@@ -22,6 +29,7 @@ export function ResumeFlowProvider({ children }: { children: ReactNode }) {
       if (deciding.current) return;
       deciding.current = true;
       try {
+        if (!(await syncBeforePlay(gameId))) return; // conflict dialog cancelled
         // Always fresh from disk: the resume point changes when a session ends.
         const info = await queryClient.fetchQuery({
           queryKey: queryKeys.resumeInfo(gameId),
@@ -41,14 +49,25 @@ export function ResumeFlowProvider({ children }: { children: ReactNode }) {
         deciding.current = false;
       }
     },
-    [queryClient, launch],
+    [queryClient, launch, syncBeforePlay],
   );
   const playGame = useCallback((gameId: number) => void play(gameId), [play]);
 
   return (
     <PlayGameContext.Provider value={playGame}>
-      {children}
+      <CloudPrePlayContext.Provider value={syncBeforePlay}>{children}</CloudPrePlayContext.Provider>
       <CoreInstallDialog />
+      {capabilities.cloudSaves && <CloudDialogsHost />}
+      {cloudConflict && (
+        <CloudConflictDialog
+          gameId={cloudConflict.gameId}
+          conflict={cloudConflict.conflict}
+          skipLabel="Play without syncing"
+          onChoose={cloudConflict.answer}
+          onSkip={() => cloudConflict.answer("skip")}
+          onClose={() => cloudConflict.answer("cancel")}
+        />
+      )}
       {asking && (
         <ResumeDialog
           gameId={asking.gameId}

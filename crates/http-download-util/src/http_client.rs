@@ -24,7 +24,7 @@ pub type HttpResponse = ureq::http::Response<ureq::Body>;
 /// and is `Send + Sync`), so one instance serves every worker thread.
 #[derive(Debug, Clone)]
 pub struct HttpClient {
-    agent: ureq::Agent,
+    pub(crate) agent: ureq::Agent,
     offline: bool,
 }
 
@@ -74,8 +74,7 @@ impl HttpClient {
             .headers()
             .get(ureq::http::header::RETRY_AFTER)
             .and_then(|value| value.to_str().ok())
-            .and_then(|value| value.trim().parse::<u64>().ok())
-            .map(Duration::from_secs);
+            .and_then(|value| crate::parse_retry_after(value, std::time::SystemTime::now()));
         tracing::debug!(url, status = status.as_u16(), "http request failed");
         Err(DownloadError::from_status(status.as_u16(), retry_after))
     }
@@ -104,7 +103,7 @@ impl HttpClient {
     }
 
     /// Guards every request before a socket is opened: offline switch, HTTPS only.
-    fn refuse_before_io(&self, url: &str) -> Result<(), DownloadError> {
+    pub(crate) fn refuse_before_io(&self, url: &str) -> Result<(), DownloadError> {
         if self.offline {
             return Err(DownloadError::Transient("offline".into()));
         }

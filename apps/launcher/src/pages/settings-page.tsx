@@ -13,11 +13,13 @@ import { SettingsArtworkSection } from "../components/settings-artwork-section";
 import { ControlsSection } from "../components/settings/controls-section";
 import { GameplayDefaultsSection } from "../components/settings/gameplay-defaults-section";
 import { SettingsAchievementsSection } from "../components/settings/settings-achievements-section";
+import { SettingsUpdatesSection } from "../components/settings/settings-updates-section";
+import { SettingsCloudSavesSection } from "../components/settings/settings-cloud-saves-section";
 import { useLibraryFolders, useRemoveLibraryFolder, useScanProgress, useStartScan } from "../hooks/use-library-queries";
 import { PageHeader } from "./page-header";
 
-/** Settings: folders, core, BIOS, gameplay defaults, RetroAchievements, controls, artwork
- *  cache, data folder, attribution, logs / bug report. */
+/** Settings: folders, core, BIOS, gameplay defaults, RetroAchievements, cloud saves, controls, artwork
+ *  cache, data folder, updates, attribution, logs / bug report. */
 export function SettingsPage() {
   const { data: folders = [] } = useLibraryFolders();
   const { data: scan } = useScanProgress();
@@ -80,6 +82,12 @@ export function SettingsPage() {
         </SettingsSection>
       )}
 
+      {capabilities.cloudSaves && (
+        <SettingsSection title="Cloud saves">
+          <SettingsCloudSavesSection />
+        </SettingsSection>
+      )}
+
       <SettingsSection title="Controls">
         <ControlsSection />
       </SettingsSection>
@@ -91,6 +99,12 @@ export function SettingsPage() {
       <SettingsSection title="Data folder">
         {capabilities.dataFolderMove ? <SettingsDataFolderSection /> : <WebDataFolderSection />}
       </SettingsSection>
+
+      {capabilities.updateCheck && (
+        <SettingsSection title="Updates">
+          <SettingsUpdatesSection />
+        </SettingsSection>
+      )}
 
       <SettingsSection title="About">
         <p className="m-0 text-sm text-text-soft">

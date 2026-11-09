@@ -10,7 +10,21 @@ mod app_state;
 mod asset_scope_dirs;
 mod bug_report_system_info;
 mod bug_report_zip;
+mod cloud_app_host;
+mod cloud_change_detection;
+mod cloud_close_wait;
+mod cloud_game_result;
+mod cloud_game_sync;
+mod cloud_google_drive_account;
+mod cloud_job_guard;
+mod cloud_library_pass;
+mod cloud_oauth_account_cleanup;
+mod cloud_provider_factory;
+mod cloud_sync_jobs;
+mod cloud_sync_state;
+mod cloud_unit_guard;
 mod command_error;
+mod command_handlers;
 mod commands;
 mod dat_file_path;
 mod data_folder_move;
@@ -23,6 +37,20 @@ mod metadata_self_heal;
 mod relinked_game_files;
 pub mod runner_binary_path;
 mod shader_presets_dir;
+mod update_check_settings;
+mod update_check_status;
+mod update_release_feed;
+mod update_release_rules;
+mod update_release_types;
+
+#[cfg(test)]
+mod cloud_play_guard_tests;
+#[cfg(test)]
+mod cloud_sync_flow_tests;
+#[cfg(test)]
+mod cloud_test_harness;
+#[cfg(test)]
+mod cloud_unit_guard_tests;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
@@ -32,13 +60,7 @@ use tauri::webview::PageLoadEvent;
 use tauri::Manager;
 
 use crate::app_state::AppState;
-use crate::commands::{
-    achievements_commands, achievements_game_view, achievements_mode, artwork_commands,
-    bios_commands, core_commands, data_folder_commands, dev_seed_commands, game_detail_commands,
-    gamepad_capture_commands, gameplay_config_commands, home_commands, input_catalog_commands,
-    library_commands, log_commands, memory_card_commands, missing_game_removal_commands,
-    play_commands, resume_commands, save_state_commands, scan_commands, system_catalog_commands,
-};
+use crate::commands::achievements_commands;
 use crate::gamepad_capture_state::GamepadCapture;
 
 /// Starts the launcher window and blocks until the app exits.
@@ -64,6 +86,7 @@ pub fn run() -> anyhow::Result<()> {
             app.manage(state);
             metadata_self_heal::spawn_catalog_warmup(app.handle());
             achievements_journal_flush::spawn_startup_flush(app.handle());
+            cloud_app_host::setup(app.handle());
             Ok(())
         })
         // Cold-start metric (PDR G1: < 1.5 s): process start → first page loaded.
@@ -75,67 +98,7 @@ pub fn run() -> anyhow::Result<()> {
                 tracing::info!(startup_ms = ms, "launcher window ready");
             }
         })
-        .invoke_handler(tauri::generate_handler![
-            library_commands::get_setup_state,
-            library_commands::list_library_folders,
-            library_commands::add_library_folder,
-            library_commands::remove_library_folder,
-            library_commands::list_games,
-            library_commands::library_summary,
-            system_catalog_commands::get_systems,
-            system_catalog_commands::get_library_systems,
-            missing_game_removal_commands::remove_missing_game,
-            missing_game_removal_commands::remove_all_missing_games,
-            scan_commands::start_scan,
-            scan_commands::cancel_scan,
-            scan_commands::get_scan_progress,
-            scan_commands::get_scan_zip_archives,
-            scan_commands::set_scan_zip_archives,
-            core_commands::get_core_status,
-            core_commands::download_core,
-            play_commands::play_game,
-            play_commands::get_active_session,
-            game_detail_commands::get_game_detail,
-            game_detail_commands::set_favorite,
-            game_detail_commands::update_game_metadata,
-            game_detail_commands::reset_game_metadata,
-            game_detail_commands::list_genres,
-            game_detail_commands::reveal_rom_in_folder,
-            home_commands::get_home_data,
-            artwork_commands::start_artwork_fetch,
-            artwork_commands::cancel_artwork_fetch,
-            artwork_commands::get_artwork_progress,
-            artwork_commands::get_artwork_cache_stats,
-            artwork_commands::clear_artwork_cache,
-            artwork_commands::get_artwork_auto_fetch,
-            artwork_commands::set_artwork_auto_fetch,
-            gameplay_config_commands::get_gameplay_config,
-            gameplay_config_commands::set_gameplay_config_value,
-            save_state_commands::list_save_states,
-            save_state_commands::delete_save_state,
-            input_catalog_commands::get_input_catalog,
-            input_catalog_commands::assign_binding,
-            input_catalog_commands::reset_controls,
-            gamepad_capture_commands::capture_gamepad_input,
-            gamepad_capture_commands::cancel_gamepad_capture,
-            gamepad_capture_commands::gamepad_label_style,
-            resume_commands::get_resume_info,
-            achievements_mode::achievements_capabilities,
-            achievements_commands::ra_login,
-            achievements_commands::ra_logout,
-            achievements_commands::ra_account,
-            achievements_game_view::game_achievements,
-            bios_commands::get_bios_status,
-            bios_commands::add_bios_file,
-            bios_commands::open_system_folder,
-            memory_card_commands::get_memory_cards,
-            memory_card_commands::import_memory_card,
-            data_folder_commands::check_data_folder,
-            data_folder_commands::change_data_folder,
-            dev_seed_commands::seed_fake_library,
-            log_commands::open_logs_folder,
-            log_commands::create_bug_report,
-        ])
+        .invoke_handler(command_handlers::invoke_handler())
         .run(tauri::generate_context!())?;
     Ok(())
 }

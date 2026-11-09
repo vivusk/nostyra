@@ -16,10 +16,13 @@ use crate::app_events::{
     SESSION_LAUNCH_TIMEOUT, SESSION_STARTED,
 };
 use crate::app_state::{lock, ActiveSession, AppState};
+use crate::cloud_app_host::spawn_push_after_session;
+use crate::cloud_unit_guard::{clear_units_for_play, session_unit_keys};
 use crate::command_error::{CommandError, CommandResult};
 use crate::commands::achievements_commands::{on_achievement_update, runner_login_env};
 use crate::commands::achievements_mode::{hardcore_for_game, launch_load_slot};
 use crate::commands::bios_required_check::require_bios;
+use crate::commands::blocking::run_blocking;
 use crate::commands::core_resolution::installed_core_for_platform;
 use crate::commands::game_data_target::GameDataTarget;
 use crate::commands::save_state_commands::load_state_args;
@@ -30,14 +33,18 @@ use crate::shader_presets_dir::runner_shader_args;
 /// `"auto"` = Continue from the resume point) at start (runner `--load-state N|auto`;
 /// an empty/incompatible slot only shows an error in-game, a failed resume boots
 /// fresh; never a state in achievement hardcore). The ROM path comes from the
-/// database, never from the UI.
+/// database, never from the UI. Runs off the main thread (cloud apply-pass wait).
 #[tauri::command]
-pub fn play_game(
+pub async fn play_game(
     app: AppHandle,
-    state: State<'_, AppState>,
     game_id: i64,
     load_state: Option<StateSlotId>,
 ) -> CommandResult<()> {
+    run_blocking(move || start_game(&app, game_id, load_state)).await
+}
+
+fn start_game(app: &AppHandle, game_id: i64, load_state: Option<StateSlotId>) -> CommandResult<()> {
+    let state = app.state::<AppState>();
     let game = storage_db::get_game(&state.db(), game_id)?
         .ok_or_else(|| CommandError::invalid("This game is no longer in the library."))?;
     let target = GameDataTarget::from_game(&game);
@@ -61,8 +68,9 @@ pub fn play_game(
     // capture checks the session while holding the capture lock.
     let capture = app.state::<GamepadCapture>();
     let _no_capture = capture.block_for_play()?;
-    // Lock order session → core_download (same as download_core): checking and claiming
-    // happen under both locks, so Play and a core update can never overlap.
+    // Lock order session → core_download (same as download_core) and session → cloud
+    // job (`cloud_sync_state`): checking and claiming happen under the session lock, so
+    // Play never overlaps a core update or a cloud sync of the game's units.
     let mut session_slot = lock(&state.session);
     if session_slot.is_some() {
         return Err(CommandError::new("session", "A game is already running."));
@@ -73,6 +81,10 @@ pub fn play_game(
             "Wait for the core download to finish.",
         ));
     }
+    // A cloud job on this game's units: a transfer is cancelled, an apply pass
+    // (renames, ms-scale) is waited for. Never refused because of an upload.
+    let unit_keys = session_unit_keys(&target);
+    clear_units_for_play(&state.cloud, &unit_keys);
     let launch = RunnerLaunch {
         runner: state.paths.runner.clone(),
         core,
@@ -91,7 +103,7 @@ pub fn play_game(
     let session = spawn_runner_session(&launch, DEFAULT_LAUNCH_TIMEOUT).map_err(|err| {
         CommandError::new("session", format!("Cannot start the game runner: {err}"))
     })?;
-    *session_slot = Some(ActiveSession { game_id });
+    *session_slot = Some(ActiveSession { game_id, unit_keys });
     drop(session_slot);
     tracing::info!(game_id, pid = session.pid, "game session started");
 
@@ -130,7 +142,7 @@ fn content_sha1_args(sha1: &str) -> Vec<OsString> {
 /// Running game id, if any (UI state after a reload).
 #[tauri::command]
 pub fn get_active_session(state: State<'_, AppState>) -> Option<i64> {
-    lock(&state.session).map(|s| s.game_id)
+    lock(&state.session).as_ref().map(|s| s.game_id)
 }
 
 /// Records play time (runner's pending file first, launcher measurement as a
@@ -158,6 +170,8 @@ fn finish_session(app: &AppHandle, game_id: i64, outcome: &SessionOutcome) {
     });
     tracing::info!(game_id, exit_code = ?outcome.exit_code, "game session ended");
     emit(app, SESSION_ENDED, SessionEndedPayload { game_id, error });
+    // The slot is free: upload what the session wrote (background, + PS2 memcards).
+    spawn_push_after_session(app, game_id);
 }
 
 /// The launcher-measured session to record when the game started but the runner's

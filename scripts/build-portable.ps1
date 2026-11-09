@@ -24,6 +24,19 @@ if (-not (Test-Path $releaseNotes)) { throw "missing $releaseNotes (write the re
 if (-not (Get-Command cargo-about -ErrorAction SilentlyContinue)) {
     throw 'cargo-about not found: cargo install cargo-about --version 0.9.2 --locked --features cli'
 }
+# Google Drive cloud saves: the OAuth client id + desktop "secret" (not confidential for native
+# apps) are embedded at build time (option_env! in cloud_app_client_ids.rs), never committed.
+# Taken from the user environment when this shell does not have them; without them the build
+# ships Google Drive as "not available".
+foreach ($var in 'NOSTYRA_GOOGLE_CLIENT_ID', 'NOSTYRA_GOOGLE_CLIENT_SECRET') {
+    if (-not [Environment]::GetEnvironmentVariable($var)) {
+        $userValue = [Environment]::GetEnvironmentVariable($var, 'User')
+        if ($userValue) { [Environment]::SetEnvironmentVariable($var, $userValue) }
+    }
+    if (-not [Environment]::GetEnvironmentVariable($var)) {
+        Write-Warning "$var is not set: this build has no Google Drive cloud saves"
+    }
+}
 
 if (-not $SkipBuild) {
     Push-Location $repoRoot

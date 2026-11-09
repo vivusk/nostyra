@@ -23,10 +23,11 @@ members = [
     "crates/web-bindings",
     "crates/hw-render-gl",
     "crates/achievements",
+    "crates/cloud-sync",
 ]
 
 [workspace.package]
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 rust-version = "1.99"
 license = "GPL-3.0-or-later"
@@ -55,6 +56,7 @@ content-file-source = { path = "crates/content-file-source" }
 rom-identity = { path = "crates/rom-identity" }
 hw-render-gl = { path = "crates/hw-render-gl" }
 achievements = { path = "crates/achievements" }
+cloud-sync = { path = "crates/cloud-sync" }
 
 libloading = "0.9.0"
 winit = "0.30.13"
@@ -63,8 +65,9 @@ wgpu = "30.0.1"
 sdl3 = { version = "0.20.0", features = ["build-from-source-static"] }
 # OpenGL loader for the hardware-render backend (already in the lock via wgpu-hal).
 glow = "0.17.0"
-# Launcher start-failure MessageBox (already in the lock via tauri/wry).
-windows-sys = { version = "0.60.2", features = ["Win32_UI_WindowsAndMessaging"] }
+# Launcher start-failure MessageBox (already in the lock via tauri/wry); cloud-sync
+# DPAPI refresh-token file (CryptProtectData / LocalFree).
+windows-sys = { version = "0.60.2", features = ["Win32_UI_WindowsAndMessaging", "Win32_Security_Cryptography", "Win32_Foundation"] }
 clap = { version = "4.6.7", features = ["derive"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
@@ -73,6 +76,8 @@ thiserror = "2.0.21"
 directories = "6.0.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
+# Update checker: release tag vs the running version (already locked transitively).
+semver = "1.0.28"
 sha2 = "0.11.1"
 # Layered config files (plain `toml`: comments are not preserved on write).
 toml = "1.1.8"
@@ -88,6 +93,11 @@ cc = "1.8.0"
 # Rewind history: pure-Rust LZ4 block compression of state deltas.
 # Pause-menu save-state times in local time ("2026-10-18 14:02").
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+# Cloud-sync device ids, PKCE verifiers, OAuth state (OS RNG; 0.3.4 already in the lock,
+# kept from phase 01 although 0.4.3 is also locked: same `getrandom::fill` API).
+getrandom = "0.3.4"
+# Cloud-sync PKCE (base64url, no padding); 0.23.1 = newest of the locked 0.21 / 0.22 / 0.23.
+base64 = "0.23.1"
 lz4_flex = { version = "0.14.0", default-features = false, features = ["std", "safe-encode", "safe-decode", "checked-decode"] }
 
 # Self-deleting temp dirs in tests (removed on drop, even on panic).

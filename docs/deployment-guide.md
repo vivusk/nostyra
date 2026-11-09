@@ -17,7 +17,8 @@ Nostyra ships as a Windows x64 portable zip on GitHub Releases: <https://github.
 2. Write `docs/release-notes-v<version>.md` (features, systems Stable/Experimental, known limitations, privacy, reporting bugs) and add a `docs/project-changelog.md` entry. Commit on `dev`.
 3. Run the gates (fmt, clippy `-D warnings`, workspace tests, `npm run typecheck` + `npm run build`).
 4. `powershell -File scripts/release.ps1 <version>` — checks the branch, a clean tree, the three versions and the release notes; creates the release commit on `main` with `git commit-tree` (never conflicts; deletions carry over) and the annotated tag `v<version>`. It never pushes.
-5. Build the zip: `powershell -File scripts/build-portable.ps1` (needs `cargo-about` installed and `npm ci` in `apps/launcher`; `dev` has the same tree as the release commit, so the zip matches the tagged source as GPL-3.0 requires). Try it once in Windows Sandbox.
+5. Build the zip: `powershell -File scripts/build-portable.ps1` (needs `cargo-about` installed and `npm ci` in `apps/launcher`; `dev` has the same tree as the release commit, so the zip matches the tagged source as GPL-3.0 requires). The Google Drive OAuth client (`NOSTYRA_GOOGLE_CLIENT_ID` / `NOSTYRA_GOOGLE_CLIENT_SECRET`, a Google "Desktop app" client of the published Nostyra project, scope `drive.file`) must be in the user environment: the script embeds it at build time and warns when it is missing (that build then has no Google Drive); check with `Select-String -Path targetelease
+ostyra-launcher.exe -Pattern apps.googleusercontent.com -SimpleMatch -Quiet` style search of the exe. Never commit the client secret (GitHub push protection flags `GOCSPX-`).
 6. Push only main and the tag: `git push origin main v<version>`.
 7. GitHub → Releases → Draft a new release → tag `v<version>`, paste the release notes, attach `dist/Nostyra-<version>-windows-x64-portable.zip`, publish.
 

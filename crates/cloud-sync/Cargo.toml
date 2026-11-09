@@ -1,0 +1,48 @@
+[package]
+name = "cloud-sync"
+description = "Cloud saves (M19): sync units, manifests, three-way planner, sync executor and storage providers."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[features]
+# Exposes the in-memory `FakeCloudProvider` (fault injection) and the scripted
+# `FakeHttpTransport` to other crates' tests.
+test-support = []
+
+# No Tauri. Network only through `http-download-util` behind the `HttpTransport` trait.
+[dependencies]
+# PKCE code challenge (base64url, no padding).
+base64.workspace = true
+# Backup folder timestamps (`YYMMDD-HHMMSS`, local time).
+chrono.workspace = true
+# Atomic base-manifest writes (`write_atomically`).
+config-layers = { workspace = true, features = ["fs"] }
+# Data paths, state slot names, browser swap files, content ids.
+ipc-protocol = { workspace = true, features = ["native"] }
+# Random device id (`<data>/cloud/device.json`), PKCE verifier, OAuth state.
+getrandom.workspace = true
+# Generic HTTPS request + retry with `Retry-After` (OAuth token endpoint, providers).
+http-download-util.workspace = true
+# OAuth query strings / form bodies.
+percent-encoding.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+# PS2 shared memory-card folder.
+system-catalog.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+walkdir.workspace = true
+
+# DPAPI (`CryptProtectData`) for `<data>/cloud/refresh-token.bin`.
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

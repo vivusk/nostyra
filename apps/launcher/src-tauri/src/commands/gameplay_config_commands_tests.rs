@@ -153,8 +153,8 @@ fn view_keeps_controls_out_of_the_gameplay_maps() {
     );
     assert_eq!(
         with_game.resolved.len(),
-        12,
-        "incl. the 5 global-only achievements keys"
+        16,
+        "incl. the 5 global-only achievements + 4 cloud keys"
     );
     assert_eq!(
         with_game.input.resolved["input_gamepad.a"],
@@ -181,4 +181,20 @@ fn achievements_keys_are_refused_for_a_game_and_hidden_from_its_layer() {
         "achievements.enabled"
     )
     .is_ok());
+}
+
+#[test]
+fn cloud_provider_and_folder_are_refused_toggles_allowed() {
+    let dir = scratch("cloud");
+    let global = global_config_path(dir.path());
+    for (key, value) in [
+        ("cloud.provider", Value::from("local_folder")),
+        ("cloud.local_folder", Value::from(r"\\attacker\share")),
+    ] {
+        let err = write_known_value(&global, key, Some(value)).unwrap_err();
+        assert_eq!(err.kind, "invalid", "{key}");
+    }
+    assert!(!global.exists(), "nothing written");
+    write_known_value(&global, "cloud.sync_states", Some(Value::Boolean(false))).unwrap();
+    write_known_value(&global, "cloud.sync_on_start", Some(Value::Boolean(false))).unwrap();
 }

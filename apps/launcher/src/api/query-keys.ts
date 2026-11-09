@@ -53,8 +53,25 @@ export const queryKeys = {
   gameAchievementsRoot: ["game-achievements"] as const,
   /** One game's achievement snapshot view (Detail tab). */
   gameAchievements: (gameId: number) => ["game-achievements", gameId] as const,
+  /** Update checker status (one automatic check per launch; never invalidated). */
+  updateStatus: ["update-status"] as const,
   resumeInfoRoot: ["resume-info"] as const,
   resumeInfo: (gameId: number) => ["resume-info", gameId] as const,
+  /** Settings → Cloud saves status; refetched on `cloud-status-changed`. */
+  cloudStatus: ["cloud-status"] as const,
+  cloudGameStatusRoot: ["cloud-game-status"] as const,
+  /** Detail chip state of one game. */
+  cloudGameStatus: (gameId: number) => ["cloud-game-status", gameId] as const,
+  /** Live library pass progress `{ done, total }` (null = idle), event-driven only. */
+  cloudPassProgress: ["cloud-pass-progress"] as const,
+  /** Game whose saves the Play path is pulling ("Syncing saves…"; null = none). */
+  cloudPrePlay: ["cloud-pre-play"] as const,
+  /** Conflict dialog opened outside the Play path (chip, single pass conflict). */
+  cloudConflictPrompt: ["cloud-conflict-prompt"] as const,
+  /** Bulk conflict dialog after a pass with ≥ 2 conflicts: the game ids (null = closed). */
+  cloudBulkPrompt: ["cloud-bulk-prompt"] as const,
+  /** The window close waits for a cloud upload (modal until the app exits). */
+  cloudClosingWait: ["cloud-closing-wait"] as const,
 };
 
 /** What the UI knows about the running game. */

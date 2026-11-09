@@ -20,7 +20,7 @@ checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
 
 [[package]]
 name = "achievements"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "cc",
  "config-layers",
@@ -204,7 +204,7 @@ checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 
 [[package]]
 name = "artwork-cache"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "http-download-util",
  "image",
@@ -394,7 +394,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "audio-output"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "libretro-host",
  "sdl3",
@@ -885,6 +885,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4bfbf56724aa9eca8afa4fcfadeb479e722935bb2a0900c2d37e0cc477af0688"
 
 [[package]]
+name = "cloud-sync"
+version = "0.5.0"
+dependencies = [
+ "base64 0.23.1",
+ "chrono",
+ "config-layers",
+ "getrandom 0.3.4",
+ "http-download-util",
+ "ipc-protocol",
+ "percent-encoding",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "system-catalog",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tracing",
+ "walkdir",
+ "windows-sys 0.60.2",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -931,7 +953,7 @@ dependencies = [
 
 [[package]]
 name = "config-layers"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "ipc-protocol",
  "serde",
@@ -955,7 +977,7 @@ checksum = "3d52eff69cd5e647efe296129160853a42795992097e8af39800e1060caeea9b"
 
 [[package]]
 name = "content-file-source"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "tempfile",
 ]
@@ -1046,7 +1068,7 @@ dependencies = [
 
 [[package]]
 name = "core-manager"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "config-layers",
  "http-download-util",
@@ -1397,7 +1419,7 @@ dependencies = [
 
 [[package]]
 name = "disc-image"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "chd",
  "content-file-source",
@@ -1869,7 +1891,7 @@ dependencies = [
 
 [[package]]
 name = "game-library"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "crc32fast",
  "disc-image",
@@ -2396,7 +2418,7 @@ dependencies = [
 
 [[package]]
 name = "http-download-util"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "thiserror 2.0.21",
  "tracing",
@@ -2417,7 +2439,7 @@ checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 
 [[package]]
 name = "hw-render-gl"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "glow",
  "libretro-host",
@@ -2681,7 +2703,7 @@ dependencies = [
 
 [[package]]
 name = "input-mapping"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "config-layers",
  "libretro-host",
@@ -2693,7 +2715,7 @@ dependencies = [
 
 [[package]]
 name = "ipc-protocol"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "directories",
@@ -3195,7 +3217,7 @@ dependencies = [
 
 [[package]]
 name = "libretro-host"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "cc",
  "libloading 0.9.0",
@@ -3527,12 +3549,13 @@ dependencies = [
 
 [[package]]
 name = "nostyra-launcher"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "achievements",
  "anyhow",
  "artwork-cache",
  "chrono",
+ "cloud-sync",
  "config-layers",
  "core-manager",
  "crc32fast",
@@ -3545,6 +3568,7 @@ dependencies = [
  "rom-patch",
  "runner-session",
  "sdl3",
+ "semver",
  "serde",
  "serde_json",
  "storage-db",
@@ -3561,7 +3585,7 @@ dependencies = [
 
 [[package]]
 name = "nostyra-runner"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "achievements",
  "anyhow",
@@ -4787,7 +4811,7 @@ dependencies = [
 
 [[package]]
 name = "rom-identity"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "content-file-source",
  "crc32fast",
@@ -4802,7 +4826,7 @@ dependencies = [
 
 [[package]]
 name = "rom-patch"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "crc32fast",
  "tempfile",
@@ -4837,7 +4861,7 @@ dependencies = [
 
 [[package]]
 name = "runner-session"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "ipc-protocol",
  "serde",
@@ -5625,7 +5649,7 @@ checksum = "ff7589a1859b09232522bb9edf076ca7fcf14ded96685d3fa629db73023ffbb7"
 
 [[package]]
 name = "storage-db"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "rusqlite",
  "rusqlite_migration",
@@ -5751,7 +5775,7 @@ dependencies = [
 
 [[package]]
 name = "system-catalog"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "content-file-source",
  "tempfile",
@@ -6742,7 +6766,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "video-renderer"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "config-layers",
  "fontdue",
@@ -7037,7 +7061,7 @@ dependencies = [
 
 [[package]]
 name = "web-bindings"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "config-layers",
  "content-file-source",

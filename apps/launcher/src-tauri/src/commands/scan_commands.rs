@@ -155,7 +155,7 @@ fn scan_all_folders(
             &state.paths.data_root,
             &state.db(),
             &summary.relinked_games,
-            session.map(|s| s.game_id),
+            session.as_ref().map(|s| s.game_id),
         );
     }
 }

@@ -59,6 +59,25 @@ fn achievement_files_and_badge_cache_move_too() {
     assert_eq!(read(to.path(), "cache/achievement-badges/00234.png"), "png");
 }
 
+/// Cloud saves keep the account, device id, base manifests and backups with the data.
+#[test]
+fn cloud_folder_moves_too() {
+    let from = tempfile::tempdir().unwrap();
+    let to = tempfile::tempdir().unwrap();
+    assert!(DATA_ENTRIES.contains(&"cloud"));
+    assert_eq!(DATA_ENTRIES.len(), 14);
+    write(from.path(), "cloud/device.json", "{}");
+    write(
+        from.path(),
+        "cloud/base/local_folder-0123/snes/abc.json",
+        "{}",
+    );
+    let plan = plan_move(from.path(), to.path()).unwrap();
+    assert_eq!(plan.files.len(), 2);
+    copy_planned_files(from.path(), to.path(), &plan, false, |_, _| {}).unwrap();
+    assert_eq!(read(to.path(), "cloud/device.json"), "{}");
+}
+
 /// PlayStation 2 keeps its BIOS (+ the core's `.nvm` / `.mec`) and the shared memory
 /// cards under `system/pcsx2/`, outside `saves/`: the `system` entry carries them.
 #[test]

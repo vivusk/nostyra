@@ -8,6 +8,8 @@ import {
   type ArtworkFinishedEvent,
   type ArtworkProgressEvent,
   type ArtworkUpdatedEvent,
+  type CloudStatusChangedEvent,
+  type CloudSyncProgressEvent,
   type CoreDownloadFinishedEvent,
   type CoreDownloadProgressEvent,
   type ScanFinishedEvent,
@@ -18,6 +20,8 @@ import {
 import { queryKeys, type GameSessionState } from "../api/query-keys";
 import { useErrorToast } from "../components/error-toast";
 import { refreshAccountViews } from "./use-achievements-queries";
+import { openCloudConflict, refreshCloudViews } from "./use-cloud-queries";
+import { cloudCommands } from "../api/tauri-commands-cloud";
 import { useCreateBugReport } from "./use-bug-report";
 
 export function useBackendEventSync() {
@@ -42,8 +46,44 @@ export function useBackendEventSync() {
         void queryClient.invalidateQueries({ queryKey: queryKeys.home });
       }, 500);
     };
+    let disposed = false;
     const setSession = (value: GameSessionState | null) =>
       queryClient.setQueryData(queryKeys.session, value);
+
+    // Cloud saves: pass progress, status refresh, the conflict prompts after a pass
+    // (≥ 2 → bulk dialog, 1 → notice with Resolve) and the close-wait notice.
+    // `skipIfSyncing`: the startup pass may have ended before these listeners existed
+    // (its events are lost), so on mount the status is read once; a pass still running
+    // reports its own end through the live events.
+    const promptConflicts = (skipIfSyncing: boolean) => {
+      void cloudCommands.status().then((status) => {
+        queryClient.setQueryData(queryKeys.cloudStatus, status);
+        if (disposed || (skipIfSyncing && status.syncing)) return;
+        const games = status.conflictGames;
+        if (games.length >= 2) queryClient.setQueryData(queryKeys.cloudBulkPrompt, games);
+        else if (games.length === 1) {
+          showNotice("Saves differ between this PC and the cloud", {
+            label: "Resolve",
+            onClick: () => void openCloudConflict(queryClient, { showError, showNotice }, games[0]),
+          });
+        }
+      }, (error) => console.warn("cloud status after a pass failed", error));
+    };
+    const cloudSubscriptions = () => [
+      listen<CloudSyncProgressEvent>(EVENTS.cloudSyncProgress, (e) => {
+        queryClient.setQueryData(queryKeys.cloudPassProgress, e.payload);
+      }),
+      listen<CloudStatusChangedEvent>(EVENTS.cloudStatusChanged, (e) => {
+        refreshCloudViews(queryClient);
+        const pass = queryClient.getQueryData<CloudSyncProgressEvent | null>(queryKeys.cloudPassProgress);
+        if (e.payload?.gameId !== undefined || !pass || pass.done < pass.total) return;
+        queryClient.setQueryData(queryKeys.cloudPassProgress, null);
+        promptConflicts(false);
+      }),
+      listen(EVENTS.cloudClosingWait, () => {
+        queryClient.setQueryData(queryKeys.cloudClosingWait, true);
+      }),
+    ];
 
     const subscriptions: Promise<Unlisten>[] = [
       listen<ScanProgressEvent>(EVENTS.scanProgress, (e) => {
@@ -126,7 +166,13 @@ export function useBackendEventSync() {
         if (e.payload.error) showError("Artwork fetch failed", e.payload.error);
       }),
     ];
+    if (capabilities.cloudSaves) {
+      const cloud = cloudSubscriptions();
+      subscriptions.push(...cloud);
+      void Promise.all(cloud).then(() => !disposed && promptConflicts(true), () => undefined);
+    }
     return () => {
+      disposed = true;
       clearTimeout(artworkRefresh);
       for (const subscription of subscriptions) {
         void subscription.then((unlisten) => unlisten());

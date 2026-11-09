@@ -7,7 +7,7 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct CommandError {
     /// "storage" | "scan" | "core" | "core_missing" | "bios_missing" | "session" |
-    /// "artwork" | "busy" | "invalid".
+    /// "artwork" | "busy" | "invalid" | "cloud_unavailable" | "cloud_sign_in".
     pub kind: &'static str,
     pub message: String,
     /// `core_missing`: the registry core to install; `bios_missing`: the core whose

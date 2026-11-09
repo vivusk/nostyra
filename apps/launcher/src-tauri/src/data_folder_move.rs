@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 /// are listed in case a crash left them. `logs` is deliberately absent: this run's log
 /// is open, and the restart after the switch starts a fresh `logs/` in the new root
 /// (the old logs stay behind with the old folder).
-pub const DATA_ENTRIES: [&str; 13] = [
+pub const DATA_ENTRIES: [&str; 14] = [
     "nostyra.db",
     "nostyra.db-wal",
     "nostyra.db-shm",
@@ -27,6 +27,8 @@ pub const DATA_ENTRIES: [&str; 13] = [
     // M15: RetroAchievements login, offline journal, snapshots; badge cache.
     "achievements",
     "cache",
+    // M19: cloud account, device id, base manifests, backups (staging is transient).
+    "cloud",
 ];
 
 /// Every file to move (relative to the root) and how many already exist at the target.

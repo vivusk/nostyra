@@ -19,6 +19,8 @@ const backend: Backend = {
     memoryCards: true,
     gamepadCaptureNative: true,
     dataFolderMove: true,
+    updateCheck: true,
+    cloudSaves: true,
   },
   invoke: (command, args) => invoke(command, args),
   listen: (event, handler) => listen(event, handler),

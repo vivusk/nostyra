@@ -62,7 +62,7 @@ pub fn get_setup_state(state: State<'_, AppState>) -> CommandResult<SetupState> 
         scanning: lock(&state.scan_cancel).is_some(),
         artwork_fetching: lock(&state.artwork_cancel).is_some(),
         core_downloading: lock(&state.core_download).is_some(),
-        active_game_id: lock(&state.session).map(|s| s.game_id),
+        active_game_id: lock(&state.session).as_ref().map(|s| s.game_id),
     })
 }
 

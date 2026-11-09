@@ -1,7 +1,7 @@
 //! Config schema: typed structs with built-in defaults. Per-key validation of
 //! raw layers lives in `known_key_checks`; the binding sections in
 //! `input_binding_schema`, the resume section in `resume_config_schema`, the
-//! achievements section in `achievements_config`.
+//! achievements section in `achievements_config`, the cloud section in `cloud_config`.
 
 use std::ops::RangeInclusive;
 use std::path::Path;
@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use toml::{Table, Value};
 
 use crate::achievements_config::AchievementsConfig;
+use crate::cloud_config::CloudConfig;
 use crate::core_layer_id::BUNDLED_PRESETS;
 use crate::input_binding_schema::InputConfig;
 use crate::resume_config_schema::ResumeConfig;
@@ -31,6 +32,8 @@ pub struct ResolvedConfig {
     pub resume: ResumeConfig,
     /// Global layer only (`achievements_config`).
     pub achievements: AchievementsConfig,
+    /// Global layer only (`cloud_config`); launcher only.
+    pub cloud: CloudConfig,
     /// Binding sections, flattened so they sit at the top level
     /// (`input_keyboard`, …) as in the TOML layers and `--print-config`.
     #[serde(flatten)]

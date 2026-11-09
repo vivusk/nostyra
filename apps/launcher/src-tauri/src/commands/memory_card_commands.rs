@@ -12,9 +12,10 @@ use system_catalog::{core_for_system, MemoryCardSlot};
 use tauri::{AppHandle, Manager};
 
 use crate::app_state::{lock, AppState};
+use crate::cloud_unit_guard::ensure_unit_idle;
 use crate::command_error::{CommandError, CommandResult};
 use crate::commands::blocking::run_blocking;
-use crate::commands::game_data_target::{ensure_idle, GameDataTarget};
+use crate::commands::game_data_target::GameDataTarget;
 use crate::commands::memory_card_import::{
     card_has_serial, normalize_card, save_names, CARD_BYTES,
 };
@@ -90,7 +91,7 @@ pub async fn import_memory_card(
         let card = read_card(Path::new(&path)).map_err(CommandError::invalid)?;
         let serial = storage_db::get_game(&state.db(), game_id)?.and_then(|g| g.serial);
         let session = lock(&state.session);
-        ensure_idle(session.map(|s| s.game_id), game_id)?;
+        ensure_unit_idle(session.as_ref(), &state.cloud, game_id, &target)?;
         write_card(&dir, &file_name, &card)?;
         drop(session);
         tracing::info!(game_id, slot, file = %file_name, "memory card imported");

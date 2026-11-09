@@ -124,7 +124,7 @@ pub async fn change_data_folder(
     .await
 }
 
-/// Refuses while anything uses the data root (a game, scan, artwork fetch, core download).
+/// Refuses while anything uses the data root (game, scan, artwork, core, cloud sync).
 fn ensure_idle(state: &AppState) -> CommandResult<()> {
     let busy = if lock(&state.session).is_some() {
         Some("a game is running")
@@ -134,6 +134,8 @@ fn ensure_idle(state: &AppState) -> CommandResult<()> {
         Some("artwork is downloading")
     } else if lock(&state.core_download).is_some() {
         Some("a core is downloading")
+    } else if state.cloud.job_running() {
+        Some("cloud saves are syncing")
     } else {
         None
     };
@@ -181,7 +183,6 @@ mod tests {
         fs::create_dir_all(&inside).unwrap();
         fs::create_dir_all(&other).unwrap();
         let text = |p: &Path| p.to_str().unwrap().to_string();
-
         assert_eq!(validate_target(&current, &text(&other)).unwrap(), other);
         assert!(!other.join(".nostyra-write-test").exists());
         for bad in [&inside, &current, &root.path().to_path_buf()] {

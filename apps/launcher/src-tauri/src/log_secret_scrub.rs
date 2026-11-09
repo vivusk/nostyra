@@ -9,8 +9,10 @@ pub const REDACTED: &str = "<redacted>";
 
 /// Keys whose values are secrets (matched case-insensitively, `_` counts as a word
 /// break so `NOSTYRA_RA_TOKEN` matches `token`). `t` is the rcheevos URL token
-/// parameter, so it is matched only in the `t=value` form.
-const SECRET_KEYS: [&str; 3] = ["password", "token", "t"];
+/// parameter, so it is matched only in the `t=value` form. `code_verifier` /
+/// `client_secret` are the OAuth (cloud saves) secrets; plain `code` is not a key:
+/// it would scrub `exit_code=3`.
+const SECRET_KEYS: [&str; 5] = ["password", "token", "t", "code_verifier", "client_secret"];
 
 /// `text` with every secret value replaced by [`REDACTED`].
 pub fn scrub_secrets(text: &str) -> String {
@@ -131,6 +133,20 @@ mod tests {
         );
         assert!(scrubbed.contains("token: \"<redacted>\" }"), "{scrubbed}");
         assert!(scrubbed.contains("token=\"<redacted>\" ok"), "{scrubbed}");
+    }
+
+    #[test]
+    fn scrubs_oauth_secrets_but_not_exit_codes() {
+        let text = "POST token code_verifier=v3r1f13r&client_secret=s3cr3t&code=abc
+                    {\"client_secret\":\"s3cr3t\"} game session ended exit_code=3
+";
+        let scrubbed = scrub_secrets(text);
+        assert!(
+            !scrubbed.contains("v3r1f13r") && !scrubbed.contains("s3cr3t"),
+            "{scrubbed}"
+        );
+        assert!(scrubbed.contains("code_verifier=<redacted>&"), "{scrubbed}");
+        assert!(scrubbed.contains("exit_code=3"), "{scrubbed}");
     }
 
     #[test]

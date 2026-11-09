@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { commands, errorMessage, type LibraryFolder } from "../api/tauri-commands";
+import { queryKeys } from "../api/query-keys";
 import { open } from "../backend";
 import { useStartScan } from "../hooks/use-library-queries";
 import { useErrorToast } from "./error-toast";
@@ -26,7 +27,8 @@ export function ChangeRomFolderButton({ current }: { current: LibraryFolder[] })
       showError("Cannot change folder", errorMessage(err));
     } finally {
       setBusy(false);
-      await queryClient.invalidateQueries();
+      // Everything except the update status (a refetch would re-run the network check).
+      await queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.updateStatus[0] });
     }
   };
   return (

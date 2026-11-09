@@ -98,6 +98,7 @@ fn delete_removes_the_three_files_only() {
 
 #[test]
 fn delete_while_the_game_runs_is_busy() {
+    use crate::commands::game_data_target::ensure_idle;
     assert_eq!(ensure_idle(Some(5), 5).unwrap_err().kind, "busy");
 }
 

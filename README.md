@@ -22,7 +22,7 @@ Data folder with the desktop app, is implemented (manual checks pending, see [No
 
 See [docs/project-overview-pdr.md](docs/project-overview-pdr.md) and
 [docs/system-architecture.md](docs/system-architecture.md). Latest release: **v0.3.2** (Windows x64
-portable zip), see the [release notes](docs/release-notes-v0.3.2.md) and
+portable zip), see the [release notes](docs/release-notes-v0.5.0.md) and
 [Install (Windows portable)](#install-windows-portable).
 
 ## Install (Windows portable)
@@ -38,8 +38,28 @@ portable zip), see the [release notes](docs/release-notes-v0.3.2.md) and
    then click **Run anyway**.
 
 Needs Windows 10 / 11 x64 and the Microsoft Edge WebView2 Runtime (built into Windows 11 and updated
-Windows 10). See the [release notes](docs/release-notes-v0.3.2.md) for requirements, known limits and how
+Windows 10). See the [release notes](docs/release-notes-v0.5.0.md) for requirements, known limits and how
 to report bugs.
+
+**Updates.** When a newer release with the Windows portable zip is out, the launcher shows a banner at the
+top of the window: **Open release page**, **Skip this version** (hidden for good, a later version shows
+again) or **Later** (hidden until the next start). **Settings → Updates** shows your version, the
+**Check for updates at startup** toggle and **Check now**. To upgrade, download the new zip and extract it
+over your Nostyra folder; your games, saves and settings are kept. The check is one GitHub API request at
+most once a day, with the user agent `Nostyra/<version>` and nothing else (see [Privacy](#privacy));
+`NOSTYRA_OFFLINE=1` turns it off.
+
+**Cloud saves** (desktop, Experimental). **Settings → Cloud saves** syncs each game's save folder across your PCs
+through **Google Drive** (sign in in your browser; Nostyra only sees the files it creates, in a visible **Nostyra**
+folder) or a **Local folder** that your OneDrive / Dropbox desktop app (or a network share) already syncs (Nostyra
+keeps its copy in `<folder>/nostyra-cloud/`). Saves download before a game starts and upload after you quit,
+plus a background pass at start (**Sync when Nostyra starts**) and **Sync now**; a slow or missing folder never holds a
+game more than ~15 s. **Also sync save states** (default on) adds slots and the resume point; PS2 memory cards sync
+with any PS2 game; per-game settings and files over 256 MiB do not sync. A save changed on both PCs opens a dialog
+(**This PC** / **Cloud** / **Play without syncing**); the other copy goes to `<data folder>/cloud/backups/` (last 5 per
+game). OneDrive / Dropbox sign-in is in the picker but not available yet. Builds from source get Google Drive only
+when `NOSTYRA_GOOGLE_CLIENT_ID` / `NOSTYRA_GOOGLE_CLIENT_SECRET` (a Google "Desktop app" OAuth client) are set at build
+or run time.
 
 ## Nostyra Online (web edition)
 
@@ -294,6 +314,22 @@ the token, and when you log in as another account. To find the game's achievemen
 rcheevos versions. Per-game achievement lists and badges are cached in `<data folder>/achievements/games/`
 and `<data folder>/cache/achievement-badges/`. Nothing else is sent.
 
+The desktop launcher checks for a new release: on by default, at most once a day at start (plus whenever you
+click **Settings → Updates → Check now**), it sends one request to
+`https://api.github.com/repos/vivusk/nostyra/releases/latest` with the user agent `Nostyra/<version>` and no
+identifiers, ROM, library or account data. The answer is kept in the local library database (settings keys
+`update_check_enabled`, `update_check_last_at`, `update_check_etag`, `update_check_latest`,
+`update_skipped_version`). Untick **Settings → Updates → Check for updates at startup** to stop the automatic
+check (Check now still asks when clicked), or set `NOSTYRA_OFFLINE=1` to stop every request. The update check sends nothing else.
+
+Cloud saves have no Nostyra server. With **Google Drive** (only while signed in) the browser signs in at
+`accounts.google.com`, then Nostyra uses `oauth2.googleapis.com` and `www.googleapis.com` to move the save files and
+file lists of your games and reads your account name / email once to show who is signed in; the sign-in is kept in
+`<data folder>/cloud/refresh-token.bin`, encrypted with Windows DPAPI for your Windows user; **Sign out** revokes it
+and deletes the file. A **Local folder** contacts no server: Nostyra copies files between `<data folder>` and the
+folder you chose, and your own sync app moves them. `<data folder>/cloud/` holds the sync state (last-synced file lists,
+backups, a random device id and your PC name, which your other PCs show in the conflict dialog).
+
 Logs stay on your PC: `<data folder>/logs/` holds the launcher and game logs. They contain file paths
 (ROM, core and data folder paths, which may include your Windows user name) but never your RetroAchievements
 password or token. Nothing is uploaded automatically: a bug report is a zip you create and attach yourself
@@ -301,7 +337,8 @@ password or token. Nothing is uploaded automatically: a bug report is a zip you 
 
 Nostyra Online (web edition) reads your ROM and Data folders in the browser only; it uploads nothing and has
 no account. Its only network requests besides the site's own files are cover art and the cover index from
-GitHub (`raw.githubusercontent.com`, `api.github.com`), as on the desktop.
+GitHub (`raw.githubusercontent.com`, `api.github.com`), the same cover-art sources as the desktop. It does not
+check for updates (the site always serves the deployed version).
 
 ## Logs and bug reports
 

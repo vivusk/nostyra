@@ -46,6 +46,8 @@ const backend: Backend = {
     memoryCards: false,
     gamepadCaptureNative: false,
     dataFolderMove: false,
+    updateCheck: false,
+    cloudSaves: false,
   },
   invoke: async <T>(command: string, args: Record<string, unknown> = {}) => {
     const handler = commands[command];

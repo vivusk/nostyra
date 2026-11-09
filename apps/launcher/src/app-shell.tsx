@@ -6,6 +6,7 @@ import { PendingSavesBanner } from "./components/pending-saves-banner";
 import { ReconnectFoldersBanner } from "./components/reconnect-folders-banner";
 import { ScanProblemsHost } from "./components/scan-problems-dialog";
 import { SidebarNavigation } from "./components/sidebar-navigation";
+import { UpdateAvailableBanner } from "./components/update-available-banner";
 import { useBackendEventSync } from "./hooks/use-backend-event-sync";
 import { useLibrarySummary, useSetupState } from "./hooks/use-library-queries";
 import { useLibrarySystems } from "./hooks/use-system-queries";
@@ -76,6 +77,7 @@ function ShellLayout() {
       <main ref={scrollRef} className="min-w-0 flex-1 overflow-y-auto px-10 pt-8 pb-14">
         <ReconnectFoldersBanner />
         <PendingSavesBanner />
+        <UpdateAvailableBanner />
         <RoutedPage route={route} />
       </main>
       <LaunchingOverlay />

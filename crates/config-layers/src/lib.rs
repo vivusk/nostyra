@@ -28,6 +28,7 @@
 mod achievements_config;
 #[cfg(feature = "fs")]
 mod atomic_file_write;
+mod cloud_config;
 mod config_layer_edit;
 mod config_layer_paths;
 mod config_layer_reader;
@@ -55,6 +56,7 @@ use std::path::PathBuf;
 pub use achievements_config::{AchievementsConfig, ACHIEVEMENTS_SECTION};
 #[cfg(feature = "fs")]
 pub use atomic_file_write::write_atomically;
+pub use cloud_config::{CloudConfig, CloudProviderId, CLOUD_COMMAND_ONLY_KEYS, CLOUD_SECTION};
 pub use config_layer_edit::{edit_layer_table, layer_table_text};
 pub use config_layer_paths::{global_config_path, ConfigLayerPaths};
 pub use config_layer_reader::{parse_layer_text, resolve_layer_tables_with_warnings};

@@ -19,6 +19,15 @@ pub const DATA_FOLDER_MOVE_PROGRESS: &str = "data-folder-move-progress";
 pub const ACHIEVEMENTS_CHANGED: &str = "achievements-changed";
 /// The stored RetroAchievements login was rejected and deleted (no payload).
 pub const RA_LOGGED_OUT: &str = "ra-logged-out";
+/// Cloud pass progress (startup, Sync now, "for all"): `{ done, total }` units.
+pub const CLOUD_SYNC_PROGRESS: &str = "cloud-sync-progress";
+/// Cloud status / a game's sync state changed: `{ gameId? }` (refetch `cloud_status`).
+pub const CLOUD_STATUS_CHANGED: &str = "cloud-status-changed";
+/// Browser sign-in started, waiting for the redirect (HTTP providers, phases 04–06).
+#[allow(dead_code)]
+pub const CLOUD_SIGN_IN_WAITING: &str = "cloud-sign-in-waiting";
+/// Window close held until a cloud job ends (≤ 15 s + a running apply pass).
+pub const CLOUD_CLOSING_WAIT: &str = "cloud-closing-wait";
 
 /// Live scan state; also returned by `get_scan_progress` for late subscribers.
 #[derive(Debug, Clone, Default, Serialize)]

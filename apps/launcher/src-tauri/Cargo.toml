@@ -19,6 +19,8 @@ tauri-build.workspace = true
 achievements.workspace = true
 anyhow.workspace = true
 artwork-cache.workspace = true
+# M19 cloud saves: sync units, executor, Local folder provider (HTTP providers later).
+cloud-sync.workspace = true
 config-layers = { workspace = true, features = ["fs"] }
 core-manager.workspace = true
 # Resume-point warnings: CRC of save.srm / the soft-patch file vs the sidecar.
@@ -31,6 +33,8 @@ rom-patch.workspace = true
 runner-session.workspace = true
 # Gamepad capture for the Controls editor only (SDL lives for one capture).
 sdl3.workspace = true
+# Update checker: GitHub release tag vs CARGO_PKG_VERSION.
+semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 storage-db.workspace = true
@@ -50,6 +54,8 @@ windows-sys.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+# In-memory cloud provider with fault / delay hooks (cloud command tests).
+cloud-sync = { workspace = true, features = ["test-support"] }
 disc-image = { workspace = true, features = ["test-images"] }
 # Synthetic PS2 BIOS images for the import / Settings view tests.
 system-catalog = { workspace = true, features = ["test-fixtures"] }
