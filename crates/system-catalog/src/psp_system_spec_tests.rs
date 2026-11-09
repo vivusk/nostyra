@@ -35,13 +35,13 @@ fn psp_shares_iso_chd_pbp_with_playstation_and_is_probed_last() {
         .filter(|s| s.media == Media::Disc)
         .map(|s| s.id)
         .collect();
-    assert_eq!(disc, ["psx", "dreamcast", "psp", "gc", "wii"]);
-    use DiscSignature::{Dreamcast, GameCube, PlayStation, Psp, Wii};
+    assert_eq!(disc, ["psx", "ps2", "dreamcast", "psp", "gc", "wii"]);
+    use DiscSignature::{Dreamcast, GameCube, PlayStation, PlayStation2, Psp, Wii};
     for (ext, asked) in [
-        ("iso", &[PlayStation, Psp, GameCube, Wii][..]),
-        ("chd", &[PlayStation, Dreamcast, Psp]),
+        ("iso", &[PlayStation, PlayStation2, Psp, GameCube, Wii][..]),
+        ("chd", &[PlayStation, PlayStation2, Dreamcast, Psp]),
         ("pbp", &[PlayStation, Psp]),
-        ("cso", &[Psp]),
+        ("cso", &[PlayStation2, Psp]),
     ] {
         let probe = Refuse(RefCell::new(Vec::new()));
         assert!(classify(ext, 1_000_000, Path::new("x"), &probe).is_err());

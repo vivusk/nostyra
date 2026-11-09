@@ -52,14 +52,22 @@ pub fn open_chd(path: &Path) -> Result<Box<dyn DiscReader>, DiscError> {
     }))
 }
 
+/// Hunk index and in-hunk byte offset of sector `lba` in a DVD CHD of `hunk_bytes`
+/// hunks (2048-byte sectors; the byte offset is computed in `u64`, so discs past
+/// 4 GiB — dual-layer DVD-9 — address the right hunk). `SectorOutOfRange` when the
+/// hunk index does not fit the CHD's `u32` hunk numbers.
+pub fn hunk_of(lba: u32, hunk_bytes: u64) -> Result<(u32, usize), DiscError> {
+    let byte = u64::from(lba) * SECTOR_DATA_BYTES as u64;
+    let hunk = u32::try_from(byte / hunk_bytes).map_err(|_| DiscError::SectorOutOfRange(lba))?;
+    Ok((hunk, (byte % hunk_bytes) as usize))
+}
+
 impl DiscReader for ChdDvdReader {
     fn read_user_data(&mut self, lba: u32) -> Result<SectorData, DiscError> {
         if u64::from(lba) >= self.sectors {
             return Err(DiscError::SectorOutOfRange(lba));
         }
-        let byte = u64::from(lba) * SECTOR_DATA_BYTES as u64;
-        let hunk =
-            u32::try_from(byte / self.hunk_bytes).map_err(|_| DiscError::SectorOutOfRange(lba))?;
+        let (hunk, at) = hunk_of(lba, self.hunk_bytes)?;
         if self.cached_hunk != Some(hunk) {
             self.cached_hunk = None;
             self.chd
@@ -67,7 +75,6 @@ impl DiscReader for ChdDvdReader {
                 .read_hunk_in(&mut self.cmp_buf, &mut self.hunk_buf)?;
             self.cached_hunk = Some(hunk);
         }
-        let at = (byte % self.hunk_bytes) as usize;
         let mut data = [0u8; SECTOR_DATA_BYTES];
         let src = self
             .hunk_buf

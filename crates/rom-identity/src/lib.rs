@@ -1,7 +1,7 @@
 //! Game identity without a database, shared by the desktop scanner (`game-library`),
 //! the runner and the web edition (wasm32): header-aware CRC32 + SHA1 of cartridges
 //! (`rom_file_hasher`), single-ROM ZIPs (`rom_archive`), disc identity — first data
-//! track hash + boot serial (`disc_game_identity`), DS / GameCube / Wii codes, the
+//! track hash + boot serial (`disc_game_identity`), DS / GameCube / Wii / PS2 codes, the
 //! sha1 that keys a game's save folder (`game_content_sha1`), the save-state content
 //! tag, No-Intro DAT parsing and matching (`dat_index`), offline metadata from the
 //! metadat attribute DATs (`metadata_dat_index`) and multi-file disc grouping
@@ -16,6 +16,7 @@
 pub mod clrmamepro_dat_parser;
 mod clrmamepro_game_blocks;
 mod dat_facts;
+pub mod dat_identified_bin;
 pub mod dat_index;
 mod dat_load_error;
 mod dat_serial_index;
@@ -28,16 +29,19 @@ pub mod gamecube_wii_identity;
 mod metadata_dat_index;
 mod metadata_record;
 pub mod nds_game_code;
+pub mod ps2_disc_identity;
 pub mod rom_archive;
 pub mod rom_file_hasher;
 pub mod serial_match_keys;
 mod state_content_tag;
+mod zip_archive_messages;
 pub mod zip_scan;
 
 pub use clrmamepro_dat_parser::{
     parse_clrmamepro_dat, parse_clrmamepro_games, DatEntry, DatGame, DatRom,
 };
 pub use dat_facts::{dat_facts, DatFacts};
+pub use dat_identified_bin::{dat_identified_system, dat_pending_hint};
 pub use dat_index::{display_region, display_title, DatIndex};
 pub use dat_load_error::DatLoadError;
 pub use disc_file_grouping::{group_disc_files, DiscGroupCandidate, DiscGrouping};

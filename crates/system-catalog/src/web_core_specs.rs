@@ -42,25 +42,48 @@ pub const WEB_PCSX_REARMED: WebCore = WebCore {
     save_dir: "PCSX-ReARMed",
 };
 
+/// Atari 2600: Stella 2014 (the old 3.9 core; the desktop plays Stella 8, so states
+/// are never shared). No SRAM on any Atari web core (`save_dir` unused).
+pub const WEB_STELLA2014: WebCore = WebCore {
+    ejs_core: "stella2014",
+    save_dir: "Stella 2014",
+};
+/// Atari 7800: ProSystem.
+pub const WEB_PROSYSTEM: WebCore = WebCore {
+    ejs_core: "prosystem",
+    save_dir: "ProSystem",
+};
+/// Atari Lynx: Handy (its EEPROM file stays in EmulatorJS's file system, not synced;
+/// the desktop's fixed `handy_refresh_rate=60` is not applied on the web).
+pub const WEB_HANDY: WebCore = WebCore {
+    ejs_core: "handy",
+    save_dir: "Handy",
+};
+
 /// Every EmulatorJS core the web edition ships.
-pub const WEB_CORES: [WebCore; 5] = [
+pub const WEB_CORES: [WebCore; 8] = [
     WEB_FCEUMM,
     WEB_SNES9X,
     WEB_MGBA,
     WEB_GENESIS_PLUS_GX,
     WEB_PCSX_REARMED,
+    WEB_STELLA2014,
+    WEB_PROSYSTEM,
+    WEB_HANDY,
 ];
 
 /// EmulatorJS core → desktop core id, for cores that are the same libretro core.
-const SAME_LIBRETRO_CORE: [(&str, &str); 4] = [
+const SAME_LIBRETRO_CORE: [(&str, &str); 6] = [
     ("snes9x", "snes9x"),
     ("mgba", "mgba"),
     ("genesis_plus_gx", "genesis_plus_gx"),
     ("pcsx_rearmed", "pcsx-rearmed"),
+    ("prosystem", "prosystem"),
+    ("handy", "handy"),
 ];
 
 /// EmulatorJS cores with no desktop counterpart (no shared core layer).
-pub const WEB_ONLY_CORES: [&str; 1] = ["fceumm"];
+pub const WEB_ONLY_CORES: [&str; 2] = ["fceumm", "stella2014"];
 
 /// The desktop core that is the same libretro core as the system's web core: the web
 /// edition then reads/writes its `config/core/<id>.toml` layer too. `None` when the

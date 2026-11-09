@@ -3,6 +3,7 @@
 
 use crate::disc_probe::DiscSignature;
 use crate::mega_drive_smd_layout::{SMD_BLOCK_BYTES, SMD_HEADER_BYTES};
+use crate::per_extension_probe::ExtensionCheck;
 
 /// Bytes read from the start of a file for content probes: enough for every probe in
 /// the registry. The DS header CRC ends at 0x160 (Game Boy logo bytes: 0x108), so
@@ -53,6 +54,9 @@ pub enum ContentProbe {
     /// Nintendo DS cartridge header: header CRC and code fields (`nds_header_probe`);
     /// a DSi-only game fails with its own reason.
     NdsHeader,
+    /// One check per extension group (`per_extension_probe`): Atari 7800 / Lynx
+    /// headers by extension, a DAT-gated headerless `.bin`.
+    PerExtension(&'static [ExtensionCheck]),
 }
 
 /// How to find the bytes DATs hash.
@@ -75,6 +79,15 @@ pub enum HeaderRule {
     /// hash as the big-endian `.z64` image No-Intro lists (see `n64_byte_order`),
     /// so all three copies share one DAT entry and content id.
     N64ByteOrder,
+    /// A format header No-Intro strips (Atari 7800 `.a78`: `ATARI7800` at 1, 128 B;
+    /// Lynx `.lnx`: `LYNX\0` at 0, 64 B). Like [`HeaderRule::INes`]: the whole file
+    /// is the primary hash and content id; when `magic` is at `offset`, the bytes
+    /// after the first `len` are a fallback hash (see [`magic_header_len`]).
+    MagicHeader {
+        offset: usize,
+        magic: &'static [u8],
+        len: usize,
+    },
 }
 
 /// Bytes skipped before hashing a file of `file_len` bytes, which is also what a DAT
@@ -92,7 +105,22 @@ pub fn hash_skip_len(rule: HeaderRule, file_len: u64) -> usize {
         | HeaderRule::SnesCopier512
         | HeaderRule::INes
         | HeaderRule::MegaDriveSmd
-        | HeaderRule::N64ByteOrder => 0,
+        | HeaderRule::N64ByteOrder
+        | HeaderRule::MagicHeader { .. } => 0,
+    }
+}
+
+/// Length of the format header of `bytes` under a [`HeaderRule::MagicHeader`] rule:
+/// `len` when the magic is there and data follows it, else 0 (no fallback hash).
+/// Other rules: 0.
+pub fn magic_header_len(rule: HeaderRule, bytes: &[u8]) -> usize {
+    match rule {
+        HeaderRule::MagicHeader { offset, magic, len }
+            if bytes.len() > len && bytes.get(offset..offset + magic.len()) == Some(magic) =>
+        {
+            len
+        }
+        _ => 0,
     }
 }
 

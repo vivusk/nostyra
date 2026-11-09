@@ -4,6 +4,7 @@ import { commands, errorMessage, type CommandError } from "../api/tauri-commands
 import type { StateSlotId } from "../api/tauri-commands-gameplay";
 import type { CoreDownloadProgressEvent } from "../api/tauri-events";
 import { queryKeys, type GameSessionState } from "../api/query-keys";
+import type { BiosRequiredPrompt } from "../components/bios-required-dialog";
 import type { CoreInstallPrompt } from "../components/core-install-dialog";
 import { useErrorToast } from "../components/error-toast";
 
@@ -46,6 +47,12 @@ export function useLaunchGame() {
         // Offer the core instead of a dead-end error (CoreInstallDialog).
         const prompt: CoreInstallPrompt = { coreId, gameId: playTarget(request).gameId, message: errorMessage(error) };
         queryClient.setQueryData(queryKeys.coreInstallPrompt, prompt);
+        return;
+      }
+      if (kind === "bios_missing" && coreId) {
+        // Offer the BIOS file picker instead of a dead-end error (BiosRequiredDialog).
+        const prompt: BiosRequiredPrompt = { coreId, gameId: playTarget(request).gameId, message: errorMessage(error) };
+        queryClient.setQueryData(queryKeys.biosRequiredPrompt, prompt);
         return;
       }
       showError("Cannot start the game", errorMessage(error));

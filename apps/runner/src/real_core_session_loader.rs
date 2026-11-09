@@ -73,6 +73,7 @@ pub(crate) fn load_session_in(
         core_options,
         hw_render,
         keep_library_loaded: spec.keep_library_loaded, // as the runner
+        stage_content: spec.stage_content,             // as the runner
     })
     .expect("load core + ROM");
     session.require_hw_context_for_states(spec.hw_render_required);

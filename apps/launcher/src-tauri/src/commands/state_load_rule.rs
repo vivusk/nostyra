@@ -111,4 +111,38 @@ mod tests {
         assert_eq!(disc1.incompatible_reason(&sidecar("1", None)), None);
         assert_eq!(StateLoadRule::default().incompatible_reason(&disc2), None);
     }
+
+    /// PS2 (M18): same serial, another executable CRC → `state-incompatible` too.
+    #[test]
+    fn ps2_state_from_another_revision_is_incompatible() {
+        let rev1 = StateSidecar {
+            core_name: "PCEE2".into(),
+            core_version: "v2.9.138".into(),
+            content_tag: Some("SLUS_203.12;1:0000BBBB".into()),
+            ..StateSidecar::default()
+        };
+        let rev0 = StateLoadRule {
+            strict_version: true,
+            core_display_name: "PCEE2",
+            installed_version: Some("v2.9.138".into()),
+            content_tag: Some("SLUS_203.12;1:0000AAAA".into()),
+        };
+        assert_eq!(
+            rev0.incompatible_reason(&rev1).as_deref(),
+            Some("Made from another disc or revision")
+        );
+        let same = StateSidecar {
+            content_tag: rev0.content_tag.clone(),
+            ..rev1.clone()
+        };
+        assert_eq!(rev0.incompatible_reason(&same), None);
+        let older = StateSidecar {
+            core_version: "v2.9.100".into(),
+            ..same
+        };
+        assert_eq!(
+            rev0.incompatible_reason(&older).as_deref(),
+            Some("Made by another PCEE2 version")
+        );
+    }
 }

@@ -8,7 +8,7 @@ use crate::environment_av_info::av_info_change;
 use crate::environment_core_messages::{core_message, log_interface};
 use crate::environment_core_options::get_variable;
 use crate::environment_disk_control::disk_control;
-use crate::environment_hw_render::hw_render;
+use crate::environment_hw_render::{hw_render, shared_context_refused};
 use crate::environment_memory_maps::{
     memory_maps, RETRO_ENVIRONMENT_SET_MEMORY_MAPS as SET_MEMORY_MAPS,
     RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS as SET_SUPPORT_ACHIEVEMENTS,
@@ -16,6 +16,7 @@ use crate::environment_memory_maps::{
 use crate::ffi_disc_message_types::*;
 use crate::ffi_hw_render_types::{
     RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, RETRO_ENVIRONMENT_SET_HW_RENDER,
+    RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT,
 };
 use crate::ffi_types::*;
 use crate::frame_sink_traits::PixelFormat;
@@ -25,6 +26,10 @@ use crate::serialization_quirks::SerializationQuirks;
 
 /// Registered with the core via `retro_set_environment`.
 pub(crate) unsafe extern "C" fn environment(cmd: c_uint, data: *mut c_void) -> bool {
+    // Bare 44 is SET_SERIALIZATION_QUIRKS: this one is told apart by its bit, no context needed.
+    if cmd == RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT {
+        return shared_context_refused();
+    }
     let cmd = cmd & !RETRO_ENVIRONMENT_EXPERIMENTAL;
     with_current(false, |ctx| {
         // SAFETY: libretro.h defines `data`'s pointee type per command; each arm

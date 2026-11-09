@@ -1,15 +1,17 @@
 //! [`DiscImageProbe`]: the registry's [`DiscProbe`] backed by this crate. Decides
 //! whether a `.bin` / `.iso` / `.chd` / `.cue` / `.gdi` / `.cdi` / `.m3u` / `.pbp`
-//! / `.cso` file (GameCube / Wii: `.gcm` / `.ciso` / `.gcz` / `.wia` / `.rvz` /
-//! `.wbfs` / `.dol` / `.elf` too) is a disc of the asked signature (PlayStation,
-//! Dreamcast, PSP, GameCube or Wii), with one readable reason when it is not. Sheets
-//! are checked for missing files first (the scan reports a broken cue / gdi once,
-//! here). GameCube / Wii read one disc header only ([`crate::nintendo_disc_probe`]).
+//! / `.cso` / `.zso` file (GameCube / Wii: `.gcm` / `.ciso` / `.gcz` / `.wia` /
+//! `.rvz` / `.wbfs` / `.dol` / `.elf` too) is a disc of the asked signature
+//! (PlayStation, PlayStation 2, Dreamcast, PSP, GameCube or Wii), with one readable
+//! reason when it is not. Sheets are checked for missing files first (the scan
+//! reports a broken cue / gdi once, here). GameCube / Wii read one disc header only
+//! ([`crate::nintendo_disc_probe`]); PlayStation 2 lives in [`crate::ps2_disc_probe`].
 
 use std::path::Path;
 
 use system_catalog::{DiscProbe, DiscSignature};
 
+use crate::cso_image::CsoReader;
 use crate::cue_sheet::CueSheet;
 use crate::disc_sector_reader::open_data_track;
 use crate::dreamcast_disc_id::read_ip_bin;
@@ -18,11 +20,13 @@ use crate::m3u_playlist::{display_name, playlist_entries};
 use crate::nintendo_disc_probe::{check_nintendo, playlist_verdict};
 use crate::pbp_sfo::{PbpInfo, PbpKind};
 use crate::playstation_disc_id::is_playstation;
+use crate::ps2_disc_probe::check_ps2;
 use crate::psp_disc_id::read_psp_identity;
 use crate::{is_cue_ext, is_gdi_ext, is_m3u_ext, DiscError, CDI_EXT, CSO_EXT, PBP_EXT};
 
 const NOT_PLAYSTATION: &str = "not a PlayStation disc";
 const NOT_DREAMCAST: &str = "not a Dreamcast disc";
+const ZSO_NOT_PSP: &str = "ZSO is not supported by the PSP core";
 const NOT_PSP_EBOOT: &str = "not a PSP eboot (PlayStation classic or no game data)";
 
 /// Disc probe used by the library scanner and the runner.
@@ -75,6 +79,7 @@ fn check(signature: DiscSignature, path: &Path) -> Result<(), String> {
     }
     match signature {
         DiscSignature::PlayStation => check_playstation(path, ext),
+        DiscSignature::PlayStation2 => check_ps2(path, ext),
         DiscSignature::Dreamcast => check_dreamcast(path, ext),
         DiscSignature::Psp => check_psp(path, ext),
         DiscSignature::GameCube | DiscSignature::Wii => check_nintendo(signature, path, ext),
@@ -122,8 +127,13 @@ fn check_dreamcast(path: &Path, ext: &str) -> Result<(), String> {
 }
 
 /// UMD image (`.iso` / `.cso` / DVD `.chd`) with a PSP game volume, or a PSP eboot
-/// with game data. CSO problems (ZSO, version 2) are reported as is.
+/// with game data. CSO problems (version 2, corrupt index) are reported as is; a ZSO
+/// (LZ4 data, even named `.cso`) is PlayStation 2 only.
 fn check_psp(path: &Path, ext: &str) -> Result<(), String> {
+    let is_cso = ext.eq_ignore_ascii_case(CSO_EXT);
+    if is_cso && CsoReader::open(path).is_ok_and(|reader| reader.is_lz4()) {
+        return Err(ZSO_NOT_PSP.to_owned());
+    }
     if ext.eq_ignore_ascii_case(PBP_EXT) {
         let info = PbpInfo::read(path).map_err(|_| NOT_PSP_EBOOT.to_owned())?;
         return match info.kind == PbpKind::Psp && info.has_game_data {
@@ -136,9 +146,7 @@ fn check_psp(path: &Path, ext: &str) -> Result<(), String> {
         Err(err @ (DiscError::Io(_) | DiscError::MissingFile(_) | DiscError::NotPsp(_))) => {
             Err(err.to_string())
         }
-        Err(err @ DiscError::Format(_)) if ext.eq_ignore_ascii_case(CSO_EXT) => {
-            Err(err.to_string())
-        }
+        Err(err @ DiscError::Format(_)) if is_cso => Err(err.to_string()),
         Err(_) => Err("not a PSP UMD image".to_owned()),
     }
 }

@@ -92,7 +92,7 @@ fn only_the_ds_reads_the_right_stick_alone() {
     for spec in ALL_SYSTEMS {
         let want = match spec.id {
             "nds" => AnalogSticks::RightOnly,
-            "n64" | "dreamcast" | "psp" | "gc" | "wii" => AnalogSticks::Both,
+            "n64" | "ps2" | "dreamcast" | "psp" | "gc" | "wii" => AnalogSticks::Both,
             _ => AnalogSticks::None,
         };
         assert_eq!(spec.analog_sticks, want, "{}", spec.id);

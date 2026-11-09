@@ -5,13 +5,16 @@
 //! Cores with a BIOS switch (Flycast, `dc/dc_boot.bin`): only the known names, at
 //! their exact size; the md5 check that decides real vs HLE is the launcher's and
 //! the runner's (std-only here: no hashing). Without any file the core's built-in
-//! HLE BIOS runs.
+//! HLE BIOS runs. PS2 cores (`FirmwareRule::Ps2Romdir`, M18): any 4–8 MiB dump with
+//! a ROMDIR `ROMVER` entry, labelled by version; no HLE — `ps2_bios_pick` chooses.
+//! The per-rule folder walk lives in `firmware_scan_rule`.
 
-use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 
-use crate::core_specs::{CoreSpec, FirmwareFile};
+use crate::core_specs::{CoreSpec, FirmwareFile, FirmwareRule};
+use crate::ps2_bios_romdir::Ps2BiosVersion;
+
+pub use crate::firmware_scan_rule::scan_firmware;
 
 /// Size of every PlayStation BIOS image.
 pub const BIOS_BYTES: u64 = 512 * 1024;
@@ -20,17 +23,21 @@ pub const ANY_REGION: &str = "ANY";
 /// Regions the status view reports, in UI order.
 pub const BIOS_REGIONS: [&str; 3] = ["JP", "US", "EU"];
 
-/// One file of the system folder that looks like a BIOS (512 KiB).
+/// One file of the BIOS folder that looks like a BIOS to the core's rule.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BiosFileStatus {
     pub file_name: String,
-    /// Registry entry with this name (case-insensitive).
+    /// Registry entry with this name (case-insensitive); `None` under `Ps2Romdir`.
     pub known: Option<&'static FirmwareFile>,
     /// Region it boots: the registry's for a known name, else guessed from the image
-    /// like the core does (`" E"` / `" J"` at 0x7FF51, otherwise US).
+    /// like the core does (`" E"` / `" J"` at 0x7FF51, otherwise US); PS2: `ROMVER`.
     pub region: &'static str,
     /// Size and signature check passed (the core skips invalid files).
     pub valid: bool,
+    /// Human label of the dump ("v1.60 · USA · 2002-02-07"); PS2 only.
+    pub label: Option<String>,
+    /// Decoded `ROMVER` (comparable: the picker takes the newest); PS2 only.
+    pub ps2_version: Option<Ps2BiosVersion>,
 }
 
 /// What the core boots for one region.
@@ -45,17 +52,24 @@ pub enum BiosChoice {
 /// Status of a core's BIOS files.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FirmwareReport {
-    /// 512 KiB files, known names first in the core's order, then the rest by name.
+    /// Known names first in the core's order, then the rest by name (PS2: by name).
     pub files: Vec<BiosFileStatus>,
 }
 
 impl FirmwareReport {
-    /// BIOS used for a disc of `region` (`"JP"`, `"US"`, `"EU"`): a valid file of that
-    /// region (or any-region file), else any valid file, else HLE.
+    /// The files the core would boot.
+    pub fn valid(&self) -> impl Iterator<Item = &BiosFileStatus> {
+        self.files.iter().filter(|f| f.valid)
+    }
+
+    /// BIOS used for a disc of `region` (`"JP"`, `"US"`, `"EU"`) by a `KnownFiles`
+    /// core: a valid file of that region (or any-region file), else any valid file,
+    /// else HLE. `Ps2Romdir` cores use `ps2_bios_pick::choose` instead.
     pub fn choice_for(&self, region: &str) -> BiosChoice {
-        let valid = || self.files.iter().filter(|f| f.valid);
-        let regional = valid().find(|f| f.region == region || f.region == ANY_REGION);
-        match regional.or_else(|| valid().next()) {
+        let regional = self
+            .valid()
+            .find(|f| f.region == region || f.region == ANY_REGION);
+        match regional.or_else(|| self.valid().next()) {
             Some(file) => BiosChoice::Real {
                 file_name: file.file_name.clone(),
             },
@@ -65,66 +79,29 @@ impl FirmwareReport {
 }
 
 /// The folder `core` reads its BIOS from: `<system_dir>/<subdir>` (one subdir per
-/// core).
+/// core; the rule's for PS2, the first firmware entry's otherwise).
 pub fn firmware_dir(system_dir: &Path, core: &CoreSpec) -> PathBuf {
-    system_dir.join(core.firmware.first().map_or("", |f| f.subdir))
+    let subdir = match core.firmware_rule {
+        FirmwareRule::Ps2Romdir { subdir, .. } => subdir,
+        FirmwareRule::KnownFiles => core.firmware.first().map_or("", |f| f.subdir),
+    };
+    system_dir.join(subdir)
 }
 
 /// Regions the status lists for `core`: JP / US / EU, or one [`ANY_REGION`] row when
-/// every BIOS file of the core boots every region.
+/// every BIOS file of the core boots every region (PS2 dumps are regional).
 pub fn bios_regions(core: &CoreSpec) -> &'static [&'static str] {
-    if core.firmware.iter().all(|f| f.region == ANY_REGION) {
-        &[ANY_REGION]
-    } else {
+    let regional = matches!(core.firmware_rule, FirmwareRule::Ps2Romdir { .. })
+        || core.firmware.iter().any(|f| f.region != ANY_REGION);
+    if regional {
         &BIOS_REGIONS
+    } else {
+        &[ANY_REGION]
     }
 }
 
-/// Scans `core`'s BIOS folder for its BIOS files (missing folder = no files).
-pub fn scan_firmware(system_dir: &Path, core: &CoreSpec) -> FirmwareReport {
-    let switch = core.bios_switch.is_some();
-    let mut files: Vec<BiosFileStatus> = std::fs::read_dir(firmware_dir(system_dir, core))
-        .into_iter()
-        .flatten()
-        .flatten()
-        .filter(|entry| {
-            entry
-                .metadata()
-                .is_ok_and(|m| m.is_file() && core.firmware.iter().any(|f| f.size == m.len()))
-        })
-        .filter_map(|entry| {
-            let file_name = entry.file_name().to_str()?.to_owned();
-            let known = core
-                .firmware
-                .iter()
-                .find(|f| f.name.eq_ignore_ascii_case(&file_name));
-            if switch && known.is_none() {
-                return None; // such cores read their known names only
-            }
-            let valid = switch
-                || read_at(&entry.path(), 0, BIOS_HEAD_BYTES)
-                    .is_some_and(|head| is_valid_bios(&head));
-            let region = known.map_or_else(|| guess_region(&entry.path()), |k| k.region);
-            Some(BiosFileStatus {
-                file_name,
-                known,
-                region,
-                valid,
-            })
-        })
-        .collect();
-    let order = |f: &BiosFileStatus| {
-        let rank = f
-            .known
-            .and_then(|k| core.firmware.iter().position(|x| x.name == k.name));
-        (rank.unwrap_or(usize::MAX), f.file_name.to_ascii_lowercase())
-    };
-    files.sort_by_key(order);
-    FirmwareReport { files }
-}
-
-/// The core's signature check on the first bytes of a 512 KiB image: a MIPS
-/// `lui t0` at byte 1, or "PS compatible" at 0x12C.
+/// The PlayStation core's signature check on the first bytes of a 512 KiB image: a
+/// MIPS `lui t0` at byte 1, or "PS compatible" at 0x12C.
 pub fn is_valid_bios(head: &[u8]) -> bool {
     head.get(1..5) == Some(&[0x00, 0x08, 0x3C, 0x3F][..])
         || head.get(0x12C..0x12C + 13) == Some(b"PS compatible")
@@ -132,23 +109,6 @@ pub fn is_valid_bios(head: &[u8]) -> bool {
 
 /// Bytes [`is_valid_bios`] looks at.
 pub const BIOS_HEAD_BYTES: usize = 0x140;
-
-/// Region marker the core reads from an image it does not know by name.
-fn guess_region(path: &Path) -> &'static str {
-    match read_at(path, 0x7FF51, 2).as_deref() {
-        Some(b" E") => "EU",
-        Some(b" J") => "JP",
-        _ => "US",
-    }
-}
-
-fn read_at(path: &Path, offset: u64, len: usize) -> Option<Vec<u8>> {
-    let mut file = File::open(path).ok()?;
-    file.seek(SeekFrom::Start(offset)).ok()?;
-    let mut bytes = Vec::with_capacity(len);
-    file.take(len as u64).read_to_end(&mut bytes).ok()?;
-    Some(bytes)
-}
 
 #[cfg(test)]
 #[path = "firmware_status_tests.rs"]

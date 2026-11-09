@@ -4,8 +4,9 @@ use system_catalog::{core, CORES};
 
 use super::*;
 
-/// `library_name` each pinned core reports (M15 spike step 6; Dolphin: rcheevos' key).
-const LIBRARY_NAMES: [(&str, &str); 10] = [
+/// `library_name` each pinned core reports (M15 spike step 6, M17 spike; Dolphin:
+/// rcheevos' key).
+const LIBRARY_NAMES: [(&str, &str); 14] = [
     ("snes9x", "Snes9x"),
     ("mesen", "Mesen"),
     ("mgba", "mGBA"),
@@ -16,6 +17,10 @@ const LIBRARY_NAMES: [(&str, &str); 10] = [
     ("ppsspp", "PPSSPP"),
     ("melonds_ds", "melonDS DS"),
     ("dolphin-emu", "dolphin-emu"),
+    ("stella", "Stella"),
+    ("prosystem", "ProSystem"),
+    ("handy", "Handy"),
+    ("pcee2", "PCEE2"),
 ];
 
 fn library_name(core_id: &str) -> &'static str {
@@ -81,6 +86,35 @@ fn rcheevos_table_rules_apply_by_library_name() {
         "pcsx_rearmed_region",
         "pal"
     ));
+}
+
+/// rcheevos' table has no PCSX2 / PCEE2 row, so the registry list is the only
+/// enforcer: every rule key at any other value is disallowed, the fixed strings pass,
+/// renderer / upscale stay free.
+#[test]
+fn pcee2_rules_come_from_the_registry_alone() {
+    let pcee2 = core("pcee2").unwrap();
+    let disallowed = |key: &str, value: &str| is_option_disallowed("PCEE2", pcee2, key, value);
+    assert_eq!(pcee2.hardcore_required_options.len(), 5);
+    for (key, required) in pcee2.hardcore_required_options {
+        assert!(!disallowed(key, required), "{key}={required}");
+        assert!(
+            rc_setting_allowed("PCEE2", key, "enabled") && rc_setting_allowed("PCEE2", key, "3"),
+            "{key}: rcheevos knows no PCEE2 rule"
+        );
+    }
+    assert!(disallowed("pcsx2_cheats", "enabled"));
+    for value in ["-3", "-1", "1", "3", "100"] {
+        assert!(disallowed("pcsx2_ee_cycle_rate", value), "{value}");
+    }
+    for value in ["1", "2", "3", "disabled"] {
+        assert!(disallowed("pcsx2_ee_cycle_skip", value), "{value}");
+    }
+    assert!(disallowed("pcsx2_widescreen_patches", "enabled"));
+    assert!(disallowed("pcsx2_no_interlacing_patches", "enabled"));
+    assert!(!disallowed("pcsx2_renderer", "software"));
+    assert!(!disallowed("pcsx2_upscale_multiplier", "4"));
+    assert!(!disallowed("pcsx2_bios", "scph39001.bin"));
 }
 
 #[test]

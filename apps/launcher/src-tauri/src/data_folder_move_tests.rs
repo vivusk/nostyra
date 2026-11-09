@@ -59,6 +59,34 @@ fn achievement_files_and_badge_cache_move_too() {
     assert_eq!(read(to.path(), "cache/achievement-badges/00234.png"), "png");
 }
 
+/// PlayStation 2 keeps its BIOS (+ the core's `.nvm` / `.mec`) and the shared memory
+/// cards under `system/pcsx2/`, outside `saves/`: the `system` entry carries them.
+#[test]
+fn ps2_bios_sidecars_and_shared_memory_cards_move_with_the_system_folder() {
+    let from = tempfile::tempdir().unwrap();
+    let to = tempfile::tempdir().unwrap();
+    let files = [
+        "system/pcsx2/bios/scph39001.bin",
+        "system/pcsx2/bios/scph39001.nvm",
+        "system/pcsx2/bios/scph39001.mec",
+        "system/pcsx2/memcards/Mcd001.ps2",
+        "system/pcsx2/memcards/Mcd002.ps2",
+        "saves/ps2/Game [FA7546D5]/slot1.state",
+    ];
+    for rel in files {
+        write(from.path(), rel, rel);
+    }
+    let plan = plan_move(from.path(), to.path()).unwrap();
+    assert_eq!(plan.files.len(), files.len());
+    let copied = copy_planned_files(from.path(), to.path(), &plan, false, |_, _| {}).unwrap();
+    assert_eq!(copied.len(), files.len());
+    for rel in files {
+        assert_eq!(read(to.path(), rel), rel);
+    }
+    remove_moved_originals(from.path(), &plan, &copied);
+    assert!(!from.path().join("system").exists());
+}
+
 #[test]
 fn keep_existing_leaves_the_conflicting_original_in_place() {
     let from = tempfile::tempdir().unwrap();

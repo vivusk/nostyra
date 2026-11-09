@@ -39,6 +39,7 @@ mod savestate_context;
 mod serialization_quirks;
 mod session_config;
 mod staged_content_file;
+mod state_size_cache;
 
 pub use core_library_loader::CoreInfo;
 pub use core_probe::probe_core;

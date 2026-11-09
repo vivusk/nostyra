@@ -3,12 +3,15 @@
 //! and a wrong one ends in a fatal emulator error (M11 phase-00 spike). So the real
 //! BIOS is chosen only when a known file sits where the core looks
 //! (`<system>/<subdir>/<name>`) with the registry's size and md5; otherwise the core
-//! is told to use its built-in HLE BIOS.
+//! is told to use its built-in HLE BIOS. PS2 cores (`FirmwareRule::Ps2Romdir`) get
+//! `pcsx2_bios` answered with the dump the shared picker chooses (`ps2_bios_option`).
 
 use std::path::Path;
 
 use md5::{Digest, Md5};
-use system_catalog::{CoreSpec, FirmwareFile, SystemSpec};
+use system_catalog::{CoreSpec, FirmwareFile, FirmwareRule, SystemSpec};
+
+pub(crate) mod ps2_bios_option;
 
 /// What the runner tells a BIOS-switch core, and why.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,9 +56,17 @@ pub fn choose(core: &CoreSpec, system_dir: &Path) -> Option<BiosSwitchChoice> {
 }
 
 /// At launch: logs the BIOS choice for `system`'s core and returns the option to
-/// answer (`None` for cores without a BIOS switch).
-pub fn launch_option(system: &SystemSpec, system_dir: &Path) -> Option<(String, String)> {
+/// answer: the PS2 dump for `rom`'s region, or the real / HLE switch (`None` for
+/// cores with neither).
+pub fn launch_option(
+    system: &SystemSpec,
+    system_dir: &Path,
+    rom: &Path,
+) -> Option<(String, String)> {
     let core = system_catalog::core_for_system(system.id)?;
+    if let FirmwareRule::Ps2Romdir { .. } = core.firmware_rule {
+        return ps2_bios_option::option(system, system_dir, core, rom);
+    }
     let choice = choose(core, system_dir)?;
     tracing::info!("{} BIOS: {}", system.display_name, choice.describe());
     option_for(core, &choice)

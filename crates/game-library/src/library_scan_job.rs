@@ -11,6 +11,7 @@ use rayon::prelude::*;
 use storage_db::{upsert_scanned_batch, Connection, FileFingerprint, LibraryFolder};
 use system_catalog::ALL_SYSTEMS;
 
+use crate::dat_pending_resolution::resolve_dat_pending;
 use crate::dat_rematch::rematch_unidentified;
 use crate::folder_scanner::DiscoveredFile;
 use crate::library_error::LibraryError;
@@ -119,10 +120,11 @@ fn scan_discovered_folder(
 ) -> Result<(), LibraryError> {
     let FolderDiscovery {
         folder,
-        discovered,
+        mut discovered,
         known,
         missing,
     } = found;
+    resolve_dat_pending(&mut discovered, catalogs);
     summary.missing += missing;
     summary.skipped += discovered.skipped;
     summary.failures.extend(discovered.failures);

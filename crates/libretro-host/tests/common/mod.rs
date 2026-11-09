@@ -40,6 +40,7 @@ pub fn load(core: &Path) -> Result<CoreSession, HostError> {
         core_options: &[],
         hw_render: None,
         keep_library_loaded: false,
+        stage_content: false,
     })
 }
 

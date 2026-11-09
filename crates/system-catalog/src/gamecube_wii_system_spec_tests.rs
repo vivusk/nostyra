@@ -41,13 +41,13 @@ fn gc_and_wii_are_the_last_disc_systems_and_probe_every_extension() {
     assert!(WII.has_extension("WBFS") && !WII.has_extension("gcm") && !WII.has_extension("m3u"));
     let ids =
         |ext: &str| -> Vec<&str> { candidates_for_extension(ext).iter().map(|s| s.id).collect() };
-    assert_eq!(ids("iso"), ["psx", "psp", "gc", "wii"]);
-    assert_eq!(ids("m3u"), ["psx", "dreamcast", "gc"]);
+    assert_eq!(ids("iso"), ["psx", "ps2", "psp", "gc", "wii"]);
+    assert_eq!(ids("m3u"), ["psx", "ps2", "dreamcast", "gc"]);
     assert_eq!(ids("rvz"), ["gc", "wii"]);
     assert_eq!(ids("wbfs"), ["wii"]);
-    use DiscSignature::{GameCube, PlayStation, Psp, Wii};
+    use DiscSignature::{GameCube, PlayStation, PlayStation2, Psp, Wii};
     for (ext, asked) in [
-        ("iso", &[PlayStation, Psp, GameCube, Wii][..]),
+        ("iso", &[PlayStation, PlayStation2, Psp, GameCube, Wii][..]),
         ("dol", &[GameCube, Wii]),
         ("wbfs", &[Wii]),
     ] {
@@ -123,7 +123,11 @@ fn dolphin_core_spec_follows_the_spike() {
             core.keep_library_loaded,
         );
         let want = core.id == DOLPHIN.id;
-        assert_eq!(flags, (want, want, want), "{}", core.id);
+        // Handy: SINGLE_SESSION states (M17); PCEE2 accepts any blob (M18).
+        let strict = want || matches!(core.id, "handy" | "pcee2");
+        // PCEE2: FreeLibrary after deinit crashes in dll_unloaded code (M18).
+        let kept = want || core.id == "pcee2";
+        assert_eq!(flags, (want, strict, kept), "{}", core.id);
     }
 }
 

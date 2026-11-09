@@ -6,8 +6,9 @@
 //! starts unpatched (never half-patched).
 //!
 //! [`content_bytes_for_core`] decides which cartridges are preloaded: patched ones,
-//! and ones whose path is too long for cores that copy it into a 256-byte buffer
-//! (libretro-host stages preloaded bytes as a short file for cores that load by path).
+//! ones whose path is too long for cores that copy it into a 256-byte buffer, and
+//! every cartridge of a `stage_content` core (libretro-host stages preloaded bytes as
+//! a short file for cores that load by path).
 
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
@@ -73,22 +74,24 @@ pub fn load_soft_patched_rom_from(rom: &Path, content: &Path) -> SoftPatchedRom 
 const LONG_PATH_BYTES: usize = 256;
 
 /// Bytes to hand the core for a cartridge: the patched ROM, else the whole file
-/// when its path is too long for path-loading cores, else `None` (the core reads
-/// `rom` as usual). A read error is logged and leaves the path load to fail.
+/// when its path is too long for path-loading cores or `always` (`CoreSpec::
+/// stage_content`: Handy), else `None` (the core reads `rom` as usual). A read error
+/// is logged and leaves the path load to fail.
 pub fn content_bytes_for_core<'a>(
     rom: &Path,
     patched: &'a SoftPatchedRom,
+    always: bool,
 ) -> Option<Cow<'a, [u8]>> {
     if let Some(bytes) = &patched.data {
         return Some(Cow::Borrowed(bytes));
     }
-    if !is_long_path(rom) {
+    if !always && !is_long_path(rom) {
         return None;
     }
     match std::fs::read(rom) {
         Ok(bytes) => Some(Cow::Owned(bytes)),
         Err(err) => {
-            tracing::warn!(path = %rom.display(), %err, "cannot preload long-path ROM");
+            tracing::warn!(path = %rom.display(), %err, "cannot preload ROM");
             None
         }
     }
@@ -125,17 +128,33 @@ mod tests {
         assert!(is_long_path(&path(256)));
         assert!(is_long_path(&path(300)));
         let short = Path::new("no/such/Game.md");
-        assert!(content_bytes_for_core(short, &SoftPatchedRom::default()).is_none());
+        assert!(content_bytes_for_core(short, &SoftPatchedRom::default(), false).is_none());
         let patched = SoftPatchedRom {
             data: Some(vec![1, 2, 3]),
             ..SoftPatchedRom::default()
         };
         assert_eq!(
-            content_bytes_for_core(short, &patched).as_deref(),
+            content_bytes_for_core(short, &patched, false).as_deref(),
             Some(&[1u8, 2, 3][..])
         );
         // Long path that cannot be read: nothing preloaded (the core reports the load).
-        assert!(content_bytes_for_core(&path(300), &SoftPatchedRom::default()).is_none());
+        assert!(content_bytes_for_core(&path(300), &SoftPatchedRom::default(), false).is_none());
+    }
+
+    #[test]
+    fn stage_content_cores_always_get_the_bytes() {
+        let dir = tempfile::Builder::new()
+            .prefix("nostyra-stage-")
+            .tempdir()
+            .unwrap();
+        let rom = dir.path().join("game.lnx");
+        std::fs::write(&rom, [7u8, 8]).unwrap();
+        let unpatched = SoftPatchedRom::default();
+        assert!(content_bytes_for_core(&rom, &unpatched, false).is_none());
+        assert_eq!(
+            content_bytes_for_core(&rom, &unpatched, true).as_deref(),
+            Some(&[7u8, 8][..])
+        );
     }
 
     #[test]

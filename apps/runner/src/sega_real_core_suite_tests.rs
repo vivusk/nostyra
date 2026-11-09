@@ -32,6 +32,7 @@ const GPGX_EXPECTATIONS: RunAheadExpectations = RunAheadExpectations {
     exact_audio: false,
     exact_round_trip: true,
     state_jitter_bytes: 0,
+    stale_first_frame: false,
 };
 
 /// Every system: frames / input / tone, run-ahead, slots, rewind; plus the reset

@@ -29,13 +29,13 @@ test("signature and region marker", () => {
 
 test("region choice: own region or any-region file, else any valid file, else HLE", () => {
   const files = [
-    { fileName: "scph5501.bin", model: null, region: "US", valid: true },
-    { fileName: "broken.bin", model: null, region: "JP", valid: false },
+    { fileName: "scph5501.bin", model: null, region: "US", valid: true, label: null, warning: null },
+    { fileName: "broken.bin", model: null, region: "JP", valid: false, label: null, warning: null },
   ];
   assert.equal(biosChoice(files, "US"), "scph5501.bin");
   assert.equal(biosChoice(files, "JP"), "scph5501.bin");
   assert.equal(biosChoice([files[1]], "JP"), null);
-  assert.equal(biosChoice([{ fileName: "psp.bin", model: null, region: "ANY", valid: true }], "EU"), "psp.bin");
+  assert.equal(biosChoice([{ fileName: "psp.bin", model: null, region: "ANY", valid: true, label: null, warning: null }], "EU"), "psp.bin");
 });
 
 test("import name: size and signature checked, known names canonical, others lower-cased", () => {

@@ -4,14 +4,18 @@
 # "nes", "gb", "gbc", "gba", "psx", "genesis", "sms", "gg", "sg1000", "snes9x",
 # "mesen", "mgba", "pcsx-rearmed", "pcsx_rearmed", "genesis_plus_gx", "n64",
 # "mupen64plus-next", "mupen64plus_next", "dreamcast", "flycast", "flycast_libretro",
-# "psp", "ppsspp", "ppsspp_libretro", "nds", "melonds_ds", "melondsds_libretro",
-# "gc", "wii", "dolphin-emu", "dolphin_libretro", and the upper-case labels), a
-# Flycast, PPSSPP, melonDS DS or Dolphin core option ("reicast_*", "ppsspp_*",
-# "melonds_*", "dolphin_*") or a ROM extension inside a string (".sfc", ".nes",
-# ".gb", ".gbc", ".gba", ".z64", ".v64", ".n64", ".md", ".gen", ".smd", ".sms",
-# ".gg", ".sg", ".cue", ".bin", ".iso", ".chd", ".pbp", ".m3u", ".gdi", ".cdi",
-# ".cso", ".nds", ".dsi", ".ids", ".gcm", ".ciso", ".gcz", ".rvz", ".wia", ".wbfs",
-# ".dol", ".elf"). crates/disc-image keeps its extension constants
+# "ps2", "pcee2", "pcee2_libretro", "psp", "ppsspp", "ppsspp_libretro", "nds",
+# "melonds_ds", "melondsds_libretro",
+# "gc", "wii", "dolphin-emu", "dolphin_libretro", "atari2600", "atari7800", "lynx",
+# "stella", "prosystem", "handy" (+ "_libretro" stems), and the labels "2600",
+# "7800", "Lynx" and the upper-case ones), a Flycast, PCEE2, PPSSPP, melonDS DS,
+# Dolphin, Stella, ProSystem or Handy core option ("reicast_*", "pcsx2_*", "ppsspp_*",
+# "melonds_*", "dolphin_*", "stella_*", "prosystem_*", "handy_*") or a ROM extension inside a
+# string (".sfc", ".nes", ".gb", ".gbc", ".gba", ".z64", ".v64", ".n64", ".md",
+# ".gen", ".smd", ".sms", ".gg", ".sg", ".cue", ".bin", ".iso", ".chd", ".pbp", ".m3u", ".gdi", ".cdi",
+# ".cso", ".zso", ".nds", ".dsi", ".ids", ".gcm", ".ciso", ".gcz", ".rvz", ".wia", ".wbfs",
+# ".dol", ".elf", ".a26", ".a78", ".lnx", ".lyx", ".bll"; ".o" only at the end of a
+# string, so "x.org" is no hit). crates/disc-image keeps its extension constants
 # dot-less ("cue").
 # Exit 1 when something is found.
 #
@@ -33,7 +37,7 @@ ALLOW=(
   "crates/ipc-protocol/src/shared_data_paths.rs" # RTC_FILE_NAME = "rtc.bin": RTC save file name, not a ROM extension
 )
 
-pattern='"(nes|snes|snes9x|mesen|SNES|NES|gb|gbc|gba|mgba|GB|GBC|GBA|psx|pcsx-rearmed|pcsx_rearmed|PS1|n64|N64|mupen64plus-next|mupen64plus_next|genesis|sms|gg|sg1000|genesis_plus_gx|MD|SMS|GG|SG|dreamcast|flycast|flycast_libretro|DC|psp|ppsspp|ppsspp_libretro|PSP|nds|NDS|melonds_ds|melondsds_libretro|gc|GC|wii|Wii|dolphin-emu|dolphin_libretro)"|"reicast_[^"]*"|"ppsspp_[^"]*"|"melonds_[^"]*"|"dolphin_[^"]*"|"[^"]*\.(sfc|nes|gb|gbc|gba|z64|v64|n64|md|gen|smd|sms|gg|sg|cue|bin|iso|chd|pbp|m3u|gdi|cdi|cso|nds|dsi|ids|gcm|ciso|gcz|rvz|wia|wbfs|dol|elf)[^"]*"'
+pattern='"(nes|snes|snes9x|mesen|SNES|NES|gb|gbc|gba|mgba|GB|GBC|GBA|psx|pcsx-rearmed|pcsx_rearmed|PS1|n64|N64|mupen64plus-next|mupen64plus_next|genesis|sms|gg|sg1000|genesis_plus_gx|MD|SMS|GG|SG|dreamcast|flycast|flycast_libretro|DC|ps2|PS2|pcee2|pcee2_libretro|psp|ppsspp|ppsspp_libretro|PSP|nds|NDS|melonds_ds|melondsds_libretro|gc|GC|wii|Wii|dolphin-emu|dolphin_libretro|atari2600|atari7800|lynx|2600|7800|Lynx|stella|prosystem|handy)"|"reicast_[^"]*"|"pcsx2_[^"]*"|"ppsspp_[^"]*"|"melonds_[^"]*"|"dolphin_[^"]*"|"stella_[^"]*"|"prosystem_[^"]*"|"handy_[^"]*"|"[^"]*\.(sfc|nes|gb|gbc|gba|z64|v64|n64|md|gen|smd|sms|gg|sg|cue|bin|iso|chd|pbp|m3u|gdi|cdi|cso|zso|nds|dsi|ids|gcm|ciso|gcz|rvz|wia|wbfs|dol|elf|a26|a78|lnx|lyx|bll)[^"]*"|"[^"]*\.o"'
 found=0
 while IFS= read -r file; do
   case "${file}" in

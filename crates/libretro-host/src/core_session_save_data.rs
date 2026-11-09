@@ -3,15 +3,16 @@
 //! plus the audio/video enable switch used by fast-forward and run-ahead.
 //!
 //! Save states go through one path (`serialize_into` / `unserialize_from`): the
-//! size is cached for fixed-size cores, the caller's buffer is reused (no per-frame
-//! allocation for run-ahead/rewind) and the core is told the savestate context.
+//! size is cached per savestate context for fixed-size cores (`state_size_cache`), the
+//! caller's buffer is reused (no per-frame allocation for run-ahead/rewind) and the
+//! core is told the savestate context.
 
 use crate::core_session::CoreSession;
 use crate::ffi_types::{RETRO_MEMORY_RTC, RETRO_MEMORY_SAVE_RAM, RETRO_MEMORY_SYSTEM_RAM};
 use crate::host_context::AvEnable;
 use crate::host_error::{HostError, HostResult};
 use crate::savestate_context::SavestateContext;
-use crate::serialization_quirks::{resolve_state_size, SerializationQuirks};
+use crate::serialization_quirks::SerializationQuirks;
 
 impl CoreSession {
     /// Outputs the core should produce from the next `run_frame` on. Disabled ones are
@@ -61,12 +62,8 @@ impl CoreSession {
         self.ensure_states_available()?;
         let quirks = self.serialization_quirks();
         self.make_hw_current(); // cores may render while they reach a safe point
-        let size_quirks = self.size_quirks();
-        let core = &self.core;
-        // SAFETY: plain query; game loaded.
-        let size = resolve_state_size(&mut self.state_size, size_quirks, || unsafe {
-            (core.serialize_size)()
-        })?;
+                                // Queried in the call's own context (ProSystem's size depends on it).
+        let size = self.state_size_in(context)?;
         buf.resize(size, 0);
         let serialize = self.core.serialize;
         // SAFETY: `buf` holds exactly `size` writable bytes.
@@ -115,7 +112,7 @@ impl CoreSession {
     }
 
     /// Quirks the size rule uses: the core's, variable when re-query is on.
-    fn size_quirks(&self) -> SerializationQuirks {
+    pub(crate) fn size_quirks(&self) -> SerializationQuirks {
         let quirks = self.serialization_quirks();
         match self.state_size_requery() {
             true => quirks.with_variable_size(),
@@ -127,13 +124,7 @@ impl CoreSession {
     pub fn unserialize_from(&mut self, state: &[u8], context: SavestateContext) -> HostResult<()> {
         self.ensure_states_available()?;
         if self.exact_state_size {
-            let quirks = self.size_quirks();
-            let core = &self.core;
-            // SAFETY: plain query; game loaded.
-            let size = resolve_state_size(&mut self.state_size, quirks, || unsafe {
-                (core.serialize_size)()
-            });
-            match size {
+            match self.state_size_in(context) {
                 Ok(size) if size != state.len() => return Err(HostError::UnserializeFailed),
                 // Size 0: this game has no states (melonDS DS on a DSi title).
                 Err(HostError::SerializeUnsupported) => {
@@ -153,7 +144,11 @@ impl CoreSession {
 
     /// Runs one serialize/unserialize FFI call with `context` answered to the core
     /// (`GET_SAVESTATE_CONTEXT`), then back to `Normal`.
-    fn with_context(&mut self, context: SavestateContext, call: impl FnOnce() -> bool) -> bool {
+    pub(crate) fn with_context(
+        &mut self,
+        context: SavestateContext,
+        call: impl FnOnce() -> bool,
+    ) -> bool {
         self.ctx_mut().savestate_context = context;
         let ok = call(); // no context reference is held across the FFI call
         self.ctx_mut().savestate_context = SavestateContext::Normal;

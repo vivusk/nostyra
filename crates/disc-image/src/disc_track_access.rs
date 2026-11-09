@@ -5,7 +5,7 @@
 //! LBAs follow rcheevos' convention: track 1 starts at LBA 0 (the 150-frame lead-in
 //! pregap is not counted); a GD-ROM's high-density area starts at LBA 45000.
 //! Formats: `.cue` (multi-file; Redump `REM HIGH-DENSITY AREA`), `.gdi`, `.chd`
-//! (CD / GD-ROM / DVD), `.cdi` (sessions), and single-track `.cso` / `.iso` / `.bin`.
+//! (CD / GD-ROM / DVD), `.cdi` (sessions), and single-track `.cso` / `.zso` / `.iso` / `.bin`.
 //! Audio tracks are listed but cannot be opened (no reader returns raw audio).
 
 use std::path::Path;
@@ -19,7 +19,7 @@ use crate::disc_track_lists::{cdi_tracks, cue_tracks, gdi_tracks, single_track};
 use crate::dreamcast_ip_track::open_gdi_track;
 use crate::gdi_sheet::GdiSheet;
 use crate::SECTOR_DATA_BYTES;
-use crate::{is_cue_ext, is_gdi_ext, is_m3u_ext, DiscError, CDI_EXT, CHD_EXT, CSO_EXT, PBP_EXT};
+use crate::{is_cso_ext, is_cue_ext, is_gdi_ext, is_m3u_ext, DiscError, CDI_EXT, CHD_EXT, PBP_EXT};
 
 /// One track of a disc image.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -146,9 +146,9 @@ impl DiscTrack {
     }
 }
 
-/// Single-track images: CSO, else a bare `.iso` / `.bin` (layout auto-detected).
+/// Single-track images: CSO / ZSO, else a bare `.iso` / `.bin` (layout auto-detected).
 fn open_single(path: &Path) -> Result<Box<dyn DiscReader>, DiscError> {
-    if ext_of(path).eq_ignore_ascii_case(CSO_EXT) {
+    if is_cso_ext(ext_of(path)) {
         Ok(Box::new(CsoReader::open(path)?))
     } else {
         Ok(Box::new(FileTrackReader::open_auto(path)?))

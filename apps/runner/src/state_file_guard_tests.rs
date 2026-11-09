@@ -64,6 +64,22 @@ fn other_disc_state_is_refused_untagged_states_load() {
 }
 
 #[test]
+fn ps2_states_are_strict_on_version_and_disc_like_dolphin() {
+    // PCEE2 accepts any blob and loads another disc's state silently (M18 spike).
+    let disc1 = StateFileGuard::new(&system_catalog::PS2, Some("SLUS_203.12;1:0000AAAA".into()));
+    let pcee2 = core("PCEE2", "v2.9.138");
+    let mut saved = sidecar("PCEE2", "v2.9.138");
+    disc1.stamp(&mut saved, b"s");
+    assert!(disc1.check_sidecar(&saved, &pcee2).is_ok());
+    let text = error(disc1.check_sidecar(&saved, &core("PCEE2", "v2.9.139")));
+    assert_eq!(text, "state was made by another PCEE2 version");
+    StateFileGuard::new(&system_catalog::PS2, Some("SLUS_203.12;1:0000BBBB".into()))
+        .stamp(&mut saved, b"s");
+    let text = error(disc1.check_sidecar(&saved, &pcee2));
+    assert_eq!(text, "state was made from another disc or revision");
+}
+
+#[test]
 fn stamped_length_and_crc_catch_truncated_and_flipped_states() {
     let guard = StateFileGuard::default();
     let state = b"state bytes".to_vec();

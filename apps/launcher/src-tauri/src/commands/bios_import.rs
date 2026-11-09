@@ -3,10 +3,15 @@
 //! stored under its canonical lower-case name (cores look names up case-sensitively
 //! on Linux/macOS), anything else under its own name lower-cased. Cores with a BIOS
 //! switch (Dreamcast): only a known dump (size + md5), stored under its canonical
-//! name, since the core would boot any file with that name.
+//! name, since the core would boot any file with that name. PS2 cores
+//! (`FirmwareRule::Ps2Romdir`): `ps2_bios_import` (ROMDIR check, stem kept).
 
 use md5::{Digest, Md5};
-use system_catalog::{is_valid_bios, systems_for_core, CoreSpec, FirmwareFile};
+use system_catalog::{
+    is_valid_bios, systems_for_core, CoreSpec, FirmwareFile, FirmwareRule, PS2_BIOS_MAX_BYTES,
+};
+
+use crate::commands::ps2_bios_import;
 
 /// Lower-case hex md5 of `bytes`.
 pub fn md5_hex(bytes: &[u8]) -> String {
@@ -24,18 +29,30 @@ pub fn identify<'a>(bytes: &[u8], core: &'a CoreSpec) -> Option<&'a FirmwareFile
         .find(|f| f.md5 == md5 && f.size == bytes.len() as u64)
 }
 
-/// The largest BIOS file the core lists (read cap for a picked file).
+/// The largest BIOS file the core accepts (read cap for a picked file): the list's
+/// largest size, or the PS2 rule's 8 MiB (a list-less core would otherwise cap at 0).
 pub fn max_bios_bytes(core: &CoreSpec) -> u64 {
-    core.firmware.iter().map(|f| f.size).max().unwrap_or(0)
+    match core.firmware_rule {
+        FirmwareRule::Ps2Romdir { .. } => PS2_BIOS_MAX_BYTES,
+        FirmwareRule::KnownFiles => core.firmware.iter().map(|f| f.size).max().unwrap_or(0),
+    }
+}
+
+/// Display name of the core's system(s) ("PlayStation", "PlayStation 2").
+fn system_name(core: &CoreSpec) -> String {
+    systems_for_core(core.id)
+        .iter()
+        .map(|s| s.display_name)
+        .collect::<Vec<_>>()
+        .join(" / ")
 }
 
 /// File name to store a picked image under, or why it is refused.
 pub fn import_name(picked_name: &str, bytes: &[u8], core: &CoreSpec) -> Result<String, String> {
-    let system = systems_for_core(core.id)
-        .iter()
-        .map(|s| s.display_name)
-        .collect::<Vec<_>>()
-        .join(" / ");
+    let system = system_name(core);
+    if let FirmwareRule::Ps2Romdir { .. } = core.firmware_rule {
+        return ps2_bios_import::import_name(picked_name, bytes, &system).map(|(name, _)| name);
+    }
     let not_bios = format!("{picked_name} is not a {system} BIOS");
     if core.bios_switch.is_some() {
         return match identify(bytes, core) {
@@ -123,6 +140,24 @@ mod tests {
         );
         assert_eq!(max_bios_bytes(&FLYCAST), 2 * 1024 * 1024);
         assert_eq!(max_bios_bytes(&PCSX_REARMED), BIOS_BYTES);
+    }
+
+    #[test]
+    fn ps2_cores_take_any_romdir_dump_under_its_stem_with_an_8_mib_cap() {
+        use system_catalog::ps2_bios_test_image::ps2_bios_image;
+        use system_catalog::PCEE2;
+        assert_eq!(max_bios_bytes(&PCEE2), 8 * 1024 * 1024);
+        let image = ps2_bios_image("0160AC20020207", 0x2740);
+        assert_eq!(
+            import_name("SCPH-39001_BIOS_V7_USA_160.BIN", &image, &PCEE2).as_deref(),
+            Ok("scph-39001_bios_v7_usa_160.bin")
+        );
+        let err = import_name("x.rom1", &vec![0u8; 4 * 1024 * 1024], &PCEE2).unwrap_err();
+        assert!(
+            err.starts_with("x.rom1 is not a PlayStation 2 BIOS"),
+            "{err}"
+        );
+        assert_eq!(identify(&image, &PCEE2), None, "no md5 list");
     }
 
     #[test]

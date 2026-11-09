@@ -1,5 +1,5 @@
 //! PS1 id tests: licence check (PS2 rejected), serial forms, region, bounded I/O,
-//! plus an ignored dev check over the developer's own discs.
+//! plus an ignored dev check over the developer's own discs (PS2: `ps2_disc_id_tests`).
 
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test code: panics are the failure signal
 

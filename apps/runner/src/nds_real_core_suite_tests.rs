@@ -47,6 +47,7 @@ const MELONDS_DS_RUN_AHEAD: RunAheadExpectations = RunAheadExpectations {
     exact_audio: false,
     exact_round_trip: true,
     state_jitter_bytes: 0,
+    stale_first_frame: false,
 };
 
 /// Play options + a fixed start time 2004-01-01 00:00:00.

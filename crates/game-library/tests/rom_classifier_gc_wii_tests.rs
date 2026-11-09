@@ -92,7 +92,7 @@ fn executables_split_on_hid4_and_foreign_isos_are_not_claimed() {
     assert_eq!(
         system_of(&ps2),
         Err(ClassifyError::DiscRejected(
-            "not a PlayStation, PSP, GameCube or Wii disc".into()
+            "not a PlayStation, PlayStation 2, PSP, GameCube or Wii disc".into()
         ))
     );
     let psp = write(d, "psp.iso", &to_iso(&psp_iso_sectors()));
@@ -121,7 +121,7 @@ fn a_gamecube_playlist_follows_its_first_disc() {
     assert_eq!(
         system_of(&foreign),
         Err(ClassifyError::DiscRejected(
-            "not a PlayStation, Dreamcast or GameCube playlist".into()
+            "not a PlayStation, PlayStation 2, Dreamcast or GameCube playlist".into()
         ))
     );
 }

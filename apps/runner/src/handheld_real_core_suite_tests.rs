@@ -27,6 +27,7 @@ fn mgba_expectations(system: &str) -> RunAheadExpectations {
         exact_audio: false,
         exact_round_trip: system != "gba",
         state_jitter_bytes: 0,
+        stale_first_frame: false,
     }
 }
 

@@ -55,6 +55,8 @@ export async function scanBios(data: DataDir, firmware: readonly FirmwareFile[])
       model: known?.model ?? null,
       region: known?.region ?? guessBiosRegion(image),
       valid: isValidBios(image),
+      label: null,
+      warning: null,
     });
   }
   found.sort((a, b) => a.rank - b.rank || a.fileName.toLowerCase().localeCompare(b.fileName.toLowerCase()));
@@ -83,6 +85,8 @@ export async function coreBiosView(data: DataDir, system: WebSystem, systemNames
       label: region === ANY_REGION ? "All regions" : region,
       fileName: biosChoice(files, region),
     })),
+    hleFallback: true,
+    pickExtensions: [],
   };
 }
 

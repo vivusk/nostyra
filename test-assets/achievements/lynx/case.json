@@ -1,0 +1,12 @@
+{
+ "system": "lynx",
+ "rom": "nostyra-test.o",
+ "console_id": 13,
+ "game_id": 9013,
+ "achievement_id": 90131,
+ "leaderboard_id": 90132,
+ "counter_address": 130,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

@@ -193,8 +193,8 @@ fn run(
     if system.media == Media::Disc {
         disc_bios_log::log_bios_choice(system, &paths.system_dir, rom);
     }
-    runner_session_config::prepare_core(system, core, &paths.system_dir)?;
-    let bios = bios_option_switch::launch_option(system, &paths.system_dir);
+    runner_session_config::prepare_core(system, core, &paths.system_dir, rom)?;
+    let bios = bios_option_switch::launch_option(system, &paths.system_dir, rom);
     let overrides = [bios.into_iter().collect(), args.core_options.clone()].concat();
     let core_options = runner_core_options::resolve(system, &overrides);
     let launch = PreparedLaunch {

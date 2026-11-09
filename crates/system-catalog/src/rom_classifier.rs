@@ -62,6 +62,11 @@ pub fn classify_with_head(
         .copied()
         .filter(|spec| spec.has_extension(ext))
     {
+        // DAT-gated (Atari `.bin`): neither a match nor a rejection here; the
+        // scanner looks the file up in the DAT once no other system took it.
+        if spec.probe.is_dat_gated(ext) {
+            continue;
+        }
         if !spec.accepts_size(file_len) {
             if error == ClassifyError::NoCandidate {
                 error = ClassifyError::OutOfSize;
@@ -159,3 +164,7 @@ mod n64_tests;
 #[cfg(test)]
 #[path = "rom_classifier_nds_tests.rs"]
 mod nds_tests;
+
+#[cfg(test)]
+#[path = "rom_classifier_atari_tests.rs"]
+mod atari_tests;

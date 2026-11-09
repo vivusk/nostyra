@@ -108,6 +108,43 @@ mod tests {
     }
 
     #[test]
+    fn lynx_rotation_resizes_and_stella_repeat_does_not() {
+        // Handy rotates a vertical game itself: 160×102 ↔ 102×160 (M17).
+        let upright = geometry(102, 160);
+        assert!(resize_target(160.0 / 102.0, &upright, false, false, MONITOR).is_some());
+        assert!(resize_target(102.0 / 160.0, &geometry(160, 102), false, false, MONITOR).is_some());
+        // Stella repeats its 320×228 geometry once at start (M17 spike): no resize.
+        let stella = RetroGameGeometry {
+            aspect_ratio: 1.203_007_5,
+            ..geometry(320, 228)
+        };
+        assert_eq!(
+            resize_target(1.203_007_5, &stella, false, false, MONITOR),
+            None
+        );
+    }
+
+    #[test]
+    fn ps2_field_height_switch_at_the_same_aspect_keeps_the_window() {
+        // PCEE2 reports 640×480 at load, then 640×448 / 512×448 / 640×512 (interlaced
+        // PAL) through SET_GEOMETRY, always with the 4:3 display aspect (M18 spike).
+        let four_thirds = 4.0 / 3.0;
+        let ps2 = |w, h| RetroGameGeometry {
+            aspect_ratio: four_thirds,
+            max_width: 2732,
+            max_height: 2048,
+            ..geometry(w, h)
+        };
+        for (w, h) in [(640, 448), (512, 448), (640, 512), (640, 480)] {
+            assert_eq!(
+                resize_target(four_thirds, &ps2(w, h), false, false, MONITOR),
+                None,
+                "{w}x{h}"
+            );
+        }
+    }
+
+    #[test]
     fn fullscreen_maximized_or_unknown_aspect_only_refit() {
         let wide = geometry(512, 192);
         assert_eq!(resize_target(TALL, &wide, true, false, MONITOR), None);

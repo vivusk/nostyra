@@ -125,6 +125,7 @@ pub(crate) fn start_core(core: CoreLibrary, provider: &FakeProvider) -> HostResu
         core_options: &[],
         hw_render: Some(provider),
         keep_library_loaded: false,
+        stage_content: false,
     };
     CoreSession::start(ProcessSessionClaim::acquire()?, core, config)
 }

@@ -6,10 +6,14 @@ Free, open-source, cross-platform retro game launcher and libretro frontend.
 Plays SNES (Snes9x core), NES (Mesen core), Game Boy, Game Boy Color and Game Boy Advance (one mGBA core),
 PlayStation (PCSX ReARMed core), Sega Mega Drive / Genesis, Master System, Game Gear and SG-1000 (one Genesis
 Plus GX core), Nintendo 64 (Mupen64Plus-Next core, OpenGL), Sega Dreamcast (Flycast core, OpenGL), Sony
-PSP (PPSSPP core, OpenGL), Nintendo DS (melonDS DS core) and Nintendo GameCube / Wii (Dolphin core, OpenGL);
-more systems are registry entries. Status: **M15 — RetroAchievements** (log in once in Settings; softcore
-achievements on 14 systems with an in-game overlay, unlock chime, pause-menu list and a launcher Achievements tab;
-offline play of games played online once, unlocks sent later; see [RetroAchievements](#retroachievements)) implemented on Windows on top of M14
+PSP (PPSSPP core, OpenGL), Nintendo DS (melonDS DS core), Nintendo GameCube / Wii (Dolphin core, OpenGL),
+Atari 2600 (Stella core), Atari 7800 (ProSystem core), Atari Lynx (Handy core) and Sony PlayStation 2 (PCEE2
+core = PCSX2, OpenGL, your own BIOS dump); more systems are registry entries. Status: **M18 — PlayStation 2**
+(see [PlayStation 2](#sony-playstation-2)) implemented on Windows (manual checks pending) on top of M17 Atari
+2600 / 7800 / Lynx (see [Atari](#atari-2600-7800-and-lynx)) and **M15 — RetroAchievements** (log in once in
+Settings; softcore achievements on 18 systems with an in-game overlay, unlock chime, pause-menu list and a
+launcher Achievements tab; offline play of games played online once, unlocks sent later; see
+[RetroAchievements](#retroachievements)), M14
 GameCube + Wii (plain and compressed discs identified by their game ID without hashing gigabytes; Wii Remote +
 Nunchuk with the pointer aimed by the mouse), M13 Nintendo DS, M12 Sony PSP, M11 Sega Dreamcast, M10 Nintendo 64, M9 Sega 8/16-bit, M8 PlayStation, M7 handheld systems, M6 multi-system library (one ROM folder organised any way you like, every file classified
 by its content, moved or renamed ROMs keep history and saves), M4 controls & resume and M3 play features; manual
@@ -47,9 +51,10 @@ uploaded: the site is static files, your ROMs and saves stay on your computer.
   picker: Firefox, Safari, phones and tablets get a "use Chrome or Edge on a computer" page; Brave ships the
   picker turned off (turn on `brave://flags/#file-system-access-api`, restart Brave).
 - **Systems:** NES, SNES, Game Boy, Game Boy Color, Game Boy Advance, Mega Drive / Genesis, Master System,
-  Game Gear, SG-1000 and PlayStation (multi-disc `.m3u`: disc 1 only; prefer `.chd` for big discs). Games of
+  Game Gear, SG-1000, PlayStation (multi-disc `.m3u`: disc 1 only; prefer `.chd` for big discs), Atari 2600,
+  Atari 7800 and Atari Lynx (save states only: the Lynx cartridge EEPROM is not synced with the desktop). Games of
   other systems in the folder are counted ("N games need the desktop app") but not listed. N64 / DS / PSP may
-  follow later; Dreamcast, GameCube and Wii stay desktop-only.
+  follow later; Dreamcast, PlayStation 2, GameCube and Wii stay desktop-only (EmulatorJS has no PS2 core).
 - **Data folder (saves, settings, controls, BIOS):** the first run asks where to keep it — **browser
   storage** (nothing to set up, only in this browser profile, lost when the site's data is cleared) or **a
   folder on this PC**. Choose the desktop app's Data folder to share in-game saves (`save.srm`, `rtc.bin`),
@@ -86,8 +91,10 @@ uploaded: the site is static files, your ROMs and saves stay on your computer.
 ### ROM ZIP archives
 
 Enable **Settings → ROM folders → Scan ZIP archives** to scan ZIPs containing one
-NES, SNES, Mega Drive/Genesis, Master System, Game Gear, SG-1000 or GBA ROM.
-The ROM may be in a subfolder alongside documents. ZIPs with several ROMs, ROMs of
+NES, SNES, Mega Drive/Genesis, Master System, Game Gear, SG-1000, GBA, Atari 2600 (`.a26`),
+Atari 7800 (`.a78`) or Atari Lynx (`.lnx`, `.lyx`, `.o`) ROM. A `.bin` inside a ZIP is checked only as a
+Mega Drive ROM (Atari `.bin` files are listed only when loose, see [Atari](#atari-2600-7800-and-lynx)): unzip
+it or rename it to `.a26` / `.a78`. The ROM may be in a subfolder alongside documents. ZIPs with several ROMs, ROMs of
 other systems (e.g. arcade sets) or nested archives are skipped quietly; a damaged ZIP,
 an unsafe member name or a ROM compressed with anything but standard Deflate (or a
 password) is listed as a scan problem. The option is off by default;
@@ -112,7 +119,10 @@ libxkbcommon-dev libwayland-dev` and X11 dev packages.
 # Fetch the libretro cores into ./cores/ (snes9x = SNES, mesen = NES, mgba = GB/GBC/GBA,
 # pcsx_rearmed = PlayStation, genesis_plus_gx = Mega Drive/Master System/Game Gear/SG-1000,
 # mupen64plus_next = Nintendo 64, flycast = Dreamcast, ppsspp = PSP + its system files in cores/PPSSPP/,
-# melondsds = Nintendo DS, dolphin = GameCube + Wii + its system files in cores/dolphin-emu/)
+# melondsds = Nintendo DS, dolphin = GameCube + Wii + its system files in cores/dolphin-emu/,
+# stella = Atari 2600, prosystem = Atari 7800, handy = Atari Lynx, pcee2 = PlayStation 2 (PCSX2; no BIOS
+# is fetched — PS2 games need your own dump, see the PlayStation 2 section). fetch-lrps2-core.* fetches the
+# ParaLLEl PS2 core for evaluation only; Nostyra does not use it.)
 ./scripts/fetch-snes9x-core.sh          # Linux / macOS / Git Bash
 ./scripts/fetch-mesen-core.sh
 ./scripts/fetch-mgba-core.sh
@@ -123,6 +133,10 @@ libxkbcommon-dev libwayland-dev` and X11 dev packages.
 ./scripts/fetch-ppsspp-core.sh
 ./scripts/fetch-melondsds-core.sh
 ./scripts/fetch-dolphin-core.sh
+./scripts/fetch-stella-core.sh
+./scripts/fetch-prosystem-core.sh
+./scripts/fetch-handy-core.sh
+./scripts/fetch-pcee2-core.sh
 .\scripts\fetch-snes9x-core.ps1         # Windows PowerShell
 .\scripts\fetch-mesen-core.ps1
 .\scripts\fetch-mgba-core.ps1
@@ -133,6 +147,10 @@ libxkbcommon-dev libwayland-dev` and X11 dev packages.
 .\scripts\fetch-ppsspp-core.ps1
 .\scripts\fetch-melondsds-core.ps1
 .\scripts\fetch-dolphin-core.ps1
+.\scripts\fetch-stella-core.ps1
+.\scripts\fetch-prosystem-core.ps1
+.\scripts\fetch-handy-core.ps1
+.\scripts\fetch-pcee2-core.ps1
 
 cargo build --workspace
 cargo test --workspace
@@ -195,17 +213,17 @@ in the devtools console to insert fake games (capped at 5 000, re-runnable). Rem
 | `crates/input-mapping` | SDL3 gamepad/keyboard → libretro joypad + analog sticks, pointer state (DS touch screen, Wii Remote pointer) |
 | `crates/storage-db` | launcher SQLite database: schema migrations + repositories |
 | `crates/game-library` | ROM folder scan, header-aware CRC32/SHA1 (streamed for large files), No-Intro / Redump DAT matching (hash, disc serial, DS game code, GameCube / Wii game ID), multi-file disc games |
-| `crates/disc-image` | disc images without loading them: cue/gdi/m3u sheets, sectors (raw, ISO, CHD incl. GD-ROM and DVD, DiscJuggler CDI, CISO `.cso`), ISO9660 paths, PlayStation disc id + serial, Dreamcast IP.BIN, PSP disc id (`PARAM.SFO`, `UMD_DATA.BIN`), PBP kind (PS1 / PSP), GameCube / Wii disc headers (ISO, CISO, GCZ, WIA, RVZ, WBFS) and `.dol` / `.elf` programs, serial rules per system |
+| `crates/disc-image` | disc images without loading them: cue/gdi/m3u sheets, sectors (raw, ISO, CHD incl. GD-ROM and DVD, DiscJuggler CDI, CISO `.cso`, LZ4 ZSO `.zso`), ISO9660 paths, PlayStation disc id + serial, PlayStation 2 disc id (`SYSTEM.CNF` `BOOT2` serial, `VMODE`), Dreamcast IP.BIN, PSP disc id (`PARAM.SFO`, `UMD_DATA.BIN`), PBP kind (PS1 / PSP), GameCube / Wii disc headers (ISO, CISO, GCZ, WIA, RVZ, WBFS) and `.dol` / `.elf` programs, serial rules per system |
 | `crates/rom-patch` | soft-patching: IPS / UPS / BPS applied to the ROM in memory |
 | `crates/http-download-util` | shared HTTPS client (timeouts, offline switch), size-capped downloads |
 | `crates/config-layers` | gameplay settings: TOML layers (global → system → core → game), merge, validated writes |
 | `crates/artwork-cache` | libretro-thumbnails lookup, cover/hero download, re-encode, atomic cache |
 | `crates/achievements` | RetroAchievements: vendored rcheevos behind a safe single-thread `rc_client` wrapper, HTTP transports (real + fake), login, credentials, offline unlock journal; used by the runner (session, overlay) and the launcher (Settings login, Achievements tab, startup journal flush) |
 | `test-assets/achievements` | fake RetroAchievements sets for the test ROMs (one achievement + one leaderboard on each ROM's RAM frame counter), generated by `generate-fake-sets.py`; used by tests through `NOSTYRA_RA_FAKE_SERVER`, never by users |
-| `test-assets/roms` | self-written GPLv3 test ROMs (`nostyra-test.sfc`, `.nes`, `.gb`, `.gbc`, `.gba`, `.gen`, `.sms`, `.gg`, `.sg`, `.z64`), PlayStation test discs (`nostyra-test-psx*.cue/.bin/.m3u`), the Dreamcast test program and discs (`nostyra-test-dc.elf`, `nostyra-test-dc*.gdi/.cue/.m3u`), the PSP test program and containers (`nostyra-test-psp.elf/.iso/.cso`, `nostyra-test-psp/EBOOT.PBP`) the DS test ROMs (`nostyra-test.nds` homebrew, `nostyra-test-save.nds` retail-like with an EEPROM save) and the GameCube / Wii test programs (`nostyra-test.dol`, `nostyra-test-wii.dol`) |
+| `test-assets/roms` | self-written GPLv3 test ROMs (`nostyra-test.sfc`, `.nes`, `.gb`, `.gbc`, `.gba`, `.gen`, `.sms`, `.gg`, `.sg`, `.z64`), PlayStation test discs (`nostyra-test-psx*.cue/.bin/.m3u`), the Dreamcast test program and discs (`nostyra-test-dc.elf`, `nostyra-test-dc*.gdi/.cue/.m3u`), the PSP test program and containers (`nostyra-test-psp.elf/.iso/.cso`, `nostyra-test-psp/EBOOT.PBP`) the DS test ROMs (`nostyra-test.nds` homebrew, `nostyra-test-save.nds` retail-like with an EEPROM save), the GameCube / Wii test programs (`nostyra-test.dol`, `nostyra-test-wii.dol`), the Atari test ROMs (`nostyra-test.a26`, `.a78`, `nostyra-test-7800.bin`, `.o`, `.lnx`) and the PlayStation 2 test program + disc (`nostyra-test-ps2.elf`, `nostyra-test-ps2.iso`; its real-core tests need your BIOS, see [PlayStation 2](#sony-playstation-2)) |
 | `third-party/libretro` | vendored `libretro.h` (MIT) |
 | `third-party/rcheevos` | vendored [rcheevos](https://github.com/RetroAchievements/rcheevos) v12.5.0 (MIT), `include/` + `src/` unmodified, compiled by `crates/achievements/build.rs`; see its `SOURCE.txt` |
-| `third-party/libretro-database` | bundled No-Intro DATs (SNES, NES, GB, GBC, GBA, N64, NDS, Mega Drive, Master System, Game Gear, SG-1000), the Redump PlayStation, Dreamcast, PSP, GameCube and Wii DATs + `metadat/` attribute DATs (CC-BY-SA-4.0), refreshed by `scripts/update-libretro-dat.*` |
+| `third-party/libretro-database` | bundled No-Intro DATs (SNES, NES, GB, GBC, GBA, N64, NDS, Mega Drive, Master System, Game Gear, SG-1000, Atari 2600, 7800, Lynx), the Redump PlayStation, PlayStation 2, Dreamcast, PSP, GameCube and Wii DATs + `metadat/` attribute DATs (CC-BY-SA-4.0), refreshed by `scripts/update-libretro-dat.*` |
 | `assets/fonts` | Noto Sans Regular + Bold v2.015 (unhinted TTF, SIL OFL-1.1, `OFL.txt` alongside; source and hashes in `SOURCE.txt`), embedded in the runner for the achievement overlay text, rasterized with [fontdue](https://github.com/mooman219/fontdue) 0.9.4 (MIT OR Apache-2.0 OR Zlib) |
 | `third-party/slang-shaders` | bundled CRT and LCD shader presets (crt-easymode, crt-geom, crt-lottes, zfast-lcd) from libretro/slang-shaders, unmodified; see its `SOURCE.txt` |
 
@@ -214,8 +232,9 @@ in the devtools console to insert fake games (capped at 5 000, re-runnable). Rem
 Nostyra does not ship or download games or BIOS files. Use games you own and a BIOS
 dumped from your own console.
 Game identification uses the No-Intro SNES, NES, Game Boy, Game Boy Color, Game Boy
-Advance, Nintendo 64, Nintendo DS (Decrypted), Sega Mega Drive - Genesis, Master System - Mark III, Game Gear and SG-1000 DATs and
-the Redump PlayStation, Dreamcast, PlayStation Portable, GameCube and Wii DATs as compiled by
+Advance, Nintendo 64, Nintendo DS (Decrypted), Sega Mega Drive - Genesis, Master System - Mark III, Game Gear,
+SG-1000, Atari 2600, Atari 7800 and Atari Lynx DATs and
+the Redump PlayStation, PlayStation 2, Dreamcast, PlayStation Portable, GameCube and Wii DATs as compiled by
 [libretro-database](https://github.com/libretro/libretro-database) (CC-BY-SA-4.0),
 bundled unmodified in `third-party/libretro-database/`; developer, publisher, genre,
 year and player counts come from the same project's `metadat` files (CC-BY-SA-4.0; the
@@ -223,7 +242,11 @@ PlayStation file has its long `description` lines removed).
 Emulator cores are never bundled: each one is downloaded from the libretro buildbot on
 first use. Snes9x and Genesis Plus GX carry **non-commercial** licences, so Nostyra must
 not be sold with them; Mupen64Plus-Next (Nintendo 64), Flycast (Dreamcast) and PPSSPP (PSP) are
-GPL-2.0-or-later; melonDS DS (Nintendo DS) is GPL-3.0-or-later; Dolphin (GameCube, Wii) is GPL-2.0-or-later.
+GPL-2.0-or-later; melonDS DS (Nintendo DS) is GPL-3.0-or-later; Dolphin (GameCube, Wii) is GPL-2.0-or-later;
+Stella (Atari 2600) is GPL-2.0-or-later, ProSystem (Atari 7800) GPL-2.0 and Handy (Atari Lynx) zlib;
+PCEE2 (PlayStation 2, the PCSX2 libretro core) is GPL-3.0-or-later. A PlayStation 2 game needs a BIOS dumped
+from your own console (there is no built-in replacement); Nostyra validates and copies that file, never
+provides one.
 PPSSPP's system files (fonts, dialog images, compatibility table) and Dolphin's (`Dolphin.zip`) come from the
 same buildbot with the core and are never bundled either.
 Cover and screenshot art comes from
@@ -311,8 +334,10 @@ uses `gb_bios.bin` / `gbc_bios.bin` / `gba_bios.bin` from `system/` if you add t
 discs are recognised by their content too (see [PlayStation](#playstation)), and so are Sega
 files (see [Sega](#sega-mega-drive-master-system-game-gear-sg-1000)), Nintendo 64 files (see
 [Nintendo 64](#nintendo-64)), Dreamcast discs (see [Sega Dreamcast](#sega-dreamcast)), PSP games (see
-[Sony PSP](#sony-psp)), DS games (see [Nintendo DS](#nintendo-ds)) and GameCube / Wii discs (see
-[Nintendo GameCube and Wii](#nintendo-gamecube-and-wii)). Moving a ROM to
+[Sony PSP](#sony-psp)), DS games (see [Nintendo DS](#nintendo-ds)), GameCube / Wii discs (see
+[Nintendo GameCube and Wii](#nintendo-gamecube-and-wii)), Atari cartridges (see
+[Atari](#atari-2600-7800-and-lynx); a loose `.bin` counts as Atari 2600 / 7800 only when the bundled DAT knows
+it) and PlayStation 2 discs (see [PlayStation 2](#sony-playstation-2)). Moving a ROM to
 another folder or renaming it keeps its play time, favorite, edited metadata, saves and
 per-game settings. No emulator core is needed up front: the first Play of a system offers
 to download its core (also in Settings → Emulator cores).
@@ -329,10 +354,12 @@ cargo run -p nostyra-runner -- --core cores/flycast_libretro.dll --rom path/to/g
 cargo run -p nostyra-runner -- --core cores/ppsspp_libretro.dll --rom path/to/game.iso --system psp
 cargo run -p nostyra-runner -- --core cores/melondsds_libretro.dll --rom path/to/game.nds --system nds
 cargo run -p nostyra-runner -- --core cores/dolphin_libretro.dll --rom path/to/game.rvz --system gc
+cargo run -p nostyra-runner -- --core cores/handy_libretro.dll --rom path/to/game.lnx --system lynx
+cargo run -p nostyra-runner -- --core cores/pcee2_libretro.dll --rom path/to/game.iso --system ps2   # needs a BIOS in <data>/system/pcsx2/bios/
 ```
 
 Default keyboard: arrows, Z = B, X = A, A = Y, S = X, Q/W = L/R, E/R = L2/R2, Enter = Start,
-Right Shift = Select; on systems with analog sticks (Nintendo 64, Dreamcast, PSP, GameCube, Wii) I/J/K/L = left stick and
+Right Shift = Select; on systems with analog sticks (Nintendo 64, Dreamcast, PSP, GameCube, Wii, PlayStation 2) I/J/K/L = left stick and
 T/F/G/H = right stick (on the DS T/F/G/H move the touch cursor). Gamepads work out of the box (SNES layout by position).
 Default hotkeys: F1 save state, F2 select slot (opens the slot grid: arrows / D-pad
 move, Enter / A use that slot, Esc / B cancel), F3 load state,
@@ -369,7 +396,7 @@ files; Chrome cannot open folders inside AppData, so Settings shows a hint to mo
 the desktop app), and play time from the browser is added to the desktop's history once the desktop has
 scanned that ROM. Do not play the same game in both at once. Layout:
 one folder per game, `saves/<system>/<ROM name> [<ID>]/` (`snes`, `nes`, `gb`, `gbc`, `gba`, `n64`, `genesis`,
-`sms`, `gg`, `sg1000`, `psx`, `dreamcast`, `psp`, `nds`, `gc`, `wii`),
+`sms`, `gg`, `sg1000`, `psx`, `ps2`, `dreamcast`, `psp`, `nds`, `gc`, `wii`, `atari2600`, `atari7800`, `lynx`),
 holding `save.srm`, `rtc.bin` (cartridge clock of Game Boy games with one, e.g. Pokémon
 Gold, so the in-game time keeps running while the game is closed) and
 `slotN.state` (+ `.json`, and a `slotN.png` thumbnail of the game picture, without
@@ -402,7 +429,7 @@ at start (≈ 0.3–1 s in release, picture kept meanwhile).
 Run-ahead (`latency.run_ahead_frames` = 1 or 2) hides 1–2 frames of the game's own
 input lag by emulating ahead and rolling back each frame (single instance); it is off
 while fast-forwarding, rewinding or in the menu, and refused (with rewind) for cores whose save
-states are incomplete or not frame-exact (Nintendo 64, Dreamcast, PSP, GameCube, Wii); the pause menu shows the reason. On the
+states are incomplete or not frame-exact (Nintendo 64, Dreamcast, PSP, GameCube, Wii, PlayStation 2); the pause menu shows the reason. On the
 Nintendo DS run-ahead is allowed but too heavy for most PCs (one run-ahead frame costs about 18 ms, more than a
 whole 60 Hz frame), so expect dropped frames; rewind works normally.
 `--print-config` prints the effective settings as JSON (after the core and ROM load;
@@ -418,8 +445,8 @@ core's own reason when it gives one, e.g. "ROM isn't valid"; the launcher says "
 
 Plain TOML files under `<data dir>/config/` (`%APPDATA%\Nostyra\data\config` on Windows),
 lowest precedence first: `global.toml`, `system/<system>.toml` (`snes`, `nes`, `gb`, `gbc`, `gba`, `n64`,
-`genesis`, `sms`, `gg`, `sg1000`, `psx`, `dreamcast`, `psp`, `nds`, `gc`, `wii`), `core/<core>.toml` (`snes9x`, `mesen`, `mgba` — shared by `gb`, `gbc`
-and `gba`, `mupen64plus-next`, `genesis_plus_gx` — shared by the four Sega systems, `pcsx-rearmed`, `flycast`, `ppsspp`, `melonds_ds`, `dolphin-emu` — shared by `gc` and `wii`), `game/<system>/<ROM name> [<ID>].toml` (same name
+`genesis`, `sms`, `gg`, `sg1000`, `psx`, `ps2`, `dreamcast`, `psp`, `nds`, `gc`, `wii`, `atari2600`, `atari7800`, `lynx`), `core/<core>.toml` (`snes9x`, `mesen`, `mgba` — shared by `gb`, `gbc`
+and `gba`, `mupen64plus-next`, `genesis_plus_gx` — shared by the four Sega systems, `pcsx-rearmed`, `flycast`, `ppsspp`, `melonds_ds`, `dolphin-emu` — shared by `gc` and `wii`, `stella`, `prosystem`, `handy`, `pcee2`), `game/<system>/<ROM name> [<ID>].toml` (same name
 as the saves folder). Command-line
 flags beat every file. All files are optional; a bad value is ignored with a warning.
 
@@ -480,13 +507,13 @@ Mega Drive rows read `A (Y)`, `B (B)`, `C (A)`, `X (L)`, `Y (X)`, `Z (R)`, `Mode
 system's button name with the shared RetroPad name in brackets; Master System / Game Gear / SG-1000:
 `1 (B)`, `2 (A)`, Start, on the Master System `Pause (Start)`; Nintendo 64 has 18 rows: `A (B)`, `B (Y)`,
 `Z (L2)`, `L (L)`, `R (R)`, Start, D-pad, `Stick Up (Left stick ↑)` … and `C-Up (Right stick ↑)` … — the stick rows have no
-gamepad default because the pad's own sticks feed the analog axes); Dreamcast has `A (B)`, `B (A)`, `X (Y)`, `Y (X)`, Start, D-pad, `LT (L2)`, `RT (R2)` and the 4 left-stick rows (the system's button name with the shared RetroPad name in brackets); PSP has `✕ (B)`, `○ (A)`, `□ (Y)`, `△ (X)`, Select, Start, D-pad, `L (L)`, `R (R)` and the 4 left-stick rows `Stick Up` … `Stick Right`; Nintendo DS has B, A, Y, X, Select, Start, D-pad, L, R, `Touch (stick cursor) (R2)`, `Microphone (blow) (L3)`, `Swap screens (R3)` and `Cursor Up` … `Cursor Right` (right stick). GameCube has A, B, X, Y, Start, D-pad, `Z (R)`, `L (L2)`, `R (R2)`, `L (light press) (L3)`, `R (light press) (R3)`, `Stick …` and `C-Stick …` (right stick); Wii has A, B, `Nunchuk C (X)`, `Nunchuk Z (Y)`, `1 (Start)`, `2 (Select)`, D-pad, `− (L)`, `+ (R)`, `Shake Nunchuk (L2)`, `Shake Remote (R2)`, `Home (R3)`, `Nunchuk Stick …` and `Tilt Remote …` (right stick). L3 / R3 (stick clicks) exist on the DS, GameCube and Wii; keyboard has no default for them. The Turbo A shortcut fires RetroPad A,
-which is C on the Mega Drive, B on the Dreamcast, ○ on the PSP, A on the GameCube and Wii and nothing on the Nintendo 64.
-L2 / R2 sit on the gamepad triggers by default. In a PlayStation, Dreamcast, GameCube or Wii game the triggers press L2 / R2 (GameCube: analog L / R; Wii: shakes) and
+gamepad default because the pad's own sticks feed the analog axes); Dreamcast has `A (B)`, `B (A)`, `X (Y)`, `Y (X)`, Start, D-pad, `LT (L2)`, `RT (R2)` and the 4 left-stick rows (the system's button name with the shared RetroPad name in brackets); PSP has `✕ (B)`, `○ (A)`, `□ (Y)`, `△ (X)`, Select, Start, D-pad, `L (L)`, `R (R)` and the 4 left-stick rows `Stick Up` … `Stick Right`; Nintendo DS has B, A, Y, X, Select, Start, D-pad, L, R, `Touch (stick cursor) (R2)`, `Microphone (blow) (L3)`, `Swap screens (R3)` and `Cursor Up` … `Cursor Right` (right stick). GameCube has A, B, X, Y, Start, D-pad, `Z (R)`, `L (L2)`, `R (R2)`, `L (light press) (L3)`, `R (light press) (R3)`, `Stick …` and `C-Stick …` (right stick); Wii has A, B, `Nunchuk C (X)`, `Nunchuk Z (Y)`, `1 (Start)`, `2 (Select)`, D-pad, `− (L)`, `+ (R)`, `Shake Nunchuk (L2)`, `Shake Remote (R2)`, `Home (R3)`, `Nunchuk Stick …` and `Tilt Remote …` (right stick). Atari 2600 has `Fire (B)`, `Game Select (Select)`, `Game Reset (Start)`, `Left difficulty A (L)`, `Left difficulty B (L2)`, `Right difficulty A (R)`, `Right difficulty B (R2)`, `Colour (L3)`, `B/W (R3)` and the D-pad; Atari 7800 has `Button 1 (B)`, `Button 2 (A)`, `Reset (X)`, Select, `Pause (Start)`, `Left difficulty (hold = A) (L)`, `Right difficulty (hold = A) (R)` and the D-pad; Atari Lynx has A, B, `Option 1 (L)`, `Option 2 (R)`, `Pause (Start)` and the D-pad; PlayStation 2 has the DualShock 2: `Cross (B)`, `Circle (A)`, `Square (Y)`, `Triangle (X)`, Select, Start, D-pad, `L1 (L)`, `R1 (R)`, `L2 (L2)`, `R2 (R2)`, `L3 (L3)`, `R3 (R3)` and the 8 stick rows `Left Stick Up` … `Right Stick Right`. L3 / R3 (stick clicks) exist on the DS, GameCube, Wii, Atari 2600 and PlayStation 2; keyboard has no default for them. The Turbo A shortcut fires RetroPad A,
+which is C on the Mega Drive, B on the Dreamcast, ○ on the PSP, Circle on the PlayStation 2, A on the GameCube and Wii, Button 2 on the Atari 7800 and nothing on the Nintendo 64 and Atari 2600.
+L2 / R2 sit on the gamepad triggers by default. In a PlayStation, PlayStation 2, Dreamcast, GameCube, Wii or Atari 2600 game the triggers press L2 / R2 (GameCube: analog L / R; Wii: shakes; 2600: difficulty B) and
 the fast-forward / rewind hold shortcuts give them up (silently, unless you rebound those shortcuts
 yourself — then Controls shows a notice); on the Nintendo 64 the left trigger is Z (rewind is off there
 anyway) and the right trigger keeps fast-forward; on the DS the right trigger is touch (R2) and gives up
-fast-forward, the left trigger keeps rewind; in every other system (not PlayStation, Dreamcast, N64, DS, GameCube, Wii) the triggers keep fast-forward /
+fast-forward, the left trigger keeps rewind; in every other system (not PlayStation, PlayStation 2, Dreamcast, N64, DS, GameCube, Wii, Atari 2600) the triggers keep fast-forward /
 rewind (the PSP has no triggers; rewind is off there).
 
 Fixed, never rebindable: Esc (keyboard) and Guide / PS (pad) open the pause menu and
@@ -503,7 +530,7 @@ from that file. The launcher window cannot capture keys that WebView2 keeps for 
 
 When you quit a game (pause menu Quit, closing the window or Alt+F4, even while
 paused) after about 10 seconds of play (600 emulated frames), the runner saves a resume point. While you
-play it is also saved every minute (every 3 minutes on PSP, Dreamcast, GameCube and Wii, whose states are
+play it is also saved every minute (every 3 minutes on PSP, Dreamcast, PlayStation 2, GameCube and Wii, whose states are
 large), real time, so fast-forward does not save more often and the paused menu does not save; the file is
 written in the background. A crash, a kill or an error therefore loses at most that much; a session shorter
 than 10 seconds keeps the previous point. On the next Play the
@@ -517,9 +544,9 @@ version, or on another disc or revision of the game) shows the reason and only S
 
 ### RetroAchievements
 
-[RetroAchievements](https://retroachievements.org) (RA) works on 14 systems: NES, SNES, Game Boy, Game Boy
-Color, Game Boy Advance, Mega Drive / Genesis, Master System, Game Gear, SG-1000, PlayStation, Nintendo 64,
-Dreamcast, PSP and Nintendo DS. Built on rcheevos v12.5.0 (the library RetroArch uses).
+[RetroAchievements](https://retroachievements.org) (RA) works on 18 systems: NES, SNES, Game Boy, Game Boy
+Color, Game Boy Advance, Mega Drive / Genesis, Master System, Game Gear, SG-1000, PlayStation, PlayStation 2,
+Nintendo 64, Dreamcast, PSP, Nintendo DS, Atari 2600, Atari 7800 and Atari Lynx. Built on rcheevos v12.5.0 (the library RetroArch uses).
 
 - **Log in once**: Settings → RetroAchievements → username + password. The password is used once to get a
   login token and is never stored (see [Privacy](#privacy): the token file is **not encrypted**). Log out
@@ -794,8 +821,8 @@ before each start, as for the PSP. No BIOS / IPL is needed: Dolphin boots discs 
 - **Game files**: GameCube `.iso`, `.gcm`, `.ciso`, `.gcz`, `.wia`, `.rvz`, homebrew `.dol` / `.elf` and `.m3u`
   playlists (up to 2 GiB); Wii `.iso`, `.ciso`, `.gcz`, `.wia`, `.rvz`, `.wbfs`, `.dol` / `.elf` (up to 8 GiB).
   Only the disc header is read (also inside compressed files): its magic decides GameCube or Wii, never the
-  extension, so a PlayStation, PSP or PS2 `.iso` is never taken for a GameCube / Wii disc (a PS2 `.iso` stays one
-  "files not added" row, as before). A `.dol` / `.elf` with Wii-only code is a Wii program. An `.elf` that is not a
+  extension, so a PlayStation, PlayStation 2 or PSP `.iso` is never taken for a GameCube / Wii disc. A `.dol` /
+  `.elf` with Wii-only code is a Wii program. An `.elf` that is not a
   PowerPC program (PSP, Dreamcast, PC) is skipped quietly. Not read: `.wad` (WiiWare / Virtual Console), `.tgc`,
   NKit, CHD, archives.
 - **Identification**: by the 6-character game ID in the disc header (e.g. `GALE01`), matched against the Redump
@@ -846,6 +873,110 @@ before each start, as for the PSP. No BIOS / IPL is needed: Dolphin boots discs 
   GameCube pad in Wii games, Classic Controller / sideways Remote, aiming with the right stick, mouse buttons as
   A / B, a pointer for player 2, motion / rumble, real Wii Remotes, `.wad`, `.tgc`, NKit, cheats, Game Boy Advance
   link, state compression, core options.
+
+### Atari 2600, 7800 and Lynx
+
+Played by **Stella** (Atari 2600, GPL-2.0-or-later), **ProSystem** (Atari 7800, GPL-2.0) and **Handy** (Atari
+Lynx, zlib); each is offered for download on the first Play (or Settings → Emulator cores;
+`scripts/fetch-{stella,prosystem,handy}-core.*` for development) and never bundled. No BIOS is needed: ProSystem
+starts cartridges directly and Handy has a built-in boot. A `7800 BIOS (U).rom` / `7800 BIOS (E).rom` or
+`lynxboot.img` you put in `<data>/system/` yourself is used by the core; Nostyra does not check or manage these
+files.
+
+- **Game files**: Atari 2600 `.a26` and `.bin` (2 KiB to 1 MiB); Atari 7800 `.a78` (with or without the A78
+  header; GoodTools names headerless dumps `.a78`) and `.bin`; Atari Lynx `.lnx` (with or without the LNX
+  header), `.lyx` (raw cartridge) and homebrew `.o` / `.bll` (BS93 programs; a `.o` that is not one, e.g. a C object
+  file, is ignored without a message).
+- **`.bin` files**: Mega Drive and PlayStation share this extension, so a loose `.bin` is listed as Atari 2600
+  or 7800 **only when its hashes are in the bundled No-Intro DAT** (checked after the Mega Drive header and the
+  PlayStation disc probe have rejected it; disc track files are never taken). Unknown `.bin` files (homebrew,
+  hacks, bad dumps) stay under "files not added" with the old reason plus "also not a known Atari 2600 / Atari
+  7800 dump (homebrew: use .a26 / .a78)": rename them to `.a26` / `.a78`. A `.bin` inside a ZIP is not looked
+  up in the DATs: unzip it or rename it to `.a26` / `.a78` (zipped `.a26`, `.a78`, `.lnx`, `.lyx` and `.o`
+  work with **Scan ZIP archives**).
+- **Identification**: the whole file against the No-Intro DAT; a headered `.a78` / `.lnx` also matches the
+  DAT's headerless entry. The save folder follows the whole file, so an `.a78` and its headerless `.bin` twin
+  are two games with separate saves.
+- **Saves**: the consoles have no battery saves (no `save.srm`): progress is save states. Lynx cartridges with an
+  EEPROM save to `saves/lynx/<game> [<ID>]/content.eeprom`, which Handy writes on Reset game and when the game
+  closes normally; a crash or a killed runner loses the EEPROM writes of that session. Renaming the ROM or moving
+  the data folder keeps the file (the whole save folder moves).
+- **Save states, run-ahead and rewind** work on all three. Stella and Handy show one stale frame right after a
+  state load (the next frames are exact). A Lynx state only loads in the Handy version that made it.
+- **Pads**: 2600: B = Fire, Select = Game Select, Start = Game Reset, L / L2 = left difficulty A / B, R / R2 =
+  right difficulty A / B, L3 = Colour, R3 = B/W (the triggers press L2 / R2, so their fast-forward / rewind
+  holds give way). 7800: B = Button 1, A = Button 2, X = Reset, Select, Start = Pause, L / R = left / right
+  difficulty (A while held, B otherwise). Lynx: A, B, L = Option 1, R = Option 2, Start = Pause. Paddle,
+  driving and keypad games play with the D-pad.
+- **Lynx screen**: vertical games are rotated automatically (from the cartridge header or Handy's database) and
+  a normal window resizes to the new shape; there is no rotate button.
+- Not yet: analog paddles / driving controllers / keypads, latched 7800 difficulty switches, a BIOS setting,
+  Atari 5200 / Jaguar / ST, `.bin` lookup inside ZIPs, Lynx EEPROM sync in Nostyra Online, core options.
+
+### Sony PlayStation 2
+
+Played by **PCEE2** (the PCSX2 libretro core, upstream PCSX2 v2.9, GPL-3.0-or-later; offered for download on the
+first Play, or Settings → Emulator cores; `scripts/fetch-pcee2-core.*` for development; a 44 MiB core, never
+bundled). **Desktop only**: Nostyra Online has no PlayStation 2 core. Windows and Linux builds are the targets
+(macOS later; the buildbot ships the core for all three) — tested on Windows so far.
+
+- **BIOS — required**: the PS2 has no built-in BIOS replacement, so a game starts only with a BIOS dumped from
+  **your own console**. Settings → BIOS → PCEE2 → **Add BIOS file…** accepts the dump under any name
+  (`SCPH-39001_….BIN`, `SCPH-77001_….ROM0`, …): Nostyra checks that the file is a 4–8 MiB PS2 ROM with a
+  `ROMVER` entry (the `.ROM1` / `.ROM2` / `.DIFF` / `.NVM` / `.MEC` files beside a dump are not the BIOS and are
+  refused with that reason), stores it as `<data>/system/pcsx2/bios/<name>.bin` and copies its sidecars with the
+  same name (`.rom1`, `.rom2`, `.erom`, `.nvm`, `.mec`). Settings lists every dump with its version, region and
+  date ("v1.60 · USA · 2002-02-07"; v1.00 gets a warning — prefer a later version) and shows which file each disc
+  region (JP / US / EU) boots: a valid BIOS of the disc's region, else any valid BIOS, newest version first (the
+  runner picks the same file and logs it). Several dumps may coexist. The folder must stay writable: the core
+  creates `<name>.nvm` / `.mec` (clock, settings) beside the dump on the first boot. Without any valid BIOS, Play
+  opens the **"PlayStation 2 BIOS needed"** dialog before anything starts: **Choose BIOS file…** imports the dump
+  exactly like Settings → BIOS and then starts the game; **Settings** opens the BIOS section. (Should the folder be
+  emptied after that check, the runner still refuses before the core loads: "PlayStation 2 needs your BIOS dump —
+  Settings → BIOS", exit code 4.) Nostyra never includes or downloads a BIOS.
+- **Game files**: `.iso`, raw `.bin` (+ `.cue`; PS2 CD games), `.chd` (`chdman createdvd` for DVDs, `createcd` for
+  CDs), `.cso` / `.zso` (CISO / LZ4) and `.m3u` multi-disc playlists (the first disc identifies the game; pause
+  menu → Disc swaps), up to 9 GiB (dual-layer DVD-9). Recognised by content (`PLAYSTATION` volume + a
+  `SYSTEM.CNF` `BOOT2 = cdrom0:\…` line), never by extension: a PS1 `.bin` / `.iso` stays PlayStation (PS1 discs
+  carry the licence text, PS2 discs do not), a PSP / GameCube / Wii image is never claimed; an unknown `.bin` now
+  reads "not a PlayStation or PlayStation 2 disc". Not read: `.gz`, homebrew `.elf`, `.mdf` / `.nrg` / `.img`.
+- **Identification**: by the disc's serial (`SLPS-25497` from `BOOT2`) against the Redump PlayStation 2 DAT —
+  discs are never hashed whole (0.1–8.5 GB each), the scan reads about 22 KiB per disc. The content id is the
+  serial, so every dump of one serial (`.iso`, `.chd`, `.cso`, Rev 0 / Rev 1, hacks keeping the retail serial) is
+  one game with one save folder and the first DAT entry's name; Redump hash verification is not available (as for
+  GameCube / Wii). A disc whose `BOOT2` names no serial-shaped executable (homebrew, demo discs:
+  `BOOT2 = cdrom0:\BOOT.ELF;1`) is identified by its volume id + boot path instead (no DAT name; two builds sharing
+  both share saves). Covers come from libretro-thumbnails like every system.
+- **Memory cards**: shared by every game, as on a real console: `<data>/system/pcsx2/memcards/Mcd001.ps2` and
+  `Mcd002.ps2` (8 MiB each, created by the core at the first boot; the game or the PS2 browser formats them on
+  first use). No per-game cards, no card import or UI. Settings → Data folder → Change… moves the whole `system/`
+  folder (BIOS and cards included); there is no backup feature — copy the two files yourself. `saves/ps2/<game>
+  [<ID>]/` holds save states only.
+- **Save states** work (96 MiB each, about 0.2–0.3 s to save; cap 128 MiB); **run-ahead and rewind are off**
+  (the pause menu says why). A state loads only in the PCEE2 version that made it (after a core update Continue
+  is hidden and old slots read "made by another PCEE2 version") and only on the disc / revision it came from
+  ("made from another disc or revision": the state remembers the boot executable). Damaged or truncated states
+  are refused before the core sees them (PCEE2 would accept them). Continue works right after start (no boot
+  wait); the resume point is saved every 3 minutes. One black frame may show right after a state load with
+  OpenGL (core behaviour).
+- **Graphics**: OpenGL on the hidden 3.3 context when the PC has one (PCEE2 adds its own shared 4.6 context for
+  its GS thread), native resolution (1×; 2× costs about 30 ms per frame to read back on the spike PC). Without
+  OpenGL 3.3 the core falls back to its own Vulkan readback device with a correct picture (one more frame of
+  latency) instead of stopping — no exit 6 for the PS2. Full speed needs a 4-core Haswell-class CPU or better and
+  a GPU. The picture changes size by game (640×448, 512×448, …) without moving the window. 59.94 fps, 48 kHz.
+- **Pads**: DualShock 2 on ports 1–2: Cross = B, Circle = A, Square = Y, Triangle = X, L1 / R1 = L / R, L2 / R2 =
+  the triggers (digital; so the pad's fast-forward / rewind holds give them up), L3 / R3 = stick clicks, both
+  sticks. Keyboard as PlayStation plus I/J/K/L = left stick, T/F/G/H = right stick; L3 / R3 have no keyboard
+  default. No pressure-sensitive buttons, no rumble (Nostyra has no rumble interface), no multitap.
+- **RetroAchievements**: supported (RA console 21; the disc is hashed the way RA does, through Nostyra's own
+  readers for `.chd` / `.cso` / `.zso`). Hardcore (when enabled) requires cheats, EE over- / underclock, widescreen
+  and no-interlacing patches off — Nostyra fixes them so.
+- **Known limits**: dumps of one serial share saves and name (above); a `.bin` without its `.cue` plays, but a
+  multi-track CD game then has no CD audio; the real-core PS2 tests need your BIOS (`NOSTYRA_PS2_BIOS_DIR`), so
+  they never run in CI; Linux / macOS not tested yet.
+- Not yet: Vulkan / Direct3D host backends, upscaling / widescreen / aspect settings, per-game memory cards or a
+  card UI, multitap, pressure-sensitive buttons, rumble, light guns / USB devices, cheats (`.pnach`), `.gz`,
+  homebrew `.elf` in the library, core options.
 
 ## Releasing
 Maintainers: see [docs/deployment-guide.md](docs/deployment-guide.md) (`dev` → `main` one commit per release, `scripts/release.ps1`).

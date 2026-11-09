@@ -10,6 +10,9 @@
 //!   (one ≤ 64 KiB read; ISO, RVZ, … copies of one disc share it).
 //! - `.m3u`: `"m3u:<ID6>"` of its first disc (playlist states load only in playlist
 //!   sessions; disc swaps inside stay the core's business).
+//! - PlayStation 2 (serial-keyed save folders, PCEE2 loads any disc's state):
+//!   `"<BOOT2 exe>:<CRC32 of its first 64 KiB>"`, `.m3u` = `"m3u:"` + the first
+//!   disc's tag (`ps2_state_content_tag`).
 //! - `.dol` / `.elf`, every other system, or an unreadable header: `None` (no check).
 
 use std::path::Path;
@@ -17,11 +20,20 @@ use std::path::Path;
 use disc_image::{is_executable_ext, is_m3u_ext, playlist_entries, read_nintendo_disc_header};
 use system_catalog::{ContentProbe, DiscSignature, SystemSpec};
 
+#[path = "ps2_state_content_tag.rs"]
+mod ps2_state_content_tag;
+
 /// The content tag of the game `rom` launched as `system` (see the module doc).
 pub fn state_content_tag(system: &SystemSpec, rom: &Path) -> Option<String> {
-    let ContentProbe::Disc(DiscSignature::GameCube | DiscSignature::Wii) = system.probe else {
-        return None;
-    };
+    match system.probe {
+        ContentProbe::Disc(DiscSignature::GameCube | DiscSignature::Wii) => nintendo_tag(rom),
+        ContentProbe::Disc(DiscSignature::PlayStation2) => ps2_state_content_tag::tag(rom),
+        _ => None,
+    }
+}
+
+/// GameCube / Wii: game ID, disc and revision from the disc header.
+fn nintendo_tag(rom: &Path) -> Option<String> {
     let ext = rom.extension().and_then(|e| e.to_str()).unwrap_or("");
     if is_executable_ext(ext) {
         return None;

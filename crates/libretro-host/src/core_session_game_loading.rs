@@ -1,5 +1,6 @@
 //! Game loading: ROM bytes from disk or preloaded by the caller (soft-patching).
-//! A core that loads by path gets preloaded bytes as a staged file.
+//! A core that loads by path (or re-reads it: `stage_content`, Handy) gets preloaded
+//! bytes as a staged file.
 
 use std::path::Path;
 
@@ -18,11 +19,12 @@ impl CoreSession {
         &mut self,
         rom_path: &Path,
         preloaded: Option<&[u8]>,
-        staging_dir: Option<&Path>,
+        (staging_dir, stage_content): (Option<&Path>, bool),
     ) -> HostResult<()> {
         let (need_fullpath, core_info) = self.core.system_info();
         self.core_info = core_info;
-        match (need_fullpath, preloaded, staging_dir) {
+        // A memory-loading core that stages still gets the bytes (data pointer) too.
+        match (need_fullpath || stage_content, preloaded, staging_dir) {
             (true, Some(bytes), Some(dir)) => {
                 let ext = rom_path.extension().and_then(|ext| ext.to_str());
                 let staged = StagedContentFile::write(dir, ext, bytes)?;
@@ -67,3 +69,7 @@ impl CoreSession {
 #[cfg(test)]
 #[path = "core_session_load_rejection_tests.rs"]
 mod load_rejection_tests;
+
+#[cfg(test)]
+#[path = "core_session_stage_content_tests.rs"]
+mod stage_content_tests;

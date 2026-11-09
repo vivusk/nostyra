@@ -6,6 +6,7 @@
 import type { ScanProblem } from "../../../api/tauri-events";
 import type { WebSystem } from "../catalog/web-systems";
 import type { NostyraWasm } from "../wasm/wasm-module";
+import { splitDatPending, type PendingFile } from "./scan-dat-pending";
 import { registerFolderFiles } from "./scan-file-registry";
 import type { FolderDiscovered, ScanFolderInput } from "./scan-protocol";
 import { extensionOf, isRomArchive, isUnchanged, romPathOf, virtualPathOf } from "./scan-paths";
@@ -27,6 +28,10 @@ export interface FolderScan {
   input: ScanFolderInput;
   files: WalkedFile[];
   games: DiscoveredGame[];
+  /** Loose files only a DAT can place (Atari `.bin`), resolved in pass B. */
+  pending: PendingFile[];
+  /** The registry's web systems (pass B looks the pending candidates up). */
+  systems: WebSystem[];
 }
 
 type Verdict = { kind: "ok"; system: string } | { kind: "skip" } | { kind: "problem"; reason: string };
@@ -98,13 +103,19 @@ export async function discoverFolder(
     games.push({ relative: walked.relative, romPath, system, size, mtime, changed: !isUnchanged(known[romPath], size, mtime) });
   });
   const hiddenFailures = new Set(grouping.hiddenFailures);
-  const failures = problems.filter((_, index) => !hiddenFailures.has(index));
+  // After grouping (sheet tracks are hidden, never pending).
+  const { problems: failures, pending } = splitDatPending(
+    problems.filter((_, index) => !hiddenFailures.has(index)),
+    (relative) => wasm.dat_pending_candidates(virtualPathOf(token, relative)),
+    (relative) => zipScanning && isRomArchive(relative),
+  );
   return {
-    scan: { input, files: walk.files, games },
+    scan: { input, files: walk.files, games, pending, systems },
     discovered: {
       kind: "discovered",
       token,
-      present: games.map((game) => game.romPath),
+      // Pending files are present too (resolved in pass B), not vanished.
+      present: [...games.map((game) => game.romPath), ...pending.map((p) => romPathOf(token, p.relative))],
       existing: walk.files.map((f) => romPathOf(token, f.relative)),
       unreadable: failures.map((f) => romPathOf(token, f.relative)),
       skipped,

@@ -134,6 +134,36 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: ./scripts/fetch-dolphin-core.ps1
+      - name: Fetch stella core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-stella-core.sh
+      - name: Fetch stella core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-stella-core.ps1
+      - name: Fetch prosystem core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-prosystem-core.sh
+      - name: Fetch prosystem core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-prosystem-core.ps1
+      - name: Fetch handy core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-handy-core.sh
+      - name: Fetch handy core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-handy-core.ps1
+      # PlayStation 2: the core alone; its real-core suites skip here (they need a
+      # user BIOS dump via NOSTYRA_PS2_BIOS_DIR, never in the repo or CI).
+      - name: Fetch pcee2 core (Unix)
+        if: runner.os != 'Windows'
+        run: bash scripts/fetch-pcee2-core.sh
+      - name: Fetch pcee2 core (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/fetch-pcee2-core.ps1
 
       - name: Test ROMs are reproducible from source
         if: runner.os == 'Linux'
@@ -150,6 +180,8 @@ jobs:
           python3 test-assets/roms/src/build-nostyra-test-psp.py
           python3 test-assets/roms/src/build-nostyra-test-nds.py
           python3 test-assets/roms/src/build-nostyra-test-gc.py
+          python3 test-assets/roms/src/build-nostyra-test-atari-roms.py
+          python3 test-assets/roms/src/build-nostyra-test-ps2.py
           git diff --exit-code -- test-assets/roms/
 
       # Canned RetroAchievements sets of the test ROMs (hash + RA counter address per

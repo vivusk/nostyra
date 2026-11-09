@@ -16,6 +16,7 @@
 pub mod catalog_json;
 pub mod config_json;
 pub mod controls_json;
+pub mod dat_pending_json;
 pub mod identity_json;
 pub mod library_json;
 pub mod naming_json;
@@ -30,6 +31,8 @@ mod js_file_reader;
 mod js_files;
 #[cfg(target_arch = "wasm32")]
 mod wasm_controls_exports;
+#[cfg(target_arch = "wasm32")]
+mod wasm_dat_pending_exports;
 #[cfg(target_arch = "wasm32")]
 mod wasm_exports;
 #[cfg(target_arch = "wasm32")]

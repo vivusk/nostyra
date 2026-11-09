@@ -4,12 +4,12 @@
 //! organise ROMs any way (`ROM/Favorites/x.nes`, an `.sfc` inside `ROM/NES/`).
 
 use std::path::{Path, PathBuf};
-use std::time::UNIX_EPOCH;
 
 use disc_image::DiscImageProbe;
 use system_catalog::{classify_among, ClassifyError, Media, SystemSpec};
 
-use crate::disc_file_grouping::group_disc_files;
+use crate::dat_pending_resolution::{split_dat_pending, DatPendingFile};
+use crate::disc_file_grouping::{group_disc_files, mtime_ns};
 use crate::library_scan_options::ScanOptions;
 use crate::rom_archive::is_rom_archive;
 use rom_identity::{scan_zip, ZipScan};
@@ -43,6 +43,9 @@ pub struct DiscoveredFiles {
     /// Unreadable entries, non-UTF-8 paths and failed content probes ("missing
     /// iNES header"); the walk continues past them.
     pub failures: Vec<ScanFailure>,
+    /// Unclassified loose files that may match a DAT (Atari `.bin`); resolved in pass
+    /// B, not listed in `failures`.
+    pub dat_pending: Vec<DatPendingFile>,
 }
 
 /// Lists files under `folder` that belong to one of `systems`. Files whose extension
@@ -125,22 +128,17 @@ pub fn discover_rom_files_with_options(
                 continue;
             }
         };
-        let mtime_ns = metadata
-            .modified()
-            .ok()
-            .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
-            .map_or(0, |since| {
-                i64::try_from(since.as_nanos()).unwrap_or(i64::MAX)
-            });
         found.files.push(DiscoveredFile {
             path: path.to_string(),
             size: metadata.len(),
-            mtime_ns,
+            mtime_ns: mtime_ns(&metadata),
             system,
         });
     }
     if systems.iter().any(|spec| spec.media == Media::Disc) {
         group_disc_files(&mut found, systems);
     }
+    // After grouping (sheet tracks are hidden, never pending), on every scan.
+    split_dat_pending(&mut found, systems);
     found
 }

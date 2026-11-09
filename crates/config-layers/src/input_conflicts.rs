@@ -168,3 +168,7 @@ mod nds_tests;
 #[cfg(test)]
 #[path = "input_conflicts_gc_wii_tests.rs"]
 mod gc_wii_tests;
+
+#[cfg(test)]
+#[path = "input_conflicts_ps2_tests.rs"]
+mod ps2_tests;

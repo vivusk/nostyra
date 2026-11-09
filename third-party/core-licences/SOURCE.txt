@@ -1,0 +1,5 @@
+Licence texts the web edition serves for EmulatorJS cores whose .data archive has no
+license.txt (copied to <base>/notices/ by scripts/build-web.mjs):
+- GPL-2.0.txt   https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt (Stella 2014)
+- Handy-zlib.txt https://github.com/libretro/libretro-handy/blob/bc55d46/lynx/license.txt
+  (Handy, K. Wilkins, zlib licence)

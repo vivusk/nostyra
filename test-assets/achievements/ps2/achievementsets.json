@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9021,
+ "Title": "Nostyra Test ps2",
+ "ConsoleId": 21,
+ "ImageIconUrl": "http://server/Images/9021.png",
+ "RichPresenceGameId": 9021,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9021,
+   "GameId": 9021,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9021.png",
+   "Achievements": [
+    {
+     "ID": 90211,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH108004=20",
+     "Author": "nostyra",
+     "BadgeName": "90211",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90212,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH108004=10::CAN:0=1::SUB:0xH108004=30::VAL:0xH108004",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

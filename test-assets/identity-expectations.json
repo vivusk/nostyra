@@ -1,4 +1,28 @@
 {
+  "nostyra-test-7800.bin": {
+    "contentId": "B2BC8383",
+    "crc32": "FCD1D1EE",
+    "datName": null,
+    "metadata": null,
+    "region": null,
+    "serial": null,
+    "sha1": "B2BC8383403663461D89CE9F44A4701067131575",
+    "size": 16384,
+    "system": "atari7800",
+    "title": "nostyra-test-7800"
+  },
+  "nostyra-test-ps2.iso": {
+    "contentId": "13E2A3FC",
+    "crc32": "E07CAB5F",
+    "datName": null,
+    "metadata": null,
+    "region": null,
+    "serial": "NSTR-00001",
+    "sha1": "13E2A3FC3D7C1C7DA6BAF5B42E6F7AE662482EA4",
+    "size": 2097152,
+    "system": "ps2",
+    "title": "nostyra-test-ps2"
+  },
   "nostyra-test-psx.cue": {
     "contentId": "A8757DDC",
     "crc32": "4467A7CF",
@@ -22,6 +46,30 @@
     "size": 150528,
     "system": "psx",
     "title": "nostyra-test-psx"
+  },
+  "nostyra-test.a26": {
+    "contentId": "33139D13",
+    "crc32": "9C68EC04",
+    "datName": null,
+    "metadata": null,
+    "region": null,
+    "serial": null,
+    "sha1": "33139D13E99AF6C532FB740D756C7790BD33F8F1",
+    "size": 4096,
+    "system": "atari2600",
+    "title": "nostyra-test"
+  },
+  "nostyra-test.a78": {
+    "contentId": "25DE76DA",
+    "crc32": "8CFC2BE3",
+    "datName": null,
+    "metadata": null,
+    "region": null,
+    "serial": null,
+    "sha1": "25DE76DA018C1CF91A78FFD1CEC8D172B5740560",
+    "size": 16512,
+    "system": "atari7800",
+    "title": "nostyra-test"
   },
   "nostyra-test.gb": {
     "contentId": "91E9250A",
@@ -83,6 +131,18 @@
     "system": "gg",
     "title": "nostyra-test"
   },
+  "nostyra-test.lnx": {
+    "contentId": "67A332AF",
+    "crc32": "01C970B9",
+    "datName": null,
+    "metadata": null,
+    "region": null,
+    "serial": null,
+    "sha1": "67A332AF6D6258F3B4728556E361828CC46DBBF6",
+    "size": 65600,
+    "system": "lynx",
+    "title": "nostyra-test"
+  },
   "nostyra-test.nes": {
     "contentId": "62AF2163",
     "crc32": "AA4821D7",
@@ -93,6 +153,18 @@
     "sha1": "62AF2163A5A6882EF22A61125790F50F1BF50F76",
     "size": 24592,
     "system": "nes",
+    "title": "nostyra-test"
+  },
+  "nostyra-test.o": {
+    "contentId": "113BCFB7",
+    "crc32": "0848DC59",
+    "datName": null,
+    "metadata": null,
+    "region": null,
+    "serial": null,
+    "sha1": "113BCFB7303F680D0A6F85C6A1251434826B4592",
+    "size": 101,
+    "system": "lynx",
     "title": "nostyra-test"
   },
   "nostyra-test.sfc": {

@@ -28,3 +28,9 @@ test-assets/roms/*.cso binary
 *.nds binary
 *.dol binary
 *.ttf binary
+*.a26 binary
+*.a78 binary
+*.lnx binary
+*.lyx binary
+*.bll binary
+test-assets/roms/*.o binary

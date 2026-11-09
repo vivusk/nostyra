@@ -40,6 +40,28 @@ fn disc_and_dat_forms_share_a_key() {
 }
 
 #[test]
+fn playstation_2_keys_are_the_ten_char_head() {
+    const PS2: DiscSignature = DiscSignature::PlayStation2;
+    assert_eq!(serial_lookup_keys(PS2, "SLES---54150"), ["SLES-54150"]);
+    assert_eq!(serial_lookup_keys(PS2, "SLES--54150/ANZ"), ["SLES-54150"]);
+    assert_eq!(serial_lookup_keys(PS2, "SLUS-20312GH"), ["SLUS-20312"]);
+    assert_eq!(serial_lookup_keys(PS2, "SLUS_203.12"), ["SLUS-20312"]);
+    assert_eq!(serial_lookup_keys(PS2, "SLPM-65002-0"), ["SLPM-65002"]);
+    assert_eq!(serial_lookup_keys(PS2, " SCES-53326/ANZ"), ["SCES-53326"]);
+    assert_eq!(serial_lookup_keys(PS2, "SLES-02375-P"), ["SLES-02375"]);
+    assert_eq!(serial_lookup_keys(PS2, "SLPS-25497"), ["SLPS-25497"]);
+    assert_eq!(
+        serial_lookup_keys(PS2, "SLPM-65002, SLPM-65003-1"),
+        ["SLPM-65002", "SLPM-65003"]
+    );
+    assert!(serial_lookup_keys(PS2, "BOOT.ELF").is_empty());
+    assert_eq!(
+        display_serial(PS2, "slus_203.12").as_deref(),
+        Some("SLUS-20312")
+    );
+}
+
+#[test]
 fn playstation_keys_are_unchanged() {
     assert_eq!(serial_lookup_keys(PS, "SLUS_012.34"), ["SLUS-01234"]);
     assert_eq!(

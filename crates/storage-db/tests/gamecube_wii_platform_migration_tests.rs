@@ -42,7 +42,7 @@ fn m13_database_upgrades_to_the_gamecube_and_wii_platforms() {
     let version: i64 = conn
         .pragma_query_value(None, "user_version", |r| r.get(0))
         .unwrap();
-    assert_eq!(version, 11);
+    assert_eq!(version, 13, "011 + later");
     let rows: Vec<(String, String, String, String, String)> = conn
         .prepare(
             "SELECT id, name, extensions, dat_file, core_id FROM platforms

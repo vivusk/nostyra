@@ -8,8 +8,11 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 
 use common::{fake_rom, TempLibrary};
-use game_library::{game_content_sha1, scan_library, ScanSummary, SystemCatalogs};
+use game_library::{
+    dat_pending_hint, game_content_sha1, scan_library, ScanSummary, SystemCatalogs,
+};
 use storage_db::{game_play_stats, list_games, GameListQuery, LibraryFolder, NewPlaySession};
+use system_catalog::{ATARI2600, ATARI7800};
 
 /// The temp library plus a second folder `roms2/`, both registered.
 fn two_folders(tag: &str) -> (TempLibrary, LibraryFolder, PathBuf) {
@@ -125,7 +128,17 @@ fn mixed_tree_scans_each_file_to_its_system() {
     lib.write("Handheld/no-branch.gba", &gba_image(8, false));
     common::ps1_test_tree::write_ps1_tree(&lib);
     let summary = scan(&lib, std::slice::from_ref(&lib.folder));
-    assert_eq!(summary.added, 8 + 4, "8 carts + 4 PS1 games");
+    assert_eq!(
+        summary.added,
+        8 + 4 + 1,
+        "8 carts + 4 PS1 games + 1 PS2 disc"
+    );
+    // Small unknown `.bin`: the last disc candidate's (PlayStation 2, M18) reason +
+    // the Atari DAT hint (M17).
+    let bin_reason = dat_pending_hint(
+        "not a PlayStation or PlayStation 2 disc",
+        &[&ATARI2600, &ATARI7800],
+    );
     let mut failed: Vec<(String, &str)> = summary
         .failures
         .iter()
@@ -137,11 +150,10 @@ fn mixed_tree_scans_each_file_to_its_system() {
     failed.sort();
     let expected = [
         ("Brig_TGGR.cue", common::ps1_test_tree::BROKEN_REASON),
-        ("audio.bin", "not a PlayStation disc"),
+        ("audio.bin", bin_reason.as_str()),
         ("bad.nes", "missing iNES header"),
         ("no-branch.gba", "missing GBA header"),
         ("no-logo.gb", "missing Game Boy header"),
-        ("ps2.bin", "not a PlayStation disc"),
     ];
     assert_eq!(
         failed,
@@ -158,6 +170,7 @@ fn mixed_tree_scans_each_file_to_its_system() {
         .collect();
     psx.sort_unstable();
     assert_eq!(psx, ["Bare.bin", "Game.cue", "Multi.m3u", "Plain.iso"]);
+    assert_eq!(count("ps2"), 1, "ps2.bin is a PlayStation 2 row (M18)");
     let c = games
         .iter()
         .find(|g| g.rom_path.ends_with("c.sfc"))

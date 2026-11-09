@@ -9,7 +9,7 @@ use std::path::Path;
 use crate::chd_dvd_reader::open_chd;
 use crate::cso_image::CsoReader;
 use crate::cue_sheet::{CueSheet, CueTrack, TrackMode};
-use crate::{is_cue_ext, is_m3u_ext, DiscError, CHD_EXT, CSO_EXT, PBP_EXT};
+use crate::{is_cso_ext, is_cue_ext, is_m3u_ext, DiscError, CHD_EXT, PBP_EXT};
 
 /// User data bytes per sector.
 pub const SECTOR_DATA_BYTES: usize = 2048;
@@ -128,9 +128,10 @@ impl DiscReader for FileTrackReader {
 }
 
 /// Opens the first data track of an image: a `.cue` (its first data track file, in
-/// the declared mode, from its `INDEX 01`), a `.chd`, a `.cso`, or a bare `.bin` / `.iso`
-/// (layout auto-detected). Fails with [`DiscError::MissingFile`] when a cue's data
-/// file does not exist; `.m3u` / `.pbp` are not single images (resolve them first).
+/// the declared mode, from its `INDEX 01`), a `.chd`, a `.cso` / `.zso`, or a bare
+/// `.bin` / `.iso` (layout auto-detected). Fails with [`DiscError::MissingFile`] when
+/// a cue's data file does not exist; `.m3u` / `.pbp` are not single images (resolve
+/// them first).
 pub fn open_data_track(path: &Path) -> Result<Box<dyn DiscReader>, DiscError> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     if is_m3u_ext(ext) || ext.eq_ignore_ascii_case(PBP_EXT) {
@@ -142,7 +143,7 @@ pub fn open_data_track(path: &Path) -> Result<Box<dyn DiscReader>, DiscError> {
         Ok(Box::new(open_cue_track(&track, &entry)?))
     } else if ext.eq_ignore_ascii_case(CHD_EXT) {
         open_chd(path)
-    } else if ext.eq_ignore_ascii_case(CSO_EXT) {
+    } else if is_cso_ext(ext) {
         Ok(Box::new(CsoReader::open(path)?))
     } else {
         Ok(Box::new(FileTrackReader::open_auto(path)?))

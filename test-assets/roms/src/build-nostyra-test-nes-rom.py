@@ -22,6 +22,8 @@ import hashlib
 import pathlib
 import sys
 
+from mos6502_emitter import Asm, lo, hi
+
 PRG_SIZE = 0x4000
 CHR_SIZE = 0x2000
 ORIGIN = 0xC000
@@ -32,57 +34,6 @@ BOOT_COUNTER, MARKER = 0x6000, 0x6001
 HUE, PRESSED = 0x01, 0x02  # zero-page variables
 # Pulse timer for ~440 Hz: CPU 1.789773 MHz / (16 * 440) - 1 = 253.
 PULSE_TIMER = 253
-
-
-class Asm:
-    """Minimal byte emitter with labels, 8-bit relative branches and absolute jumps."""
-
-    def __init__(self, origin):
-        self.origin = origin
-        self.buf = bytearray()
-        self.labels = {}
-        self.fixups = []  # (offset, label, kind) with kind "rel" or "abs"
-
-    @property
-    def pc(self):
-        return self.origin + len(self.buf)
-
-    def label(self, name):
-        self.labels[name] = self.pc
-
-    def emit(self, *data):
-        self.buf.extend(data)
-
-    def abs_op(self, opcode, addr):
-        self.emit(opcode, lo(addr), hi(addr))
-
-    def branch(self, opcode, name):
-        self.emit(opcode, 0)
-        self.fixups.append((len(self.buf) - 1, name, "rel"))
-
-    def jmp(self, name):
-        self.emit(0x4C, 0, 0)
-        self.fixups.append((len(self.buf) - 2, name, "abs"))
-
-    def resolve(self):
-        for off, name, kind in self.fixups:
-            target = self.labels[name]
-            if kind == "abs":
-                self.buf[off:off + 2] = bytes([lo(target), hi(target)])
-                continue
-            rel = target - (self.origin + off + 1)
-            if not -128 <= rel <= 127:
-                raise ValueError(f"branch to {name} out of range")
-            self.buf[off] = rel & 0xFF
-        return bytes(self.buf)
-
-
-def lo(v):
-    return v & 0xFF
-
-
-def hi(v):
-    return (v >> 8) & 0xFF
 
 
 def build_program():

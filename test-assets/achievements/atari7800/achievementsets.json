@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9051,
+ "Title": "Nostyra Test atari7800",
+ "ConsoleId": 51,
+ "ImageIconUrl": "http://server/Images/9051.png",
+ "RichPresenceGameId": 9051,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9051,
+   "GameId": 9051,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9051.png",
+   "Achievements": [
+    {
+     "ID": 90511,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH001800=20",
+     "Author": "nostyra",
+     "BadgeName": "90511",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90512,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH001800=10::CAN:0=1::SUB:0xH001800=30::VAL:0xH001800",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

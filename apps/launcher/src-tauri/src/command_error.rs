@@ -6,11 +6,12 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CommandError {
-    /// "storage" | "scan" | "core" | "core_missing" | "session" | "artwork" | "busy" |
-    /// "invalid".
+    /// "storage" | "scan" | "core" | "core_missing" | "bios_missing" | "session" |
+    /// "artwork" | "busy" | "invalid".
     pub kind: &'static str,
     pub message: String,
-    /// `core_missing` only: the registry core to install.
+    /// `core_missing`: the registry core to install; `bios_missing`: the core whose
+    /// BIOS folder needs a dump.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub core_id: Option<&'static str>,
 }
@@ -32,6 +33,20 @@ impl CommandError {
             message: format!(
                 "{system} games need the {} core. Install it from Settings.",
                 core.display_name
+            ),
+            core_id: Some(core.id),
+        }
+    }
+
+    /// Play refused: `core` has no HLE BIOS and its BIOS folder holds no valid dump
+    /// (`bios_required_check`). The UI offers the file picker.
+    pub fn bios_missing(core: &'static system_catalog::CoreSpec, platform_id: &str) -> Self {
+        let system = system_catalog::system(platform_id).map_or(platform_id, |s| s.short_label);
+        Self {
+            kind: "bios_missing",
+            message: format!(
+                "{system} games need the BIOS dumped from your own console. \
+                 Choose the BIOS file to add it and start the game."
             ),
             core_id: Some(core.id),
         }

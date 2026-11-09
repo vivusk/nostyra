@@ -21,6 +21,10 @@ pub enum Media {
 pub enum DiscSignature {
     /// ISO9660 system id `PLAYSTATION` plus Sony's licence text in sector 4.
     PlayStation,
+    /// ISO9660 system id `PLAYSTATION` plus a root `SYSTEM.CNF` with a
+    /// `BOOT2 = cdrom0:\…` line (PS2 discs carry no licence text; the PlayStation
+    /// probe runs first, so a PS1 disc never reaches this one).
+    PlayStation2,
     /// IP.BIN hardware id `SEGA SEGAKATANA` in the first sector of the boot data track
     /// (GD-ROM high-density area at LBA 45000, or a MIL-CD's last session).
     Dreamcast,

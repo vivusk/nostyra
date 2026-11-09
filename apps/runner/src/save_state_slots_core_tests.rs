@@ -47,7 +47,8 @@ fn write_sidecar(dir: &Path, core_name: &str, core_version: &str) {
 /// Frames after a load against the frames the first run showed after the save.
 /// `exact_replay`: the same frames. Otherwise (Mupen64Plus-Next: serialize runs the
 /// core to a safe point, so replay is not checksum-exact) the replay must show the
-/// first run's frames shifted by at most one frame.
+/// first run's frames shifted by at most one frame, or with a stale first frame only
+/// (Stella, Handy: the partly drawn frame is not in the state).
 fn assert_replay(first: &[u64], replay: &[u64], exact_replay: bool) {
     if exact_replay {
         assert_eq!(first, replay, "frames after the load match the first run");
@@ -55,7 +56,10 @@ fn assert_replay(first: &[u64], replay: &[u64], exact_replay: bool) {
     }
     let shifted = |a: &[u64], b: &[u64]| a[1..] == b[..b.len() - 1];
     assert!(
-        first == replay || shifted(first, replay) || shifted(replay, first),
+        first == replay
+            || shifted(first, replay)
+            || shifted(replay, first)
+            || first[1..] == replay[1..],
         "frames after the load match the first run +-1 frame: {first:x?} vs {replay:x?}"
     );
 }

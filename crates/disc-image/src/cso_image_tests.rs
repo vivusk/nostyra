@@ -1,10 +1,12 @@
 //! CSO reader tests: in-code CISO v1 images (deflate + plain blocks, align, bigger
-//! blocks with a partial last one) read back sector by sector; broken headers/index.
+//! blocks with a partial last one) and their LZ4 ZSO twins read back sector by
+//! sector; broken headers / index / LZ4 blocks.
 
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test code: panics are the failure signal
 
 use super::*;
 use crate::test_images::write;
+use crate::test_ps2_images::zso;
 use crate::test_psp_containers::cso;
 
 /// 7 sectors: zeros (deflate well) and pseudo-random bytes (stored plain).
@@ -57,24 +59,53 @@ fn bigger_blocks_with_a_partial_last_block() {
 }
 
 #[test]
+fn zso_lz4_blocks_read_back_like_the_cso_twin() {
+    let dir = tempfile::tempdir().unwrap();
+    let iso = sample_iso();
+    for (block, align) in [(SECTOR_DATA_BYTES, 0), (SECTOR_DATA_BYTES, 2), (4096, 0)] {
+        let image = zso(&iso, block, align);
+        assert_eq!(&image[..4], b"ZISO");
+        assert!(image.len() < iso.len(), "zeros compressed");
+        let path = write(dir.path(), &format!("z{block}-{align}.zso"), &image);
+        assert_eq!(read_all(&path, 7), iso);
+    }
+}
+
+#[test]
+fn a_broken_lz4_block_is_a_format_error() {
+    let dir = tempfile::tempdir().unwrap();
+    // One block of 2048 bytes whose 16 stored bytes are no LZ4 block at all.
+    let mut image = vec![0u8; 0x18 + 8];
+    image[..4].copy_from_slice(b"ZISO");
+    image[8..16].copy_from_slice(&(SECTOR_DATA_BYTES as u64).to_le_bytes());
+    image[16..20].copy_from_slice(&(SECTOR_DATA_BYTES as u32).to_le_bytes());
+    image[20] = 1;
+    image[0x18..0x1C].copy_from_slice(&0x20u32.to_le_bytes());
+    image[0x1C..0x20].copy_from_slice(&0x30u32.to_le_bytes());
+    image.extend([0xFFu8; 16]);
+    let mut reader = CsoReader::open(&write(dir.path(), "bad.zso", &image)).unwrap();
+    assert_eq!(
+        reader.read_user_data(0).err().unwrap().to_string(),
+        "ZSO block does not decompress"
+    );
+}
+
+#[test]
 fn unsupported_and_broken_files_are_errors() {
     let dir = tempfile::tempdir().unwrap();
     let good = cso(&sample_iso(), SECTOR_DATA_BYTES, 0);
     let open = |name: &str, bytes: &[u8]| CsoReader::open(&write(dir.path(), name, bytes));
     let error = |result: Result<CsoReader, DiscError>| result.err().unwrap().to_string();
-    let mut zso = good.clone();
-    zso[..4].copy_from_slice(b"ZISO");
-    assert_eq!(
-        error(open("z.cso", &zso)),
-        "ZSO is not supported by the PSP core"
-    );
     let mut v2 = good.clone();
     v2[20] = 2;
     assert_eq!(error(open("v2.cso", &v2)), "CSO version 2 is not supported");
     let mut odd_block = good.clone();
     odd_block[16..20].copy_from_slice(&3000u32.to_le_bytes());
     assert!(open("odd.cso", &odd_block).is_err());
-    assert!(open("junk.cso", b"not a cso at all, no").is_err());
+    assert_eq!(
+        error(open("junk.cso", b"not a cso at all, no, not even close")),
+        "not a CSO / ZSO file"
+    );
     assert!(open("short.cso", b"CISO").is_err());
     let mut corrupt = good;
     corrupt[0x18 + 4..0x18 + 8].copy_from_slice(&0u32.to_le_bytes()); // block 1 ends before it starts

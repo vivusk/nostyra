@@ -53,7 +53,9 @@ fn retain_unhidden<T>(items: &mut Vec<T>, hidden: &[usize]) {
     });
 }
 
-fn mtime_ns(meta: &std::fs::Metadata) -> i64 {
+/// Modification time in ns since the unix epoch (0 if the OS cannot tell); the one
+/// conversion every fingerprint of a walk uses.
+pub(crate) fn mtime_ns(meta: &std::fs::Metadata) -> i64 {
     meta.modified()
         .ok()
         .and_then(|time| time.duration_since(UNIX_EPOCH).ok())

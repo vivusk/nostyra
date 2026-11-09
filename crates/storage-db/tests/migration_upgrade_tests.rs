@@ -31,7 +31,7 @@ fn m1_database_upgrades_and_keeps_games_and_play_history() {
     let version: i64 = conn
         .pragma_query_value(None, "user_version", |r| r.get(0))
         .unwrap();
-    assert_eq!(version, 11, "001 + every later migration (latest 011)");
+    assert_eq!(version, 13, "001 + every later migration (latest 013)");
     let sega: Vec<(String, String)> = conn
         .prepare(
             "SELECT id, core_id FROM platforms WHERE core_id = 'genesis_plus_gx' ORDER BY rowid",
@@ -59,7 +59,7 @@ fn m1_database_upgrades_and_keeps_games_and_play_history() {
 }
 
 #[test]
-fn m9_database_upgrades_to_the_n64_dreamcast_psp_and_nds_platforms_and_keeps_games() {
+fn m9_database_upgrades_to_the_n64_dreamcast_psp_nds_and_ps2_platforms_and_keeps_games() {
     let temp = tempfile::Builder::new()
         .prefix("nostyra-upgrade-")
         .tempdir()
@@ -92,7 +92,7 @@ fn m9_database_upgrades_to_the_n64_dreamcast_psp_and_nds_platforms_and_keeps_gam
     let version: i64 = conn
         .pragma_query_value(None, "user_version", |r| r.get(0))
         .unwrap();
-    assert_eq!(version, 11);
+    assert_eq!(version, 13);
     let n64: (String, String, String, String) = conn
         .query_row(
             "SELECT name, extensions, dat_file, core_id FROM platforms WHERE id = 'n64'",
@@ -167,6 +167,29 @@ fn m9_database_upgrades_to_the_n64_dreamcast_psp_and_nds_platforms_and_keeps_gam
         ),
         want,
         "010 row"
+    );
+    let ps2: (String, String, String, String) = conn
+        .query_row(
+            "SELECT name, extensions, dat_file, core_id FROM platforms WHERE id = 'ps2'",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )
+        .unwrap();
+    let want = (
+        "PS2",
+        "iso,bin,cue,chd,cso,zso,m3u",
+        "Sony - PlayStation 2.dat",
+        "pcee2",
+    );
+    assert_eq!(
+        (
+            ps2.0.as_str(),
+            ps2.1.as_str(),
+            ps2.2.as_str(),
+            ps2.3.as_str()
+        ),
+        want,
+        "013 row"
     );
     assert_eq!(get_game(&conn, 1).unwrap().unwrap().title, "Sonic");
 }

@@ -13,6 +13,8 @@ use content_file_source::ContentFile;
 use system_catalog::{classify_with_head, ClassifyError, SystemSpec, ALL_SYSTEMS, PROBE_BYTES};
 use zip::ZipArchive;
 
+use crate::zip_archive_messages;
+
 /// A validated cartridge member. `bytes` are the original, unmodified ROM dump.
 #[derive(Debug)]
 pub struct ArchivedRom {
@@ -116,8 +118,8 @@ fn read_archive(path: &Path, whole: bool) -> io::Result<ArchivedRom> {
             .filter(|s| s.has_extension(ext))
             .collect();
         if candidates.is_empty() {
-            return Err(not_single_rom(format!(
-                "ZIP ROM system is not supported: {name} (NES, SNES, Sega cartridges and GBA only)"
+            return Err(not_single_rom(zip_archive_messages::unsupported_system(
+                &name,
             )));
         }
         let size = entry.size();
@@ -154,9 +156,8 @@ fn read_archive(path: &Path, whole: bool) -> io::Result<ArchivedRom> {
         }
         selected = Some((index, name, system, size, bytes));
     }
-    let (index, name, system, size, mut bytes) = selected.ok_or_else(|| {
-        not_single_rom("ZIP contains no supported ROM (NES, SNES, Sega cartridges or GBA)")
-    })?;
+    let (index, name, system, size, mut bytes) =
+        selected.ok_or_else(|| not_single_rom(zip_archive_messages::no_supported_rom()))?;
     if whole {
         bytes.clear();
         open_member(&mut archive, index, &name)?

@@ -25,7 +25,7 @@ fn dreamcast_shares_disc_extensions_with_playstation_but_not_bin() {
         .collect();
     assert_eq!(
         disc,
-        ["psx", "dreamcast", "psp", "gc", "wii"],
+        ["psx", "ps2", "dreamcast", "psp", "gc", "wii"],
         "discs last, PlayStation first"
     );
     assert_eq!(dc.pad_labels[0], ("b", "A"));

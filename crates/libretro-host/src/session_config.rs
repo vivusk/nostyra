@@ -31,6 +31,10 @@ pub struct SessionConfig<'a> {
     /// unloads the game and deinits): Dolphin hangs in `FreeLibrary` after a failed
     /// boot or any `retro_unserialize` (M14). Registry `CoreSpec::keep_library_loaded`.
     pub keep_library_loaded: bool,
+    /// Stage preloaded bytes as a file even for a core that loads from memory (it is
+    /// also given the bytes): the core re-reads the path (Handy). Registry
+    /// `CoreSpec::stage_content`.
+    pub stage_content: bool,
 }
 
 /// `path` as a C string for the core (`InvalidPath` with an interior NUL).

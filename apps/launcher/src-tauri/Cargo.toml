@@ -51,6 +51,8 @@ windows-sys.workspace = true
 [dev-dependencies]
 tempfile.workspace = true
 disc-image = { workspace = true, features = ["test-images"] }
+# Synthetic PS2 BIOS images for the import / Settings view tests.
+system-catalog = { workspace = true, features = ["test-fixtures"] }
 
 [lints]
 workspace = true

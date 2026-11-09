@@ -47,6 +47,21 @@ mod tests {
     }
 
     #[test]
+    fn ps2_serials_collapse_redump_variant_suffixes() {
+        let rule = Some(DiscSignature::PlayStation2);
+        assert_eq!(
+            serial_keys(rule, "SLPM-65002-0"),
+            ["SLPM-65002-0", "SLPM-65002"]
+        );
+        assert_eq!(
+            serial_keys(rule, "SCES-53326/ANZ"),
+            ["SCES-53326/ANZ", "SCES-53326"]
+        );
+        assert_eq!(serial_keys(rule, "SLPS-25497"), ["SLPS-25497"]);
+        assert_eq!(serial_rule(&system_catalog::PS2), rule);
+    }
+
+    #[test]
     fn psp_serials_get_the_dash_and_lose_a_suffix() {
         let rule = Some(DiscSignature::Psp);
         assert_eq!(serial_keys(rule, "ULUS10041"), ["ULUS10041", "ULUS-10041"]);

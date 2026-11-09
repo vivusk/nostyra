@@ -154,10 +154,10 @@ mod tests {
     }
 
     #[test]
-    fn gamecube_and_wii_rows_carry_the_registry_labels() {
+    fn gamecube_wii_and_ps2_rows_carry_the_registry_labels() {
         // Controls rows = the runner's pad actions, labels as the registry names them.
         let systems = get_systems();
-        for spec in [system_catalog::GC, system_catalog::WII] {
+        for spec in [system_catalog::GC, system_catalog::WII, system_catalog::PS2] {
             let view = systems.iter().find(|s| s.id == spec.id).unwrap();
             assert_eq!(view.pad_actions, spec.pad_actions, "{}", spec.id);
             let labels: Vec<(&str, &str)> = view

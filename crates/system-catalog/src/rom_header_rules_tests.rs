@@ -86,3 +86,23 @@ fn ines_header_with_and_without_trainer() {
     assert_eq!(ines_header_len(&header), 528);
     assert_eq!(ines_header_len(&header[..15]), 0);
 }
+
+#[test]
+fn magic_header_strips_only_with_the_magic_and_data() {
+    let rule = HeaderRule::MagicHeader {
+        offset: 1,
+        magic: b"ATARI7800",
+        len: 128,
+    };
+    let mut a78 = vec![0u8; 128 + 16];
+    a78[1..10].copy_from_slice(b"ATARI7800");
+    assert_eq!(magic_header_len(rule, &a78), 128);
+    assert_eq!(magic_header_len(rule, &a78[..128]), 0, "header only");
+    assert_eq!(magic_header_len(rule, &[0u8; 300]), 0, "no magic");
+    assert_eq!(magic_header_len(HeaderRule::INes, &a78), 0);
+    assert_eq!(
+        hash_skip_len(rule, a78.len() as u64),
+        0,
+        "whole file is primary"
+    );
+}

@@ -1,6 +1,6 @@
 [package]
 name = "disc-image"
-description = "Reads CD, GD-ROM, UMD and GameCube/Wii disc images without loading them: cue/gdi/m3u sheets, CHD (CD/GD/DVD), CSO, DiscJuggler CDI, sector reader, ISO9660 lookup, PARAM.SFO/PBP, PlayStation, Dreamcast and PSP disc ids and serials, GameCube/Wii disc headers (ISO/CISO/WIA/RVZ/WBFS/GCZ) and DOL/ELF executables."
+description = "Reads CD, GD-ROM, DVD, UMD and GameCube/Wii disc images without loading them: cue/gdi/m3u sheets, CHD (CD/GD/DVD), CSO/ZSO, DiscJuggler CDI, sector reader, ISO9660 lookup, PARAM.SFO/PBP, PlayStation, PlayStation 2, Dreamcast and PSP disc ids and serials, GameCube/Wii disc headers (ISO/CISO/WIA/RVZ/WBFS/GCZ) and DOL/ELF executables."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,6 +12,9 @@ chd.workspace = true
 # Content reads (OS files, or the web edition's virtual source).
 content-file-source.workspace = true
 flate2.workspace = true
+# ZSO (LZ4-block compressed ISO) decoding; `default-features = false` + `std` keeps
+# the wasm32 build of the web edition working.
+lz4_flex.workspace = true
 # std-only registry: the `DiscProbe` trait this crate implements.
 system-catalog.workspace = true
 thiserror.workspace = true

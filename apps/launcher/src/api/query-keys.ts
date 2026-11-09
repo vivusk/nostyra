@@ -11,6 +11,8 @@ export const queryKeys = {
   systems: ["systems"] as const,
   /** Play refused for a missing core: the install prompt's state (null = closed). */
   coreInstallPrompt: ["core-install-prompt"] as const,
+  /** Play refused for a missing BIOS dump (PS2): the picker prompt's state (null = closed). */
+  biosRequiredPrompt: ["bios-required-prompt"] as const,
   gamesRoot: ["games"] as const,
   games: (query: GameListQuery) => ["games", query] as const,
   coreStatus: ["core-status"] as const,

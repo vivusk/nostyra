@@ -18,7 +18,7 @@ fn parity_dol(system: &str, text: &[u32]) {
         .unwrap();
     let rom = temp.path().join("Parity.dol");
     std::fs::write(&rom, dol(text, &[])).unwrap();
-    check_parity(system, &rom);
+    check_parity(system, &rom, |_| {});
 }
 
 #[test]

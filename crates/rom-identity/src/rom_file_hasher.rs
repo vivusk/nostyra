@@ -3,8 +3,9 @@
 //! What is hashed follows the system's `HeaderRule`: SNES skips a copier header
 //! (No-Intro hashes headerless SNES dumps); NES hashes the whole file
 //! (libretro-database lists headered `.nes` dumps) with a headerless fallback for
-//! re-headered copies; Mega Drive SMD files hash as their de-interleaved raw image;
-//! N64 `.v64` / `.n64` dumps hash as their big-endian `.z64` image. Large
+//! re-headered copies (Atari 7800 `.a78` / Lynx `.lnx` the same way); Mega Drive
+//! SMD files hash as their de-interleaved raw image; N64 `.v64` / `.n64` dumps
+//! hash as their big-endian `.z64` image. Large
 //! whole-file cartridges (DS, up to 512 MiB) are hashed streaming, never held in RAM.
 
 use std::io::Read;
@@ -12,7 +13,8 @@ use std::path::Path;
 
 use sha1::{Digest, Sha1};
 use system_catalog::{
-    ines_header_len, normalise_in_place, rom_image_for_hash, HeaderRule, SystemSpec,
+    ines_header_len, magic_header_len, normalise_in_place, rom_image_for_hash, HeaderRule,
+    SystemSpec,
 };
 
 /// Hashes of the bytes a DAT lists (upper-case hex).
@@ -67,14 +69,18 @@ pub fn hash_rom_bytes(bytes: &[u8], system: &SystemSpec) -> RomHashes {
     hash_image(&rom_image_for_hash(system.header_rule, bytes))
 }
 
-/// NES fallback: hashes of the bytes after the iNES header (+ trainer), matching the
-/// DAT's headerless `.unh` entries. `None` for other header rules or a file with no
-/// data after the header. Called only when the primary hashes miss the DAT.
+/// Headerless fallback hashes, called only when the primary hashes miss the DAT:
+/// NES = the bytes after the iNES header (+ trainer), matching the DAT's headerless
+/// `.unh` entries; Atari 7800 `.a78` / Lynx `.lnx` (`HeaderRule::MagicHeader`) = the
+/// bytes after the format header, matching No-Intro's headerless `.bin` / `.lyx`.
+/// `None` for other header rules, a missing magic or a file with no data after the
+/// header.
 pub fn hash_headerless(bytes: &[u8], system: &SystemSpec) -> Option<RomHashes> {
-    if system.header_rule != HeaderRule::INes {
-        return None;
-    }
-    let skip = ines_header_len(bytes);
+    let skip = match system.header_rule {
+        HeaderRule::INes => ines_header_len(bytes),
+        rule @ HeaderRule::MagicHeader { .. } => magic_header_len(rule, bytes),
+        _ => return None,
+    };
     (skip > 0 && skip < bytes.len()).then(|| hash_image(&bytes[skip..]))
 }
 

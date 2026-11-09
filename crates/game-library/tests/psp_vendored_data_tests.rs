@@ -41,9 +41,13 @@ fn vendored_psp_data_matches_disc_serials() {
 fn unreadable_psp_images_are_reported_with_a_reason() {
     let lib = TempLibrary::new("psp-bad");
     let iso = to_iso(&psp_iso_sectors());
+    // Block 16 (the PVD) ends before it starts: the index is corrupt.
+    let mut corrupt = cso(&iso, 2048, 0);
+    corrupt[0x18 + 17 * 4..0x18 + 18 * 4].copy_from_slice(&0u32.to_le_bytes());
+    lib.write("Packed.cso", &corrupt);
     let mut zso = cso(&iso, 2048, 0);
     zso[..4].copy_from_slice(b"ZISO");
-    lib.write("Packed.cso", &zso);
+    lib.write("Zipped.cso", &zso);
     lib.write(
         "Movie.iso",
         &to_iso(&iso_tree("UMD VIDEO", &[("UMD_VIDEO/X.BIN", b"x")])),
@@ -62,10 +66,13 @@ fn unreadable_psp_images_are_reported_with_a_reason() {
         })
         .collect();
     reasons.sort();
-    assert_eq!(reasons.len(), 3, "{reasons:?}");
+    assert_eq!(reasons.len(), 4, "{reasons:?}");
     assert!(reasons[0].1.contains("not a PSP eboot"), "{reasons:?}");
     // The GameCube / Wii probes come later on `.iso`; their plain "not a … disc"
     // never replaces PSP's specific reason.
     assert!(reasons[1].1.contains("UMD Video/Audio disc"), "{reasons:?}");
-    assert!(reasons[2].1.contains("ZSO is not supported"), "{reasons:?}");
+    // The PS2 probe runs first on `.cso`; a damaged container keeps its own text.
+    assert!(reasons[2].1.contains("CSO index is corrupt"), "{reasons:?}");
+    // A ZSO named `.cso` is PlayStation 2 only: PSP keeps its rejection.
+    assert!(reasons[3].1.contains("ZSO is not supported"), "{reasons:?}");
 }

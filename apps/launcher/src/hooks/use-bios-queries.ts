@@ -1,7 +1,7 @@
 // BIOS status (Settings) and memory cards (Detail → Save states).
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { open } from "../backend";
-import { biosCommands } from "../api/tauri-commands-bios";
+import { biosCommands, type CoreBios } from "../api/tauri-commands-bios";
 import { errorMessage } from "../api/tauri-commands";
 import { queryKeys } from "../api/query-keys";
 import { useErrorToast } from "../components/error-toast";
@@ -10,14 +10,23 @@ export function useBiosStatus() {
   return useQuery({ queryKey: queryKeys.bios, queryFn: biosCommands.getBiosStatus });
 }
 
-/** Picks a file and copies it into the BIOS folder (the backend validates it). */
+/** Picks a file and copies it into the BIOS folder (the backend validates it). The
+ *  picker is filtered to the core's extensions when it names some (PS2: .bin / .rom0),
+ *  with an "All files" escape. */
 export function useAddBiosFile() {
   const queryClient = useQueryClient();
   const { showError, showNotice } = useErrorToast();
   return useMutation({
-    mutationFn: async (coreId: string) => {
-      const path = await open({ multiple: false, directory: false, title: "Choose a BIOS file" });
-      return typeof path === "string" ? biosCommands.addBiosFile(coreId, path) : null;
+    mutationFn: async (core: CoreBios) => {
+      const filters =
+        core.pickExtensions.length > 0
+          ? [
+              { name: "BIOS files", extensions: core.pickExtensions },
+              { name: "All files", extensions: ["*"] },
+            ]
+          : undefined;
+      const path = await open({ multiple: false, directory: false, title: "Choose a BIOS file", filters });
+      return typeof path === "string" ? biosCommands.addBiosFile(core.coreId, path) : null;
     },
     onSuccess: (name) => {
       if (name) showNotice(`BIOS added as ${name}`);

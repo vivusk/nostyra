@@ -1,5 +1,6 @@
 //! Per-core setup around `CoreSession::load`, all from the registry (`CoreSpec`):
-//! before the load the core's system files and process environment, after it the
+//! before the load the core's system files, the PS2 BIOS presence and the process
+//! environment, after it the
 //! hardware-render rules (a refused request is fatal for `hw_render_required` cores,
 //! their states need the context), state-size rules and controller ports (library
 //! retention, `keep_library_loaded`, is part of the load itself: `SessionConfig`).
@@ -8,24 +9,37 @@
 use std::path::Path;
 
 use libretro_host::{CoreSession, HostError};
-use system_catalog::{CoreSpec, SystemSpec};
+use system_catalog::{CoreSpec, FirmwareRule, SystemSpec};
 
+use crate::bios_option_switch::ps2_bios_option;
 use crate::core_system_assets::{cores_dir_of, ensure_core_assets};
 use crate::runner_core_options;
+use crate::runner_exit_codes::ps2_bios_check;
 
 /// Before the load: the core's system files in `system_dir` (installed from beside
-/// `core_path`; missing → `MissingCoreAssets`, exit 3), then its environment
-/// variables (`set_process_env`: also msvcrt's copy for MinGW cores). Must run before SDL or any other thread starts: setting the
-/// environment is only sound while no thread can read it concurrently.
+/// `core_path`; missing → `MissingCoreAssets`, exit 3), then — for PS2 cores, which
+/// have no HLE BIOS and would show a silent black screen — at least one valid BIOS
+/// dump (`Unplayable { path: rom }`, exit 4), then its environment variables
+/// (`set_process_env`: also msvcrt's copy for MinGW cores). Must run before SDL or
+/// any other thread starts: setting the environment is only sound while no thread
+/// can read it concurrently.
 pub fn prepare_core(
     system: &SystemSpec,
     core_path: &Path,
     system_dir: &Path,
+    rom: &Path,
 ) -> anyhow::Result<()> {
     let Some(core) = system_catalog::core_for_system(system.id) else {
         return Ok(());
     };
     ensure_core_assets(core, system_dir, cores_dir_of(core_path))?;
+    if let FirmwareRule::Ps2Romdir { subdir, .. } = core.firmware_rule {
+        let report = ps2_bios_option::scan_report(system_dir, core);
+        if let Some(err) = ps2_bios_check::no_bios_refusal(&report, rom) {
+            tracing::error!("no {} BIOS found in system/{subdir}", system.display_name);
+            return Err(err.into());
+        }
+    }
     for (key, value) in process_env(core) {
         tracing::debug!(key, value, "core process environment");
         libretro_host::set_process_env(key, value);
@@ -81,6 +95,10 @@ fn fatal_hw_refusal(required: bool, refused: bool, has_context: bool) -> Option<
 }
 
 #[cfg(test)]
+#[path = "ps2_session_tests.rs"]
+mod ps2_session_tests;
+
+#[cfg(test)]
 mod tests {
     use system_catalog::CORE_DEFAULTS;
 
@@ -121,11 +139,21 @@ mod tests {
         );
     }
 
+    /// PCEE2 asks for GL but survives a refusal on its own readback device (M18
+    /// phase 03): a refused request stays a warning, never exit 6.
+    #[test]
+    fn ps2_refusal_is_a_warning_only() {
+        let core = system_catalog::core_for_system(system_catalog::PS2.id).expect("PS2 core");
+        assert!(!core.hw_render_required);
+        assert!(fatal_hw_refusal(core.hw_render_required, true, false).is_none());
+    }
+
     #[test]
     fn systems_without_extra_needs_prepare_nothing() {
         let temp = tempfile::tempdir().unwrap();
         let core = temp.path().join("cores/snes9x_libretro.dll");
-        prepare_core(&system_catalog::SNES, &core, temp.path()).unwrap();
+        let rom = temp.path().join("game.sfc");
+        prepare_core(&system_catalog::SNES, &core, temp.path(), &rom).unwrap();
         assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 0);
     }
 }

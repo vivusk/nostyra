@@ -12,6 +12,10 @@ publish = false
 # Content reads (OS files, or the web edition's virtual source).
 content-file-source.workspace = true
 
+[features]
+# Synthetic BIOS fixtures for dependent crates' tests (dev-dependencies only).
+test-fixtures = []
+
 [dev-dependencies]
 tempfile.workspace = true
 

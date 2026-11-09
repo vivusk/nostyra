@@ -6,7 +6,8 @@
 //! award sent, snapshot written, journal empty. Softcore from boot, then (core reset)
 //! hardcore with the hidden flag forced: the leaderboard starts and submits (D3: RA
 //! leaderboards run in hardcore only). N64 / Dreamcast use OpenGL where the GL gate
-//! passes (N64 falls back to Angrylion, Dreamcast skips). A missing core skips.
+//! passes (N64 falls back to Angrylion, Dreamcast skips). A missing core skips; PS2
+//! also skips without the user's BIOS (`NOSTYRA_PS2_BIOS_DIR`, M18).
 
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test code: panics are the failure signal
 
@@ -48,6 +49,11 @@ const UNLOCK_FRAMES: &[(&str, Option<u32>, Option<u32>)] = &[
     ("dreamcast", None, None),
     ("psp", None, None),
     ("nds", Some(20), Some(20)),
+    ("atari2600", Some(21), Some(21)),
+    ("atari7800", Some(20), Some(20)),
+    ("lynx", Some(17), Some(17)),
+    // BIOS boot length is the user's dump's; skipped without `NOSTYRA_PS2_BIOS_DIR`.
+    ("ps2", None, None),
 ];
 
 fn run_case(system: &str) {
@@ -172,4 +178,8 @@ achievement_suites! {
     achievements_real_core_dreamcast => "dreamcast",
     achievements_real_core_psp => "psp",
     achievements_real_core_nds => "nds",
+    achievements_real_core_atari2600 => "atari2600",
+    achievements_real_core_atari7800 => "atari7800",
+    achievements_real_core_lynx => "lynx",
+    achievements_real_core_ps2 => "ps2",
 }

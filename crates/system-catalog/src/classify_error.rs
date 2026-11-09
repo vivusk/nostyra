@@ -51,9 +51,10 @@ impl ClassifyError {
 }
 
 /// A disc probe's "this is not my disc" text: the `not a <systems> disc` /
-/// `not a <systems> playlist` family ("not a PlayStation disc", "not a PlayStation,
-/// PSP, GameCube or Wii disc", "not a PlayStation, Dreamcast or GameCube playlist")
-/// and PSP's "not a PSP UMD image". Reasons about the file itself stay specific even
+/// `not a <systems> playlist` family ("not a PlayStation disc", "not a PlayStation
+/// or PlayStation 2 disc" on a `.bin`, "not a PlayStation, PlayStation 2, PSP,
+/// GameCube or Wii disc", "not a PlayStation, PlayStation 2, Dreamcast or GameCube playlist") and
+/// PSP's "not a PSP UMD image". Reasons about the file itself stay specific even
 /// when they start the same way ("not a valid GDI sheet", "not a valid DiscJuggler
 /// image", "not a single disc image", "not a PSP eboot (…)").
 fn is_generic_reject(reason: &str) -> bool {
@@ -71,7 +72,8 @@ mod tests {
     #[test]
     fn a_specific_disc_reason_outranks_a_later_generic_one_only() {
         let specific = DiscRejected("UMD Video/Audio disc".into());
-        let generic = DiscRejected("not a PlayStation, PSP, GameCube or Wii disc".into());
+        let generic =
+            DiscRejected("not a PlayStation, PlayStation 2, PSP, GameCube or Wii disc".into());
         assert!(specific.outranks(&generic));
         assert!(
             !generic.outranks(&specific),
@@ -88,7 +90,8 @@ mod tests {
 
     #[test]
     fn file_reasons_starting_like_a_generic_text_stay_specific() {
-        let playlist = DiscRejected("not a PlayStation, Dreamcast or GameCube playlist".into());
+        let playlist =
+            DiscRejected("not a PlayStation, PlayStation 2, Dreamcast or GameCube playlist".into());
         let disc = DiscRejected("not a GameCube or Wii disc".into());
         for reason in [
             "not a valid GDI sheet",

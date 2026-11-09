@@ -2,7 +2,9 @@
 //! game keeps one content id / save folder):
 //!
 //! - `.m3u`: the rule of its first disc.
-//! - PlayStation `.cue`: the first data track file (what the Redump PS1 DAT hashes).
+//! - PlayStation / PlayStation 2 `.cue`: the first data track file (what the Redump
+//!   PS1 / PS2 DATs list; PS2 identity is header-only, the file only sizes the DAT
+//!   tie-break).
 //! - Dreamcast `.gdi` / `.cue`: the largest data track file (the one rom the Redump
 //!   Dreamcast DAT lists per game; ties → the last such track).
 //! - Anything else (`.chd`, `.cdi`, `.pbp`, `.cso`, a bare image, every PSP image):
@@ -31,7 +33,7 @@ pub fn identity_source(path: &Path, signature: DiscSignature) -> Result<PathBuf,
         return identity_source(&first, signature);
     }
     match signature {
-        DiscSignature::PlayStation if is_cue_ext(ext) => {
+        DiscSignature::PlayStation | DiscSignature::PlayStation2 if is_cue_ext(ext) => {
             Ok(CueSheet::read(path)?.first_data_track(path)?.0)
         }
         DiscSignature::Dreamcast if is_cue_ext(ext) => {

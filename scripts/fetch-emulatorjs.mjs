@@ -32,17 +32,30 @@ const PINS = {
   "cores/reports/mgba.json": "08219f6c855a9d996f04ed21169bb0c5ac64d469a8a536468b9876205b5c268d",
   "cores/reports/pcsx_rearmed.json": "93b99266955ab16e9aa0faa0d6338f4a29b50c197764dd48be945573a5b449c1",
   "cores/reports/snes9x.json": "dc7ac963eb7935a7ac78956235ac0b8912ec785c57026336825aa2ed8031b3ad",
+  "cores/reports/stella2014.json": "c9920b95db48f678294daa72a289c19846e74ba69ca6d6094a76fb9f560fb39a",
+  "cores/reports/prosystem.json": "e76f6a0fa395b175f6ddde0b574a3cb358dca0c359c6fd37e68b85a549ba21ee",
+  "cores/reports/handy.json": "995faa51abe88c8d68c1cbf044f2af63f7a0aca315c7c546d65cb63c57c8e60a",
   "cores/fceumm-legacy-wasm.data": "f1054b094e7149fd6278485bc1b2e51ff75c5259048ddb1134171e53d651f239",
   "cores/genesis_plus_gx-legacy-wasm.data": "2a1edeb68d7ec882149ed3cd5d3aa95a6ac231ebabaf82cdb56175a8b62967cc",
   "cores/mgba-legacy-wasm.data": "e300d2f368c82bf61d77c972c36e367cf16408ec3d50beede080337519a3d696",
   "cores/pcsx_rearmed-legacy-wasm.data": "88faee73d06c597a68a8b78e5621d97feefca134c64b623e65f0a900037456da",
   "cores/pcsx_rearmed-wasm.data": "fe5515f6c29f093f0e8c01824b213804f1f76eb9cb4c97c72fe2cc17606bfbc2",
   "cores/snes9x-legacy-wasm.data": "7d427a575cefad98ff400493fa1d7e892da63fe7bab68979babd9cea0bfaaf3b",
+  // M17 (2026-11-08, npm 4.2.3; reports' options are empty: no WebGL 2 build needed).
+  "cores/stella2014-legacy-wasm.data": "6dc81bb0c3c5833af69aa750491a6ecd547ec9b91c21bd55ed9a77d5b0a8dd08",
+  "cores/prosystem-legacy-wasm.data": "18cb399796b85461bd357bd17b08171b3728758eed170a9992dfc79ee071864e",
+  "cores/handy-legacy-wasm.data": "6fadae42b263deca542d5de8ff6b663ebfbf03d2b013b89e980b9273b873bd84",
   LICENSE: "a617fab6d251b3302b1cb2c1c94f52d1c584f6fcb2fc218ec1a475bc08053a61",
 };
 
 /** Source repositories whose name differs from the core name (the `repo` in each core's core.json). */
-const SOURCE_REPOS = { fceumm: "libretro-fceumm", genesis_plus_gx: "Genesis-Plus-GX" };
+const SOURCE_REPOS = {
+  fceumm: "libretro-fceumm",
+  genesis_plus_gx: "Genesis-Plus-GX",
+  stella2014: "stella2014-libretro",
+  prosystem: "prosystem-libretro",
+  handy: "libretro-handy",
+};
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 const target = join(repo, "apps", "launcher", "public", "emulatorjs", VERSION);

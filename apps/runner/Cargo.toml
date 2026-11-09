@@ -43,6 +43,8 @@ tempfile.workspace = true
 
 [dev-dependencies]
 zip.workspace = true
+# Synthetic PS2 BIOS images for the BIOS option / refusal tests.
+system-catalog = { workspace = true, features = ["test-fixtures"] }
 # Synthetic Dreamcast images (GDI fixtures) for the runner's process tests.
 disc-image = { workspace = true, features = ["test-images"] }
 # sdl3 0.20 refuses `Sdl::new` off the first thread unless its `test-mode` is on (GL

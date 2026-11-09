@@ -9,6 +9,10 @@ export interface BiosFile {
   region: string;
   /** False: wrong signature or unknown dump, the file is not used. */
   valid: boolean;
+  /** Decoded version label ("v1.60 · USA · 2002-02-07"); PS2 dumps only. */
+  label: string | null;
+  /** Usable but discouraged (PS2 v1.00): shown with a warning. */
+  warning: string | null;
 }
 
 /** What one region boots: a real BIOS file, or `null` = built-in HLE BIOS. */
@@ -19,7 +23,7 @@ export interface BiosRegion {
   fileName: string | null;
 }
 
-/** A core that can use BIOS files (PCSX ReARMed, Flycast). */
+/** A core that can use BIOS files (PCSX ReARMed, Flycast, PCEE2). */
 export interface CoreBios {
   coreId: string;
   coreName: string;
@@ -27,6 +31,10 @@ export interface CoreBios {
   folder: string;
   files: BiosFile[];
   regions: BiosRegion[];
+  /** The core boots without a BIOS file (built-in HLE BIOS); false for PS2. */
+  hleFallback: boolean;
+  /** File-picker extensions for "Add BIOS file…" (empty: any file). */
+  pickExtensions: string[];
 }
 
 /** One memory card slot of a game (1-based). */

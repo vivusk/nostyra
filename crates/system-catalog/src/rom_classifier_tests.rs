@@ -189,9 +189,9 @@ fn disc_candidates_go_to_the_disc_probe() {
         Err(ClassifyError::OutOfSize),
         "size checked before the disc probe"
     );
-    // A `.cue` is a candidate of both disc systems: PlayStation is asked first.
-    use DiscSignature::{Dreamcast, PlayStation};
-    assert_eq!(*no.asked.borrow(), [PlayStation, Dreamcast]);
+    // A `.cue` is a candidate of three disc systems: PlayStation is asked first.
+    use DiscSignature::{Dreamcast, PlayStation, PlayStation2};
+    assert_eq!(*no.asked.borrow(), [PlayStation, PlayStation2, Dreamcast]);
     let dc = FakeDisc::new(Ok(()));
     assert_eq!(
         classify("gdi", 120, &missing, &dc).map(|s| s.id),

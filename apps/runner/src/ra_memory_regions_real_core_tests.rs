@@ -72,6 +72,20 @@ const CASES: &[(&str, &str, &[Probe])] = &[
         "nostyra-test.nds",
         &[Probe::Word(0x0, 0xE59F_0128), Probe::Changes(0x3F_0008)],
     ),
+    ("atari2600", "nostyra-test.a26", &[Probe::Changes(0x00)]),
+    ("atari7800", "nostyra-test.a78", &[Probe::Changes(0x1800)]),
+    ("lynx", "nostyra-test.o", &[Probe::Changes(0x82)]),
+    // PCEE2 `SET_MEMORY_MAPS`: EE RAM at RA 0 (+ scratchpad at 0x70000000), sent on
+    // the first frame; the ELF's debug block ('NSTY' + counter, ps2_test_elf.py).
+    // Skipped without `NOSTYRA_PS2_BIOS_DIR` (no HLE BIOS).
+    (
+        "ps2",
+        "nostyra-test-ps2.iso",
+        &[
+            Probe::Word(0x10_8000, 0x5954_534E),
+            Probe::Changes(0x10_8004),
+        ],
+    ),
 ];
 
 #[test]

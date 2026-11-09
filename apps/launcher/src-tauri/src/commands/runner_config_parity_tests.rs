@@ -26,6 +26,12 @@ mod system_cases;
 #[path = "runner_config_parity_gc_wii_tests.rs"]
 mod gc_wii_cases;
 
+#[path = "runner_config_parity_atari_tests.rs"]
+mod atari_cases;
+
+#[path = "runner_config_parity_ps2_tests.rs"]
+mod ps2_cases;
+
 fn repo(rel: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../..")
@@ -94,10 +100,10 @@ fn runner_values(runner: &Path, core: &Path, rom: &Path, data: &Path) -> Option<
 
 #[test]
 fn launcher_resolution_matches_runner_print_config() {
-    check_parity("snes", &repo("test-assets/roms/nostyra-test.sfc"));
+    check_parity("snes", &repo("test-assets/roms/nostyra-test.sfc"), |_| {});
 }
 
-fn check_parity(system: &str, rom: &Path) {
+fn check_parity(system: &str, rom: &Path, prepare_data: impl FnOnce(&Path)) {
     let spec = system_catalog::core_for_system(system).unwrap();
     let (runner, core) = (
         runner_exe(),
@@ -116,6 +122,7 @@ fn check_parity(system: &str, rom: &Path) {
         .tempdir()
         .unwrap();
     let data = temp.path();
+    prepare_data(data); // e.g. a BIOS the core needs before it loads
     let rom = rom.to_path_buf();
     // The runner gets no --content-sha1 here: it hashes the ROM the same way.
     let spec_system = system_catalog::system(system).unwrap();
@@ -141,7 +148,11 @@ fn check_parity(system: &str, rom: &Path) {
     // Per-game gamepad override on `a`, or on `y` for a pad without `a` (N64); the pad
     // save_state hotkey on `misc1`, free on every pad (the stick clicks are L3 / R3).
     let actions = target.system_actions().unwrap();
-    let overridden = if actions.contains(&"a") { "a" } else { "y" };
+    // A game action the system has (the 2600 has neither A nor Y).
+    let overridden = ["a", "y", "select"]
+        .into_iter()
+        .find(|action| actions.contains(action))
+        .unwrap_or("y");
     write(
         &layers.game,
         &format!(

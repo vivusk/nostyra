@@ -18,6 +18,7 @@ use crate::process_session_claim::ProcessSessionClaim;
 pub use crate::session_config::SessionConfig;
 use crate::session_config::{c_path, core_option_cstrings};
 use crate::staged_content_file::StagedContentFile;
+use crate::state_size_cache::StateSizes;
 
 /// Timing + geometry reported by the core (`retro_system_av_info`).
 pub type AvInfo = RetroSystemAvInfo;
@@ -33,8 +34,8 @@ pub struct CoreSession {
     pub(crate) rom_data: Vec<u8>,
     pub(crate) rom_path: CString,
     pub(crate) core_info: CoreInfo,
-    /// `retro_serialize_size` once known (fixed-size cores only; see `serialization_quirks`).
-    pub(crate) state_size: Option<usize>,
+    /// `retro_serialize_size` per savestate context once known (fixed-size cores only).
+    pub(crate) state_sizes: StateSizes,
     /// Refuse states whose length differs from that size (see `set_exact_state_size`).
     pub(crate) exact_state_size: bool,
     // Field order matters: library unloads after Drop::drop ran, then the staged
@@ -75,7 +76,7 @@ impl CoreSession {
             rom_data: Vec::new(),
             rom_path,
             core_info: CoreInfo::default(),
-            state_size: None,
+            state_sizes: StateSizes::default(),
             exact_state_size: false,
             core,
             staged: None,
@@ -96,7 +97,11 @@ impl CoreSession {
         // Declared after `session`: dropped first, while the context still exists.
         let provider_guard = ProviderGuard::install(session.ctx, config.hw_render);
         session
-            .load_game(config.rom_path, config.rom_data, config.staging_dir)
+            .load_game(
+                config.rom_path,
+                config.rom_data,
+                (config.staging_dir, config.stage_content),
+            )
             .map_err(|error| hw::load_failure(session.ctx, error))?;
         let mut av = AvInfo::default();
         // SAFETY: valid out-param; game is loaded.

@@ -11,7 +11,7 @@ One folder per RA system (`<system>/`), read by the runner tests:
   the fake answers "unknown game" for any other hash, so a loaded set proves identification.
 - `case.json`: the same facts for the real-core suite (ids, values, address, ROM).
 
-Counters: NES hue $0001 (0..11), SNES WRAM $7E0000, GB/GBC HRAM $FF80; the other builders
+Counters: NES hue $0001 (0..11), SNES WRAM $7E0000, GB/GBC HRAM $FF80, Atari as below; the other builders
 copy their register counter into RAM (test-assets/roms/src, M15 D12). 8-bit reads only:
 the 32-bit counters are little-endian in the cores' buffers (low byte first).
 
@@ -42,6 +42,14 @@ SYSTEMS = {
     "psp": (41, "nostyra-test-psp.iso", 0x805F50, 20, 10, 30, "12401395fbb18b25dfd26ead32cb6999"),
     # Main RAM 0x023F0008 (nds_test_arm9.py FRAME_COUNTER_OFFSET).
     "nds": (18, "nostyra-test.nds", 0x3F0008, 20, 10, 30, "bb170d92aa660083da1f4a3ce714e0bb"),
+    # Atari (M17, atari_test_programs.py): 2600 RIOT RAM $80 = RA $00; 7800 $1800 (RA
+    # map is linear); Lynx zero page $82 (BS93 `.o`, hashed whole).
+    "atari2600": (25, "nostyra-test.a26", 0x0000, 20, 10, 30, "eb78c3674c8ee1608061a27bea3920d2"),
+    "atari7800": (51, "nostyra-test.a78", 0x1800, 20, 10, 30, "8d1bcd89f22d9385abeef201a65ff978"),
+    "lynx": (13, "nostyra-test.o", 0x0082, 20, 10, 30, "e23d500fb8921a5e2bf9880a4cc7cbfd"),
+    # PS2 (M18, ps2_test_elf.py): EE RAM is RA 0; the counter word follows 'NSTY' at
+    # 0x00108000. Hash = md5("NSTR_000.01" + ELF), printed by build-nostyra-test-ps2.py.
+    "ps2": (21, "nostyra-test-ps2.iso", 0x108004, 20, 10, 30, "11f4d27b1591e25cdb2edf0b0e0fdd6b"),
 }
 
 

@@ -1,8 +1,9 @@
 //! Loading a test ROM on the pinned core of an RA system the way the achievement
 //! suites need it (M15 phases 02 / 07): the registry's fixed options plus the test
 //! overrides (PCSX ReARMed HLE BIOS, PPSSPP software backend + system files,
-//! Mupen64Plus-Next on Angrylion without OpenGL), N64 / Dreamcast on the GL provider
-//! when the GL gate passed, Dreamcast skipped without it.
+//! Mupen64Plus-Next on Angrylion without OpenGL, PCEE2 with the user's BIOS copied
+//! in), N64 / Dreamcast on the GL provider when the GL gate passed, Dreamcast skipped
+//! without it, PS2 skipped without `NOSTYRA_PS2_BIOS_DIR`.
 
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test code: panics are the failure signal
 
@@ -15,6 +16,11 @@ use crate::real_core_session_loader::{core_path, load_session_in};
 use crate::runner_core_options;
 use crate::runner_held_input::HeldInput;
 use crate::runner_real_core_suite::scratch;
+
+/// PS2 needs the user's BIOS in the system folder (`NOSTYRA_PS2_BIOS_DIR`); the
+/// PS2 suite shares this one include (clippy: a file is a module once).
+#[path = "ps2_bios_test_gate.rs"]
+pub(crate) mod ps2_bios_gate;
 
 /// A loaded core session with its folders (dropped after the session: the core keeps
 /// files in them open on Windows) and the options the host answers.
@@ -43,6 +49,10 @@ pub(crate) fn load_ra_core(
         "psp" => {
             overrides.push(("ppsspp_backend".into(), "none".into()));
             ensure_core_assets(core, system_dir.path(), cores_dir_of(&core_path(core.id))).unwrap();
+        }
+        "ps2" => {
+            // No HLE BIOS: without the user's dump the case skips (phase-06 gate).
+            ps2_bios_gate::install_user_bios(system_dir.path())?;
         }
         "n64" if gl.is_none() => {
             overrides.push(("mupen64plus-rdp-plugin".into(), "angrylion".into()))

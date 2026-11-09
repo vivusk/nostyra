@@ -1,6 +1,7 @@
 //! Exit codes of the launcher contract (ipc-protocol's, as `u8` for `ExitCode`) and
 //! the ROM file check (system + size limits from the registry, DS dumps the core
-//! cannot play: `nds_rom_check`) before it is read.
+//! cannot play: `nds_rom_check`) before it is read; PS2 launches without a BIOS dump
+//! (`ps2_bios_check`, applied by `prepare_core`).
 
 use std::path::{Path, PathBuf};
 
@@ -10,6 +11,7 @@ use system_catalog::{ContentProbe, DiscProbe, SystemSpec};
 use crate::core_system_assets::MissingCoreAssets;
 
 mod nds_rom_check;
+pub(crate) mod ps2_bios_check;
 
 pub const EXIT_CORE_LOAD: u8 = ipc_protocol::EXIT_CORE_LOAD as u8;
 pub const EXIT_ROM_LOAD: u8 = ipc_protocol::EXIT_ROM_LOAD as u8;

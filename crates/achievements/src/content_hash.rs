@@ -71,3 +71,11 @@ pub fn content_hash(console_id: u32, path: &Path, data: Option<&[u8]>) -> Option
 #[cfg(test)]
 #[path = "content_hash_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "atari_content_hash_tests.rs"]
+mod atari_tests;
+
+#[cfg(test)]
+#[path = "ps2_content_hash_tests.rs"]
+mod ps2_tests;

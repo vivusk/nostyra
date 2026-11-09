@@ -9,7 +9,7 @@ Package `nostyra-web-<version>/` (also as `nostyra-web-<version>.zip`):
 
 | Path | What |
 |---|---|
-| `play/` | Every file served under `/play/` (≈ 32 MB, ~125 files; zip ≈ 13 MB). Copy as is. |
+| `play/` | Every file served under `/play/` (≈ 35 MB, ~150 files with the Atari cores; the build prints the exact numbers). Copy as is. |
 | `vercel.headers.json` | `{ "headers": [...] }` — response headers to merge into the site's `vercel.json`. |
 | `DEPLOY.md` | This guide. |
 | `build-info.json` | Version, Nostyra commit, `basePath` (`/play/`), `sourceTagMatches`, bytes per part. |
@@ -55,9 +55,13 @@ Copy the package's `play/` folder so that it becomes `<site static output>/play/
   data files the app fetches by exact name.
 - If the site has a framework build (Next.js, Astro, Vite, …), put `play/` in the folder
   it copies verbatim (`public/` in most frameworks) and check the built output contains
-  `play/emulatorjs/4.2.3/cores/*.data` unchanged.
+  `play/emulatorjs/4.2.3/cores/*.data` unchanged (eight cores, incl. `stella2014-`, `prosystem-` and
+  `handy-legacy-wasm.data` for the Atari systems) and `play/notices/` (licence texts the licences page links,
+  e.g. `GPL-2.0.txt`, `Handy-zlib.txt`). There is no PlayStation 2 core: PS2 (M18) is desktop-only (EmulatorJS has
+  none), so nothing PS2-related is deployed and PS2 discs in a folder only count towards "N games need the
+  desktop app".
 - If the site's repo ignores large or binary files (`.gitignore`, Git LFS rules), make sure
-  `play/**` is kept; total ≈ 32 MB, largest file ≈ 4 MB (`libretro-database/Sony - PlayStation.dat`).
+  `play/**` is kept; total ≈ 35 MB, largest file ≈ 4 MB (`libretro-database/Sony - PlayStation.dat`).
 
 ## 2. Merge the headers into `vercel.json`
 Append every object of `vercel.headers.json` → `headers` to the `headers` array of the
@@ -105,7 +109,7 @@ From the site project (Vercel CLI logged in, project linked):
 
 Size limits relied on (https://vercel.com/docs/limits, read 2026-11-06): CLI "static file
 uploads" up to 100 MB on Hobby / 1 GB on Pro, at most 15,000 files per deployment. The page
-does not say whether 100 MB is per file or per upload; this package is ≈ 32 MB in ~125
+does not say whether 100 MB is per file or per upload; this package is ≈ 35 MB in ~150
 files with the largest ≈ 4 MB, so it fits either reading — but together with the rest of
 the site a Hobby deployment may come close to 100 MB.
 
@@ -144,8 +148,8 @@ Browser check (the owner, or an agent with a real browser):
 5. **Firefox** (or Safari, or a phone) → "Nostyra Online needs Chrome or Edge on a
    computer" with a link to nostyra.com. (Brave with default settings shows the same page
    plus a hint about `brave://flags/#file-system-access-api`.)
-6. `https://nostyra.com/play/licences.html` lists Nostyra, EmulatorJS 4.2.3, the five
-   cores, libretro-database and the notices links (each link opens).
+6. `https://nostyra.com/play/licences.html` lists Nostyra, EmulatorJS 4.2.3, the eight
+   cores (incl. Stella 2014, ProSystem, Handy), libretro-database and the notices links (each link opens).
 
 ## 6. Troubleshooting
 | Symptom | Cause / fix |

@@ -5,8 +5,8 @@
 //! (PlayStation: `SYSTEM.CNF` boot file; Dreamcast: IP.BIN product number; PSP:
 //! `UMD_DATA.BIN` / `PARAM.SFO`). A PSP `.pbp` also gives its `PARAM.SFO` title
 //! (homebrew and PSN eboots are all named `EBOOT`). GameCube / Wii: game ID only,
-//! no whole-file hash (`gamecube_wii_identity`). An `.m3u` game is identified by
-//! its first disc.
+//! no whole-file hash (`gamecube_wii_identity`); PlayStation 2: `BOOT2` serial only
+//! (`ps2_disc_identity`). An `.m3u` game is identified by its first disc.
 
 use std::path::{Path, PathBuf};
 
@@ -17,6 +17,7 @@ use disc_image::{
 use system_catalog::DiscSignature;
 
 use crate::gamecube_wii_identity::read_gamecube_wii_identity;
+use crate::ps2_disc_identity::read_ps2_identity;
 use crate::rom_file_hasher::{hash_file_streaming, RomHashes};
 
 /// What a disc game is identified by.
@@ -40,6 +41,9 @@ pub fn read_disc_identity(
     if matches!(signature, DiscSignature::GameCube | DiscSignature::Wii) {
         return read_gamecube_wii_identity(&disc, signature);
     }
+    if signature == DiscSignature::PlayStation2 {
+        return read_ps2_identity(&disc);
+    }
     let is_pbp = extension(&disc).eq_ignore_ascii_case(PBP_EXT);
     let mut title = None;
     let serial = match signature {
@@ -60,8 +64,8 @@ pub fn read_disc_identity(
                 .and_then(|mut reader| read_psp_identity(reader.as_mut()))?
                 .serial
         }
-        // Returned above: header-only identity, never a sector image read.
-        DiscSignature::GameCube | DiscSignature::Wii => None,
+        // Returned above: header-only identities, never a sector image read.
+        DiscSignature::PlayStation2 | DiscSignature::GameCube | DiscSignature::Wii => None,
     };
     let hashed = identity_source(&disc, signature)?;
     Ok(DiscIdentity {

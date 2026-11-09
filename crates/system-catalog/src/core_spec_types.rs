@@ -28,6 +28,22 @@ pub struct FirmwareFile {
     pub subdir: &'static str,
 }
 
+/// How a core's BIOS folder is read and validated (Settings → BIOS, import, runner).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FirmwareRule {
+    /// The `firmware` list decides: files of a listed size, known names (md5 for a
+    /// BIOS-switch core) or the PlayStation signature; the core has an HLE fallback.
+    KnownFiles,
+    /// Any 4–8 MiB file whose ROMDIR table has a `ROMVER` entry (PCSX2's own check;
+    /// no md5 table, no HLE fallback). `subdir`: folder under `<data>/system/` the
+    /// core scans; `option`: the core option the runner answers with the chosen
+    /// file name (`pcsx2_bios`), both cores honour it.
+    Ps2Romdir {
+        subdir: &'static str,
+        option: &'static str,
+    },
+}
+
 /// A core option that picks the real BIOS or the core's HLE BIOS. Cores that boot a
 /// present BIOS file without checking it (Flycast) get it answered by the runner: the
 /// real BIOS only when a known file (name, size, md5) is there.
@@ -84,6 +100,9 @@ pub struct CoreSpec {
     pub fixed_options: &'static [(&'static str, &'static str)],
     /// Optional BIOS files the core looks for in `<data>/system/` (never bundled).
     pub firmware: &'static [FirmwareFile],
+    /// How the BIOS folder is validated (see [`FirmwareRule`]); `KnownFiles` reads
+    /// `firmware`, `Ps2Romdir` needs no list.
+    pub firmware_rule: FirmwareRule,
     /// Option the runner answers with real/HLE BIOS from `firmware` (see
     /// [`BiosOptionSwitch`]); `None` when the core checks its BIOS itself.
     pub bios_switch: Option<BiosOptionSwitch>,
@@ -123,6 +142,11 @@ pub struct CoreSpec {
     /// rcheevos' own disallowed-option table (which matches `library_name`; melonDS DS
     /// reports "melonDS DS", not rcheevos' "melonDS", so its DSi rule is restated here).
     pub hardcore_required_options: &'static [(&'static str, &'static str)],
+    /// Always hand the core its content as a staged file `content.<ext>` (the runner
+    /// preloads the cartridge, patched or not): Handy ignores the data pointer, re-reads
+    /// the path and names its EEPROM file after it (`content.eeprom`, stable across a
+    /// ROM rename, ZIP or soft patch).
+    pub stage_content: bool,
 }
 
 /// Defaults for the fields most cores do not use; registry entries end with
@@ -135,6 +159,7 @@ pub const CORE_DEFAULTS: CoreSpec = CoreSpec {
     license: "",
     fixed_options: &[],
     firmware: &[],
+    firmware_rule: FirmwareRule::KnownFiles,
     bios_switch: None,
     memory_cards: &[],
     savestates: SaveStateQuality::Deterministic,
@@ -148,4 +173,5 @@ pub const CORE_DEFAULTS: CoreSpec = CoreSpec {
     strict_state_version: false,
     keep_library_loaded: false,
     hardcore_required_options: &[],
+    stage_content: false,
 };

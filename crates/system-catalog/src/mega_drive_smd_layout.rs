@@ -55,7 +55,10 @@ pub fn rom_image_for_hash(rule: HeaderRule, bytes: &[u8]) -> Cow<'_, [u8]> {
                 Cow::Owned(image)
             }
         },
-        HeaderRule::None | HeaderRule::SnesCopier512 | HeaderRule::INes => {
+        HeaderRule::None
+        | HeaderRule::SnesCopier512
+        | HeaderRule::INes
+        | HeaderRule::MagicHeader { .. } => {
             let skip = hash_skip_len(rule, bytes.len() as u64).min(bytes.len());
             Cow::Borrowed(&bytes[skip..])
         }

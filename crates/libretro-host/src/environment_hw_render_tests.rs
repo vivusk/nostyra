@@ -120,6 +120,63 @@ fn preferred_hw_render_comes_from_the_provider() {
     });
 }
 
+/// Log sink for one test: every `tracing` line of the thread while it is the default.
+#[derive(Clone, Default)]
+struct Captured(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+impl std::io::Write for Captured {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for Captured {
+    type Writer = Captured;
+
+    fn make_writer(&'a self) -> Captured {
+        self.clone()
+    }
+}
+
+/// PCEE2 asks before `SET_HW_RENDER`, LRPS2 after, both with `data == NULL`: answered
+/// false with one log line each (proving the request is told apart from the bare-44
+/// `SET_SERIALIZATION_QUIRKS` and its null guard), and neither the accepted request
+/// nor the refusal state moves.
+#[test]
+fn shared_context_request_is_logged_refused_and_leaves_hw_state_alone() {
+    let _serial = serial();
+    let provider = FakeProvider::default();
+    let log = Captured::default();
+    let subscriber = tracing_subscriber::fmt()
+        .with_writer(log.clone())
+        .with_ansi(false)
+        .finish();
+    let shared = RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT;
+    let mut cb = request(RETRO_HW_CONTEXT_OPENGL_CORE, 3, 3);
+    let ctx = with_provider(Some(&provider), || {
+        tracing::subscriber::with_default(subscriber, || {
+            assert!(!env(shared, std::ptr::null_mut()));
+            assert!(env(RETRO_ENVIRONMENT_SET_HW_RENDER, (&raw mut cb).cast()));
+            assert!(!env(shared, std::ptr::null_mut()));
+        });
+    });
+    assert!(ctx.hw_request.is_some() && ctx.hw_refused.is_none());
+    let text = String::from_utf8(log.0.lock().unwrap().clone()).unwrap();
+    assert_eq!(
+        text.matches("SET_HW_SHARED_CONTEXT refused").count(),
+        2,
+        "{text}"
+    );
+
+    let ctx = with_provider(None, || assert!(!env(shared, std::ptr::null_mut())));
+    assert!(ctx.hw_request.is_none() && ctx.hw_refused.is_none());
+}
+
 #[test]
 fn host_fns_answer_zero_and_null_without_a_context() {
     let _serial = serial();

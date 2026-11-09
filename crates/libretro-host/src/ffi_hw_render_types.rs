@@ -3,15 +3,20 @@
 
 use std::ffi::{c_char, c_uint, c_void};
 
+use crate::ffi_types::RETRO_ENVIRONMENT_EXPERIMENTAL;
+
 pub(crate) const RETRO_ENVIRONMENT_SET_HW_RENDER: c_uint = 14;
 pub(crate) const RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER: c_uint = 56;
-// Known but unanswered for now (Vulkan / shared contexts come with a later backend).
+// Known but unanswered for now (Vulkan comes with a later backend).
 #[allow(dead_code)]
 pub(crate) const RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE: c_uint = 41;
 #[allow(dead_code)]
 pub(crate) const RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE: c_uint = 43;
-#[allow(dead_code)]
-pub(crate) const RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT: c_uint = 44;
+/// `data` is NULL; refused on purpose (`environment_hw_render::shared_context_refused`).
+/// Kept with its experimental bit: the bare 44 is `SET_SERIALIZATION_QUIRKS`, so this
+/// one is told apart **before** `environment` strips the bit.
+pub(crate) const RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT: c_uint =
+    44 | RETRO_ENVIRONMENT_EXPERIMENTAL;
 
 /// `enum retro_hw_context_type`.
 pub(crate) const RETRO_HW_CONTEXT_OPENGL: c_uint = 1;

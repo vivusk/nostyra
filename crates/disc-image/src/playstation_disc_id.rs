@@ -1,7 +1,11 @@
 //! PlayStation disc identification from its first data track: the ISO9660 system id
 //! `PLAYSTATION` plus Sony's licence text in sector 4 (PS2 CDs share the system id
 //! but carry no licence text), the boot serial from `SYSTEM.CNF`, and the region the
-//! licence text names.
+//! licence text names. PlayStation 2: the same system id plus a `BOOT2` line (the
+//! check rcheevos uses), its serial and the `VMODE` the BIOS picker needs; the
+//! identity key (serial, else volume id + boot path) is built in `ps2_disc_probe`.
+
+use system_catalog::Ps2VideoMode;
 
 use crate::disc_sector_reader::DiscReader;
 use crate::iso9660_root::{read_extent, PrimaryVolume};
@@ -12,6 +16,9 @@ const LICENCE_SECTOR: u32 = 4;
 const LICENCE_MARK: &[u8] = b"Sony Computer";
 /// `SYSTEM.CNF` is a few lines; read at most one sector.
 const MAX_SYSTEM_CNF: usize = 2048;
+const SYSTEM_ID: &str = "PLAYSTATION";
+/// Device prefix of a PS2 `BOOT2` path.
+const PS2_BOOT_DEVICE: &str = "cdrom0:";
 
 /// Disc region, from the licence text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -24,7 +31,18 @@ pub enum DiscRegion {
 /// Whether the image is a PlayStation (PS1) disc.
 pub fn is_playstation(reader: &mut dyn DiscReader) -> Result<bool, DiscError> {
     let pvd = PrimaryVolume::read(reader)?;
-    Ok(pvd.system_id == "PLAYSTATION" && licence_tail(reader)?.is_some())
+    Ok(pvd.system_id == SYSTEM_ID && licence_tail(reader)?.is_some())
+}
+
+/// Whether the image is a PlayStation 2 disc: `PLAYSTATION` volume whose root
+/// `SYSTEM.CNF` has a `BOOT2` line. A PS1 disc passes [`is_playstation`] first in
+/// the classifier, so the licence text is not checked here.
+pub fn is_playstation2(reader: &mut dyn DiscReader) -> Result<bool, DiscError> {
+    let pvd = PrimaryVolume::read(reader)?;
+    if pvd.system_id != SYSTEM_ID {
+        return Ok(false);
+    }
+    Ok(system_cnf(reader, &pvd)?.is_some_and(|cnf| boot2_exe(&cnf).is_some()))
 }
 
 /// Region named by the licence text (`…Entertainment Inc.` = Japan, `Amer ica` /
@@ -50,27 +68,48 @@ pub fn region(reader: &mut dyn DiscReader) -> Result<Option<DiscRegion>, DiscErr
 /// `None` when the disc boots `PSX.EXE` (no `SYSTEM.CNF`) or the line is unreadable.
 pub fn serial(reader: &mut dyn DiscReader) -> Result<Option<String>, DiscError> {
     let pvd = PrimaryVolume::read(reader)?;
+    Ok(system_cnf(reader, &pvd)?.and_then(|cnf| boot_serial(&cnf)))
+}
+
+/// Text of the root `SYSTEM.CNF` (first 2 KiB), `None` when the volume has none.
+pub fn system_cnf(
+    reader: &mut dyn DiscReader,
+    pvd: &PrimaryVolume,
+) -> Result<Option<String>, DiscError> {
     let Some(extent) = pvd.find_root_file(reader, "SYSTEM.CNF")? else {
         return Ok(None);
     };
     let text = read_extent(reader, extent, MAX_SYSTEM_CNF)?;
-    Ok(boot_serial(&String::from_utf8_lossy(&text)))
+    Ok(Some(String::from_utf8_lossy(&text).into_owned()))
 }
 
 /// The `BOOT` line's executable name, normalised. `BOOT2` (PS2) is not matched.
 pub fn boot_serial(system_cnf: &str) -> Option<String> {
-    let value = system_cnf.lines().find_map(|line| {
-        let line = line.trim();
-        let keyword = line.get(..4).filter(|k| k.eq_ignore_ascii_case("BOOT"))?;
-        line[keyword.len()..].trim_start().strip_prefix('=')
-    })?;
-    let value = value.trim();
-    let path = value
-        .get(..6)
-        .filter(|p| p.eq_ignore_ascii_case("cdrom:"))
-        .map_or(value, |_| &value[6..]);
+    let value = cnf_value(system_cnf, "BOOT")?;
+    let path = strip_device(value, "cdrom:");
     let exe = path.rsplit(['\\', '/']).next()?;
     normalize_serial(exe.split(';').next()?)
+}
+
+/// The `BOOT2` path after `cdrom0:\`, upper-cased, `;1` kept
+/// (`BOOT2 = cdrom0:\SLUS_203.12;1` → `SLUS_203.12;1`); `None` without a `BOOT2` line.
+pub fn boot2_exe(system_cnf: &str) -> Option<String> {
+    let value = cnf_value(system_cnf, "BOOT2")?;
+    let path = strip_device(value, PS2_BOOT_DEVICE).trim_start_matches(['\\', '/']);
+    (!path.is_empty()).then(|| path.to_ascii_uppercase())
+}
+
+/// The serial the `BOOT2` executable name carries (`SLUS_203.12;1` → `SLUS-20312`);
+/// `None` for `BOOT.ELF`-style names.
+pub fn boot2_serial(system_cnf: &str) -> Option<String> {
+    let exe = boot2_exe(system_cnf)?;
+    let name = exe.rsplit(['\\', '/']).next()?;
+    normalize_serial(name.split(';').next()?)
+}
+
+/// The `VMODE` line (`NTSC` / `PAL`) of a PS2 `SYSTEM.CNF`.
+pub fn disc_video_mode(system_cnf: &str) -> Option<Ps2VideoMode> {
+    Ps2VideoMode::parse(cnf_value(system_cnf, "VMODE")?)
 }
 
 /// `SLUS_012.34` / `SLUS01234` / `slus-01234` → `SLUS-01234`: alphanumerics only,
@@ -85,6 +124,29 @@ pub fn normalize_serial(raw: &str) -> Option<String> {
     let (prefix, digits) = clean.split_at(split);
     let valid = !prefix.is_empty() && digits.chars().all(|c| c.is_ascii_digit());
     valid.then(|| format!("{prefix}-{digits}"))
+}
+
+/// Trimmed value of the `KEY = value` line whose key is exactly `key`
+/// (case-insensitive): `BOOT2 = …` is not a `BOOT` line.
+fn cnf_value<'a>(system_cnf: &'a str, key: &str) -> Option<&'a str> {
+    system_cnf.lines().find_map(|line| {
+        let line = line.trim();
+        let found = line
+            .get(..key.len())
+            .filter(|k| k.eq_ignore_ascii_case(key))?;
+        line[found.len()..]
+            .trim_start()
+            .strip_prefix('=')
+            .map(str::trim)
+    })
+}
+
+/// `value` without a leading `device` prefix (case-insensitive).
+fn strip_device<'a>(value: &'a str, device: &str) -> &'a str {
+    value
+        .get(..device.len())
+        .filter(|p| p.eq_ignore_ascii_case(device))
+        .map_or(value, |_| &value[device.len()..])
 }
 
 /// Bytes after "Sony Computer" in sector 4, if present.

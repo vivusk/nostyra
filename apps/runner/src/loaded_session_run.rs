@@ -60,8 +60,11 @@ pub fn run(
     } = launch;
     let system = paths.system;
     // Disc images are never preloaded (multi-file, hundreds of MB).
+    let stage_content = runner_core_options::stage_content(system);
     let content = match system.media {
-        Media::Cartridge => rom_soft_patching::content_bytes_for_core(&content_rom, &patched),
+        Media::Cartridge => {
+            rom_soft_patching::content_bytes_for_core(&content_rom, &patched, stage_content)
+        }
         Media::Disc => None,
     };
     // Outlives `session` (declared first; moved into `EmulationApp` after it).
@@ -78,6 +81,7 @@ pub fn run(
         core_options: &core_options,
         hw_render: Some(hw_render.as_provider()),
         keep_library_loaded,
+        stage_content,
     })
     .with_context(|| format!("cannot start {} with {}", rom.display(), core.display()))?;
     let _slow_teardown = TestTeardownDelay; // debug test hook: drops after the guard armed

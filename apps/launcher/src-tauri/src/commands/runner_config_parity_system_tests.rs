@@ -13,7 +13,7 @@ fn nes_launcher_resolution_matches_runner_print_config() {
         .unwrap();
     let rom = temp.path().join("Parity.nes");
     std::fs::write(&rom, minimal_nrom()).unwrap();
-    check_parity("nes", &rom);
+    check_parity("nes", &rom, |_| {});
 }
 
 /// GBA game on mGBA (`config/core/mgba.toml`, shared by gb/gbc/gba): proves
@@ -26,7 +26,7 @@ fn gba_launcher_resolution_matches_runner_print_config() {
         .unwrap();
     let rom = temp.path().join("Parity.gba");
     std::fs::write(&rom, minimal_gba()).unwrap();
-    check_parity("gba", &rom);
+    check_parity("gba", &rom, |_| {});
 }
 
 /// PS1 disc on PCSX ReARMed (`config/core/pcsx-rearmed.toml`): proves
@@ -42,7 +42,7 @@ fn psx_launcher_resolution_matches_runner_print_config() {
     let rom = temp.path().join("Parity.bin");
     let sectors = ps1_sectors(Some(US_LICENCE), r"BOOT = cdrom:\SLUS_012.34;1");
     std::fs::write(&rom, to_raw(&sectors, 2)).unwrap();
-    check_parity("psx", &rom);
+    check_parity("psx", &rom, |_| {});
 }
 
 /// Mega Drive `.bin` on Genesis Plus GX (`config/core/genesis_plus_gx.toml`, shared
@@ -59,7 +59,7 @@ fn genesis_launcher_resolution_matches_runner_print_config() {
     let mut image = vec![0; 128 * 1024];
     image[0x100..0x110].copy_from_slice(b"SEGA MEGA DRIVE ");
     std::fs::write(&rom, image).unwrap();
-    check_parity("genesis", &rom);
+    check_parity("genesis", &rom, |_| {});
 }
 
 /// Nintendo 64 test ROM on Mupen64Plus-Next (`config/core/mupen64plus-next.toml`):
@@ -67,7 +67,7 @@ fn genesis_launcher_resolution_matches_runner_print_config() {
 /// for OpenGL inside `retro_load_game`, so `--print-config` skips (exit 6) without it.
 #[test]
 fn n64_launcher_resolution_matches_runner_print_config() {
-    check_parity("n64", &repo("test-assets/roms/nostyra-test.z64"));
+    check_parity("n64", &repo("test-assets/roms/nostyra-test.z64"), |_| {});
 }
 
 /// Dreamcast GDI on Flycast (`config/core/flycast.toml`): proves
@@ -81,7 +81,7 @@ fn dreamcast_launcher_resolution_matches_runner_print_config() {
         .tempdir()
         .unwrap();
     let gdi = disc_image::test_gd_images::write_gdi(temp.path(), "parity", "NSTY-00001", false);
-    check_parity("dreamcast", &gdi);
+    check_parity("dreamcast", &gdi, |_| {});
 }
 
 /// PSP UMD image on PPSSPP (`config/core/ppsspp.toml`): proves
@@ -98,7 +98,7 @@ fn psp_launcher_resolution_matches_runner_print_config() {
         .unwrap();
     let iso = temp.path().join("parity.iso");
     std::fs::write(&iso, to_iso(&psp_iso_sectors())).unwrap();
-    check_parity("psp", &iso);
+    check_parity("psp", &iso, |_| {});
 }
 
 /// Nintendo DS homebrew on melonDS DS (`config/core/melonds_ds.toml`): proves
@@ -112,7 +112,7 @@ fn nds_launcher_resolution_matches_runner_print_config() {
         .unwrap();
     let rom = temp.path().join("Parity.nds");
     std::fs::write(&rom, minimal_nds()).unwrap();
-    check_parity("nds", &rom);
+    check_parity("nds", &rom, |_| {});
 }
 
 /// 4 KiB homebrew DS image (ARM9 @0x200 → 0x02000000, ARM7 @0x400 → 0x037F8000,

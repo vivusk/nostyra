@@ -29,6 +29,7 @@ const PCSX_EXPECTATIONS: RunAheadExpectations = RunAheadExpectations {
     exact_audio: true,
     exact_round_trip: true,
     state_jitter_bytes: 16,
+    stale_first_frame: false,
 };
 
 /// Registry fixed options + the HLE BIOS, as the process tests pass `--core-option`.

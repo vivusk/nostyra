@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9025,
+ "Title": "Nostyra Test atari2600",
+ "ConsoleId": 25,
+ "ImageIconUrl": "http://server/Images/9025.png",
+ "RichPresenceGameId": 9025,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9025,
+   "GameId": 9025,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9025.png",
+   "Achievements": [
+    {
+     "ID": 90251,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH000000=20",
+     "Author": "nostyra",
+     "BadgeName": "90251",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90252,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH000000=10::CAN:0=1::SUB:0xH000000=30::VAL:0xH000000",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

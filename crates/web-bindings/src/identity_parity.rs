@@ -7,7 +7,7 @@
 /// Test ROMs checked: (file name under `test-assets/roms`, system, bytes). `.cue`
 /// entries are followed by the files they reference.
 #[cfg(test)]
-pub(crate) const PARITY_ROMS: [(&str, &str, &[u8]); 12] = [
+pub(crate) const PARITY_ROMS: [(&str, &str, &[u8]); 18] = [
     (
         "nostyra-test.nes",
         "nes",
@@ -54,6 +54,31 @@ pub(crate) const PARITY_ROMS: [(&str, &str, &[u8]); 12] = [
         include_bytes!("../../../test-assets/roms/nostyra-test.sg"),
     ),
     (
+        "nostyra-test.a26",
+        "atari2600",
+        include_bytes!("../../../test-assets/roms/nostyra-test.a26"),
+    ),
+    (
+        "nostyra-test.a78",
+        "atari7800",
+        include_bytes!("../../../test-assets/roms/nostyra-test.a78"),
+    ),
+    (
+        "nostyra-test-7800.bin",
+        "atari7800",
+        include_bytes!("../../../test-assets/roms/nostyra-test-7800.bin"),
+    ),
+    (
+        "nostyra-test.o",
+        "lynx",
+        include_bytes!("../../../test-assets/roms/nostyra-test.o"),
+    ),
+    (
+        "nostyra-test.lnx",
+        "lynx",
+        include_bytes!("../../../test-assets/roms/nostyra-test.lnx"),
+    ),
+    (
         "nostyra-test-psx.cue",
         "psx",
         include_bytes!("../../../test-assets/roms/nostyra-test-psx.cue"),
@@ -67,6 +92,12 @@ pub(crate) const PARITY_ROMS: [(&str, &str, &[u8]); 12] = [
         "nostyra-test-psx.m3u",
         "psx",
         include_bytes!("../../../test-assets/roms/nostyra-test-psx.m3u"),
+    ),
+    // Serial identity (`sha1("ps2:NSTR-00001")`), header-only on both editions.
+    (
+        "nostyra-test-ps2.iso",
+        "ps2",
+        include_bytes!("../../../test-assets/roms/nostyra-test-ps2.iso"),
     ),
 ];
 

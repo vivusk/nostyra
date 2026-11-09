@@ -97,6 +97,10 @@ unsafe extern "C" fn cd_close_track(handle: *mut c_void) {
 }
 
 #[cfg(test)]
+#[path = "hash_cd_reader_lba_tests.rs"]
+mod lba_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

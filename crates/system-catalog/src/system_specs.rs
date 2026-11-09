@@ -4,6 +4,7 @@
 
 use std::path::Path;
 
+use crate::atari_system_specs::{ATARI2600, ATARI7800, LYNX};
 use crate::disc_probe::Media;
 use crate::disc_system_specs::PSX;
 use crate::dreamcast_system_spec::DREAMCAST;
@@ -11,6 +12,7 @@ use crate::gamecube_wii_system_specs::{GC, WII};
 use crate::handheld_system_specs::{GB, GBA, GBC};
 use crate::nds_system_spec::NDS;
 use crate::nintendo_64_system_spec::NINTENDO_64;
+use crate::ps2_system_spec::PS2;
 use crate::psp_system_spec::PSP;
 use crate::rom_header_rules::{ContentProbe, HeaderRule};
 use crate::sega_system_specs::{GENESIS, GG, SG1000, SMS};
@@ -109,8 +111,12 @@ impl SystemSpec {
 /// Cartridges first, then discs: a `.bin` checks the cheap Mega Drive magic before
 /// the PlayStation disc probe, and a `.cue` / `.chd` / `.m3u` shared by PlayStation
 /// and Dreamcast tries the PlayStation probe first (it fails fast on a GD-ROM);
-/// GameCube / Wii come last (an `.iso` fails the PSX / PSP probes after one read).
-pub const ALL_SYSTEMS: [&SystemSpec; 16] = [
+/// PlayStation 2 right after it (a PS2 CD shares the PS1 system id and must fail the
+/// licence check first); GameCube / Wii come last (an `.iso` fails the PSX / PS2 /
+/// PSP probes after one read). The Atari 2600 / 7800 `.bin` is DAT-gated: skipped
+/// here, looked up by the scanner once Mega Drive, PlayStation and PlayStation 2
+/// rejected the file.
+pub const ALL_SYSTEMS: [&SystemSpec; 20] = [
     &SNES,
     &NES,
     &GB,
@@ -122,7 +128,11 @@ pub const ALL_SYSTEMS: [&SystemSpec; 16] = [
     &SMS,
     &GG,
     &SG1000,
+    &ATARI2600,
+    &ATARI7800,
+    &LYNX,
     &PSX,
+    &PS2,
     &DREAMCAST,
     &PSP,
     &GC,
@@ -130,9 +140,9 @@ pub const ALL_SYSTEMS: [&SystemSpec; 16] = [
 ];
 
 /// Every system in UI order (sidebar, Library system filter): makers by popularity
-/// (Nintendo, Sony, Sega); per maker, home consoles then handhelds, each by release.
-/// Display only — classification keeps [`ALL_SYSTEMS`] order.
-pub const DISPLAY_ORDER: [&SystemSpec; 16] = [
+/// (Nintendo, Sony, Sega, Atari); per maker, home consoles then handhelds, each by
+/// release. Display only — classification keeps [`ALL_SYSTEMS`] order.
+pub const DISPLAY_ORDER: [&SystemSpec; 20] = [
     &NES,
     &SNES,
     &NINTENDO_64,
@@ -143,12 +153,16 @@ pub const DISPLAY_ORDER: [&SystemSpec; 16] = [
     &GBA,
     &NDS,
     &PSX,
+    &PS2,
     &PSP,
     &SG1000,
     &SMS,
     &GENESIS,
     &DREAMCAST,
     &GG,
+    &ATARI2600,
+    &ATARI7800,
+    &LYNX,
 ];
 
 /// System by `platforms.id`.

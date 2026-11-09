@@ -21,10 +21,15 @@ use crate::{
     state_policy_core_tests,
 };
 
+/// `rel` (with `/`) under the repo root, in native separators throughout: PCEE2
+/// refuses a Windows path that mixes in `/` (M18 spike D7).
 pub(crate) fn repo(rel: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join(rel)
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(2)
+        .unwrap();
+    rel.split('/')
+        .fold(root.to_path_buf(), |path, part| path.join(part))
 }
 
 /// Serialises core sessions in this binary: the suites and the measurement test each
@@ -88,6 +93,7 @@ fn runner_real_core_suite_mesen() {
         exact_audio: false,
         exact_round_trip: true,
         state_jitter_bytes: 0,
+        stale_first_frame: false,
     };
     run_core_checks(&mut session, temp.path(), mesen_quirks);
 }
@@ -95,6 +101,12 @@ fn runner_real_core_suite_mesen() {
 /// Same start state twice → same frame hashes; holding a button changes the frame;
 /// the ROM's square wave makes non-silent audio.
 pub(crate) fn check_frames_and_input(session: &mut CoreSession) {
+    check_frames_and_input_from(session, 0);
+}
+
+/// [`check_frames_and_input`] comparing frames from `skip` on after each load (1 for
+/// cores whose first frame after an unserialize is stale: Stella, Handy).
+pub(crate) fn check_frames_and_input_from(session: &mut CoreSession, skip: usize) {
     // Past boot first: a state taken before the first `retro_run` restores without
     // the core's first-frame setup, so its first frame differs.
     let (mut video, mut audio) = (NullVideoSink::default(), NullAudioSink::default());
@@ -120,13 +132,13 @@ pub(crate) fn check_frames_and_input(session: &mut CoreSession) {
     };
     let plain = frames(session, HeldInput::None);
     assert_eq!(
-        plain,
-        frames(session, HeldInput::None),
+        plain[skip..],
+        frames(session, HeldInput::None)[skip..],
         "deterministic frames"
     );
     assert_ne!(
-        plain,
-        frames(session, HeldInput::B),
+        plain[skip..],
+        frames(session, HeldInput::B)[skip..],
         "input changes the frame"
     );
     session.unserialize(&start).unwrap();
@@ -164,3 +176,9 @@ fn rewind_history_measurement() {
     let label = rom.file_name().unwrap_or_default().to_string_lossy();
     rewind_core_tests::measure_history(&mut session, &label, 60);
 }
+
+#[path = "atari_real_core_suite_tests.rs"]
+mod atari_suite;
+/// PlayStation 2 on PCEE2 (M18): gated on the DLL and on `NOSTYRA_PS2_BIOS_DIR`.
+#[path = "ps2_real_core_suite_tests.rs"]
+mod ps2_suite;

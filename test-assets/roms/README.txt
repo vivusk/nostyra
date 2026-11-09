@@ -368,6 +368,41 @@ Dolphin (reports 50 fps while its VI runs NTSC). The Wii DOL never drives the
 Bluetooth stack, so the emulated Wii Remote is never polled. No Nintendo code or
 data; they never run on real hardware.
 
+nostyra-test-ps2.elf, nostyra-test-ps2.iso — Nostyra PlayStation 2 test program and disc
+==========================================================================================
+
+Author:  Nostyra contributors (self-written, 2026)
+License: GPL-3.0-or-later (full text in ./LICENSE).
+Source:  ./src/build-nostyra-test-ps2.py with ./src/ps2_test_elf.py (EE program on
+         the Allegrex/MIPS emitter of psp_test_allegrex.py, plain ELF32 writer) and
+         ./src/psp_test_disc.py (ISO9660 writer); Python 3, no PS2SDK; output is
+         byte-for-byte reproducible, the script prints both SHA1s and the RA hash
+Rebuild: python test-assets/roms/src/build-nostyra-test-ps2.py
+SHA1:    nostyra-test-ps2.elf  b69182c7f31cf2609d9af0151d3d7306c82cbf66
+         nostyra-test-ps2.iso  aeaa1084e31df8eae43a97385b3d060b7746c311
+
+What it does (each feature backs a runner test on PCEE2, booted through the user's
+own BIOS dump: there is no HLE BIOS, so those tests run only where
+NOSTYRA_PS2_BIOS_DIR names a folder with a dump; never in the repo or CI):
+- Video: SetGsCrt NTSC + GS privileged registers (SMODE2, DISPFB1, DISPLAY1,
+  BGCOLOR, PMODE); every VSINT (CSR bit 3, acknowledged by writing it) a
+  full-screen sprite is DMA'd to the GIF with a colour that ramps per frame, so the
+  picture is non-black and consecutive frames differ.
+- RAM: 'NSTY' + the frame counter at EE RAM 0x00108000 (read by the tests through
+  RETRO_MEMORY_SYSTEM_RAM and by the fake achievement set at RA $108004).
+- No input and no audio (IOP modules are out of scope): the suites assert picture,
+  counter, states, reset and the core's files only.
+
+Format: the ELF has one RWX PT_LOAD at 0x00100000 (entry), no section headers,
+1 328 bytes. The ISO is a DVD-style ISO9660 volume (PVD system id PLAYSTATION,
+volume NOSTYRA_TEST_PS2, SYSTEM.CNF `BOOT2 = cdrom0:\NSTR_000.01;1` + VER + VMODE
+NTSC, serial NSTR-00001, the ELF as NSTR_000.01) with root L/M path tables and a
+2 MiB zero padding: the PS2 kernel's cdvd driver walks the path table and reads
+ahead past the image end, and without both the ELF never starts (M18 spike). The
+CHD / CSO / ZSO twins are built from the ISO in test code. RetroAchievements hash
+(md5 of "NSTR_000.01" + the ELF) 11f4d27b1591e25cdb2edf0b0e0fdd6b. No Sony code or
+data; it never ran on real hardware.
+
 Frame counters in RAM (RetroAchievements tests, M15)
 =====================================================
 
@@ -377,4 +412,27 @@ RetroAchievements address: NES zero page $01 (hue 0..11), SNES WRAM $7E0000, GB/
 HRAM $FF80 (since the first builds); copied from the CPU register every frame since
 M15 phase 07: Mega Drive $FF0000 and $FF0001, SMS/GG/SG-1000 $C000, GBA IWRAM
 0x03000000, PS1 0x800F0000, N64 RDRAM 0xF0000, Dreamcast 0x8C0F0000, PSP the word
-after the tone buffer (0x08805F50), NDS main RAM 0x023F0008.
+after the tone buffer (0x08805F50), NDS main RAM 0x023F0008, PS2 (M18) EE RAM
+0x00108004 (RA $108004; the 'NSTY' magic word precedes it at 0x00108000).
+Atari 2600 / 7800 / Lynx (M17): nostyra-test.a26, .a78, -7800.bin, .o, .lnx
+===========================================================================
+
+Built by src/build-nostyra-test-atari-roms.py (programs: src/atari_test_programs.py,
+shared 6502 emitter src/mos6502_emitter.py, also used by the NES builder).
+- 2600: 4 KiB at $F000, real NTSC frame (3 VSYNC + 37 VBLANK + 192 + 30 lines), COLUBK
+  luminance steps per frame; fire / up / console Reset (SWCHB bit 0) pick other hues;
+  TIA channel 0 tone; frame counter in RIOT RAM $80.
+- 7800: 16 KiB at $C000; the .a78 has the 128-byte A78 header, -7800.bin is the same
+  image headerless. MARIA DMA on with empty display lists, BACKGRND per frame and
+  input (one-button mode), TIA tone, frame counter at $1800. Boots without a BIOS.
+- Lynx .o: BS93 homebrew loaded at $0200 (no encryption needed). Lynx .lnx: 64-byte
+  LNX header (rotation left, 93C46 EEPROM) + 64 KiB bank 0 booted by the pre-encrypted
+  first-stage loader of cc65 (libsrc/lynx/bootldr.s, Karri Kaksonen, zlib licence; the
+  52 bytes and the licence text are in src/lynx_boot_loader.py), which copies the test
+  program to $FB68. Display at $C000; pens 0 / 15 get a free-running green level, all
+  pens red (joystick: blue) per end-of-frame flag; Mikey channel 0 output toggled by
+  the CPU for a tone; frame counter at zero page $82. Frame timer 2 = 84 lines (one
+  Lynx frame per 60 Hz Handy frame, measured).
+
+Own code and data apart from the cc65 loader bytes; no Atari BIOS or game data.
+RetroAchievements counters: 2600 RA $00, 7800 RA $1800, Lynx RA $0082.

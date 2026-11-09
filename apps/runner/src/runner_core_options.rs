@@ -35,6 +35,11 @@ pub fn keep_library_loaded(system: &SystemSpec) -> bool {
     system_catalog::core_for_system(system.id).is_some_and(|core| core.keep_library_loaded)
 }
 
+/// Whether the system's core always gets its cartridge as a staged file (Handy).
+pub fn stage_content(system: &SystemSpec) -> bool {
+    system_catalog::core_for_system(system.id).is_some_and(|core| core.stage_content)
+}
+
 /// Devices for `retro_set_controller_port_device` after load (empty: none sent).
 pub fn port_devices(system: &SystemSpec) -> &'static [u32] {
     system_catalog::core_for_system(system.id).map_or(&[], |core| core.port_devices)

@@ -147,6 +147,7 @@ fn start_kept(keep: bool, load_ok: bool) -> HostResult<CoreSession> {
         core_options: &[],
         hw_render: Some(&provider),
         keep_library_loaded: keep,
+        stage_content: false,
     };
     let load_game = if load_ok { software_load } else { failed_load };
     let claim = crate::process_session_claim::ProcessSessionClaim::acquire()?;

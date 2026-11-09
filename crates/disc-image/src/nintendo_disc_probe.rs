@@ -1,7 +1,7 @@
 //! GameCube / Wii arms of [`crate::DiscImageProbe`]: a disc container must hold a
 //! header whose magic names the asked system; a `.dol` / `.elf` must be a valid
 //! PowerPC executable whose HID4 rule names it. Reject texts follow the classifier
-//! order (`ALL_SYSTEMS`: … PSP, GameCube, Wii): Wii is the last `.iso` candidate and
+//! order (`ALL_SYSTEMS`: … PSX, PS2, …, PSP, GameCube, Wii): Wii is the last `.iso` candidate and
 //! GameCube the last `.m3u` candidate, so their texts become the scan-problem row
 //! text and name every system that was tried.
 
@@ -14,8 +14,9 @@ use crate::nintendo_disc_header::{read_nintendo_disc_header, NintendoDiscKind};
 use crate::{DiscError, ISO_EXT, WBFS_EXT};
 
 pub(crate) const NOT_GAMECUBE: &str = "not a GameCube disc";
-pub(crate) const NOT_GAMECUBE_PLAYLIST: &str = "not a PlayStation, Dreamcast or GameCube playlist";
-pub(crate) const NOT_ANY_ISO: &str = "not a PlayStation, PSP, GameCube or Wii disc";
+pub(crate) const NOT_GAMECUBE_PLAYLIST: &str =
+    "not a PlayStation, PlayStation 2, Dreamcast or GameCube playlist";
+pub(crate) const NOT_ANY_ISO: &str = "not a PlayStation, PlayStation 2, PSP, GameCube or Wii disc";
 pub(crate) const NOT_WII: &str = "not a Wii disc";
 pub(crate) const NOT_GAMECUBE_OR_WII: &str = "not a GameCube or Wii disc";
 

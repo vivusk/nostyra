@@ -44,6 +44,16 @@ pub(crate) unsafe fn hw_render(ctx: &mut HostContext, cmd: c_uint, data: *mut c_
     }
 }
 
+/// `SET_HW_SHARED_CONTEXT` (`data == NULL`; `environment` answers it before stripping
+/// the experimental bit, as bare 44 is `SET_SERIALIZATION_QUIRKS`). The host creates
+/// no shareable context (refused, one log line); harmless for the cores that ask:
+/// PCEE2 then creates its own GL context shared with ours for its GS thread ("trying
+/// anyway", M18 spike), and the request leaves `hw_request` / `hw_refused` untouched.
+pub(crate) fn shared_context_refused() -> bool {
+    tracing::info!("SET_HW_SHARED_CONTEXT refused: the host creates no shareable context");
+    false
+}
+
 fn set_hw_render(ctx: &mut HostContext, callback: &mut RetroHwRenderCallback) -> bool {
     let request = request_from(callback);
     let supported = match ctx.hw_provider {

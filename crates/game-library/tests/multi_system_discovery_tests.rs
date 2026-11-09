@@ -103,25 +103,42 @@ fn bare_playstation_bins_are_listed_by_content() {
     let ps1 = ps1_sectors(Some(US_LICENCE), r"BOOT = cdrom:\SLUS_012.34;1");
     std::fs::write(temp.path().join("Game (USA).bin"), to_raw(&ps1, 2)).unwrap();
     std::fs::write(temp.path().join("Other.iso"), to_iso(&ps1)).unwrap();
-    // PS2-like: same system id, no licence text.
+    // PS2: same system id, no licence text, `BOOT2` (M18).
     let ps2 = ps1_sectors(None, r"BOOT2 = cdrom0:\SLUS_200.62;1");
     std::fs::write(temp.path().join("ps2.bin"), to_raw(&ps2, 2)).unwrap();
+    // Neither: a `PLAYSTATION` volume without licence text or `BOOT2`.
+    let neither = ps1_sectors(None, "");
+    std::fs::write(temp.path().join("neither.bin"), to_raw(&neither, 2)).unwrap();
 
     let found = discover_rom_files(temp.path(), &ALL_SYSTEMS);
-    let mut psx: Vec<String> = found
+    let mut rows: Vec<(String, &str)> = found
         .files
         .iter()
         .map(|f| {
-            assert_eq!(f.system.id, "psx");
-            std::path::Path::new(&f.path)
+            let name = std::path::Path::new(&f.path)
                 .file_name()
                 .unwrap()
                 .to_string_lossy()
-                .into_owned()
+                .into_owned();
+            (name, f.system.id)
         })
         .collect();
-    psx.sort();
-    assert_eq!(psx, ["Game (USA).bin", "Other.iso"]);
-    assert_eq!(found.failures.len(), 1);
-    assert_eq!(found.failures[0].reason, "not a PlayStation disc");
+    rows.sort();
+    assert_eq!(
+        rows,
+        [
+            ("Game (USA).bin".to_string(), "psx"),
+            ("Other.iso".to_string(), "psx"),
+            ("ps2.bin".to_string(), "ps2"),
+        ]
+    );
+    // The unclaimed `.bin` waits for the Atari DAT lookup of pass B (M17) with the
+    // last disc candidate's text (PlayStation 2, M18).
+    assert!(found.failures.is_empty(), "{:?}", found.failures);
+    assert_eq!(found.dat_pending.len(), 1);
+    assert!(found.dat_pending[0].path.ends_with("neither.bin"));
+    assert_eq!(
+        found.dat_pending[0].reason,
+        "not a PlayStation or PlayStation 2 disc"
+    );
 }

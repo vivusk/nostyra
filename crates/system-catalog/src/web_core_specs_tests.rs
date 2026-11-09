@@ -1,8 +1,20 @@
 use super::*;
 use crate::system_specs::ALL_SYSTEMS;
 
-const MVP: [&str; 10] = [
-    "nes", "snes", "gb", "gbc", "gba", "genesis", "sms", "gg", "sg1000", "psx",
+const MVP: [&str; 13] = [
+    "nes",
+    "snes",
+    "gb",
+    "gbc",
+    "gba",
+    "genesis",
+    "sms",
+    "gg",
+    "sg1000",
+    "psx",
+    "atari2600",
+    "atari7800",
+    "lynx",
 ];
 
 #[test]
@@ -24,6 +36,8 @@ fn exactly_the_mvp_systems_are_on_the_web() {
         "GPGX forced, not SMS Plus"
     );
     assert_eq!(core_of("psx"), Some("pcsx_rearmed"));
+    assert_eq!(core_of("atari2600"), Some("stella2014"));
+    assert_eq!(core_of("lynx"), Some("handy"));
 }
 
 #[test]
@@ -50,6 +64,16 @@ fn shared_core_layer_only_for_the_same_libretro_core() {
     assert_eq!(web_shared_core("gbc").map(|c| c.id), Some("mgba"));
     assert_eq!(web_shared_core("gg").map(|c| c.id), Some("genesis_plus_gx"));
     assert_eq!(web_shared_core("nes"), None, "fceumm is not Mesen");
+    assert_eq!(
+        web_shared_core("atari2600"),
+        None,
+        "stella2014 is not Stella 8"
+    );
+    assert_eq!(
+        web_shared_core("atari7800").map(|c| c.id),
+        Some("prosystem")
+    );
+    assert_eq!(web_shared_core("lynx").map(|c| c.id), Some("handy"));
     assert_eq!(web_shared_core("n64"), None, "not on the web");
     assert_eq!(web_shared_core("nope"), None);
 }
@@ -64,7 +88,10 @@ fn ejs_save_folders_are_the_retroarch_core_names() {
             "Snes9x",
             "mGBA",
             "Genesis Plus GX",
-            "PCSX-ReARMed"
+            "PCSX-ReARMed",
+            "Stella 2014",
+            "ProSystem",
+            "Handy"
         ]
     );
 }

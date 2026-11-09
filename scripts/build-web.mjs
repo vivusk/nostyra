@@ -47,6 +47,10 @@ const notices = join(launcher, "public", "notices");
 rmSync(notices, { recursive: true, force: true });
 mkdirSync(notices, { recursive: true });
 copyFileSync(join(repo, "LICENSE"), join(notices, "Nostyra-GPL-3.0.txt"));
+// Cores whose EmulatorJS archive ships no license.txt (Stella 2014, Handy; M17).
+for (const text of ["GPL-2.0.txt", "Handy-zlib.txt"]) {
+  copyFileSync(join(repo, "third-party", "core-licences", text), join(notices, text));
+}
 run("cargo", ["about", "generate", "-m", "crates/web-bindings/Cargo.toml", "--target", "wasm32-unknown-unknown",
   "--locked", "--fail", "-c", "about.toml", "about-web.hbs", "-o", join(notices, "THIRD-PARTY-RUST.txt")]);
 run("node", [join(repo, "scripts", "generate-npm-notices.mjs"), join(notices, "THIRD-PARTY-NPM.txt"), "--web"]);

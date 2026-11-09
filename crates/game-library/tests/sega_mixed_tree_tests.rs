@@ -90,6 +90,12 @@ fn sega_files_sort_into_their_systems_beside_other_systems() {
     .map(|(file, system)| (file.to_string(), system))
     .collect();
     assert_eq!(listed, expected);
-    let reported: Vec<String> = found.failures.iter().map(|f| name(&f.path)).collect();
-    assert_eq!(reported, ["junk.bin"], "{:?}", found.failures);
+    // The unknown 128 KiB `.bin` waits for the Atari DAT lookup of pass B (M17).
+    assert!(found.failures.is_empty(), "{:?}", found.failures);
+    let pending: Vec<String> = found
+        .dat_pending
+        .iter()
+        .map(|f| name(Path::new(&f.path)))
+        .collect();
+    assert_eq!(pending, ["junk.bin"]);
 }

@@ -92,6 +92,9 @@ fn probes_fit_in_probe_bytes() {
             ContentProbe::MagicAny {
                 offset, patterns, ..
             } => patterns.iter().map(|bytes| offset + bytes.len()).collect(),
+            ContentProbe::PerExtension(checks) => {
+                checks.iter().filter_map(|c| c.magic_end()).collect()
+            }
             ContentProbe::Any | ContentProbe::Disc(_) | ContentProbe::NdsHeader => continue,
         };
         assert!(ends.iter().all(|&end| end <= PROBE_BYTES), "{}", spec.id);

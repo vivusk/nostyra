@@ -22,6 +22,8 @@ thiserror.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+# `with_source`: the > 4 GiB virtual disc behind the cdreader LBA tests.
+content-file-source.workspace = true
 # CHD / CDI / DVD builders for the hash parity tests.
 disc-image = { workspace = true, features = ["test-images"] }
 tempfile.workspace = true

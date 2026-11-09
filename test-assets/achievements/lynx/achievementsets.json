@@ -1,0 +1,41 @@
+{
+ "Success": true,
+ "GameId": 9013,
+ "Title": "Nostyra Test lynx",
+ "ConsoleId": 13,
+ "ImageIconUrl": "http://server/Images/9013.png",
+ "RichPresenceGameId": 9013,
+ "RichPresencePatch": "",
+ "Sets": [
+  {
+   "AchievementSetId": 9013,
+   "GameId": 9013,
+   "Title": null,
+   "Type": "core",
+   "ImageIconUrl": "http://server/Images/9013.png",
+   "Achievements": [
+    {
+     "ID": 90131,
+     "Title": "Frame 20",
+     "Description": "Counter reaches 20",
+     "Flags": 3,
+     "Points": 5,
+     "MemAddr": "0xH000082=20",
+     "Author": "nostyra",
+     "BadgeName": "90131",
+     "Created": 1367266583,
+     "Modified": 1376929305
+    }
+   ],
+   "Leaderboards": [
+    {
+     "ID": 90132,
+     "Title": "Frame counter",
+     "Description": "Counter at submit",
+     "Mem": "STA:0xH000082=10::CAN:0=1::SUB:0xH000082=30::VAL:0xH000082",
+     "Format": "SCORE"
+    }
+   ]
+  }
+ ]
+}

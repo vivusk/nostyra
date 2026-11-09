@@ -1,4 +1,5 @@
 import { useLayoutEffect } from "react";
+import { BiosRequiredDialog } from "./components/bios-required-dialog";
 import { WebPlayerControls } from "./components/gameplay/web-player-controls";
 import { LaunchingOverlay } from "./components/launching-overlay";
 import { PendingSavesBanner } from "./components/pending-saves-banner";
@@ -31,6 +32,9 @@ export function AppShell() {
   return (
     <NavigationProvider initial={INITIAL_ROUTE}>
       <ShellLayout />
+      {/* Needs `useNavigation` ("Settings" button): inside the provider, unlike the
+          dialogs ResumeFlowProvider renders above the shell. */}
+      <BiosRequiredDialog />
     </NavigationProvider>
   );
 }

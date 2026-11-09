@@ -9,7 +9,7 @@ import { ResumeDialog } from "./resume-dialog";
 
 /** Provides `usePlayGame()` and renders the Resume dialog (Continue / Start fresh) and
  *  the missing-core install prompt once for the whole app, so every Play entry point
- *  behaves the same. */
+ *  behaves the same. (The missing-BIOS prompt lives in `AppShell`: it needs navigation.) */
 export function ResumeFlowProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { mutate: launch } = useLaunchGame();

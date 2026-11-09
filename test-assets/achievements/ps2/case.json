@@ -1,0 +1,12 @@
+{
+ "system": "ps2",
+ "rom": "nostyra-test-ps2.iso",
+ "console_id": 21,
+ "game_id": 9021,
+ "achievement_id": 90211,
+ "leaderboard_id": 90212,
+ "counter_address": 1081348,
+ "unlock_value": 20,
+ "lb_start_value": 10,
+ "lb_submit_value": 30
+}

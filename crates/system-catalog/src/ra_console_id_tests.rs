@@ -6,7 +6,7 @@ use crate::{ALL_SYSTEMS, GC, WII};
 
 #[test]
 fn ra_console_ids_match_rcheevos() {
-    let expected: [(&str, Option<u8>); 16] = [
+    let expected: [(&str, Option<u8>); 20] = [
         ("nes", Some(7)),
         ("snes", Some(3)),
         ("gb", Some(4)),
@@ -16,7 +16,11 @@ fn ra_console_ids_match_rcheevos() {
         ("sms", Some(11)),
         ("gg", Some(15)),
         ("sg1000", Some(33)),
+        ("atari2600", Some(25)),
+        ("atari7800", Some(51)),
+        ("lynx", Some(13)),
         ("psx", Some(12)),
+        ("ps2", Some(21)),
         ("n64", Some(2)),
         ("dreamcast", Some(40)),
         ("psp", Some(41)),
@@ -32,9 +36,9 @@ fn ra_console_ids_match_rcheevos() {
 }
 
 #[test]
-fn fourteen_systems_have_unique_ids_and_gamecube_wii_have_none() {
+fn eighteen_systems_have_unique_ids_and_gamecube_wii_have_none() {
     let ids: Vec<u8> = ALL_SYSTEMS.iter().filter_map(|s| s.ra_console_id).collect();
-    assert_eq!(ids.len(), 14);
-    assert_eq!(ids.iter().collect::<HashSet<_>>().len(), 14, "unique");
+    assert_eq!(ids.len(), 18);
+    assert_eq!(ids.iter().collect::<HashSet<_>>().len(), 18, "unique");
     assert_eq!((GC.ra_console_id, WII.ra_console_id), (None, None));
 }

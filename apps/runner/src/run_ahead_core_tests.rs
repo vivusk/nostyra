@@ -34,6 +34,10 @@ pub(crate) struct RunAheadExpectations {
     /// with this tolerance). 0 for every core but PCSX ReARMed, whose serialize
     /// bumps a counter inside the state on each call (M8 phase 05).
     pub state_jitter_bytes: usize,
+    /// The first frame after an unserialize shows stale rows (the partly drawn frame is
+    /// not in the state: Stella, Handy; M17 spike); every later frame is exact. The
+    /// presented-frame check skips that one frame.
+    pub stale_first_frame: bool,
 }
 
 /// Every check strict (snes9x).
@@ -42,6 +46,7 @@ pub(crate) const EXACT_RUN_AHEAD: RunAheadExpectations = RunAheadExpectations {
     exact_audio: true,
     exact_round_trip: true,
     state_jitter_bytes: 0,
+    stale_first_frame: false,
 };
 
 /// Input indexed by the real-timeline frame number (shared with the hooks), so
@@ -186,13 +191,15 @@ pub(crate) fn check_run_ahead(session: &mut CoreSession, expect: RunAheadExpecta
     // Presented frame: input held (B = id 0), no catch-up ticks.
     let held = Some(0);
     let plain = run(session, &frame0, 0, 62, held, false).presented;
-    assert!(plain.windows(2).all(|w| w[0] != w[1]), "frames must differ");
+    let skip = usize::from(expect.stale_first_frame);
+    let frames_differ = plain[skip..].windows(2).all(|w| w[0] != w[1]);
+    assert!(frames_differ, "frames must differ: {plain:x?}");
     for frames in [1u8, 2] {
         let ahead = run(session, &frame0, frames, 60, held, false).presented;
         let n = usize::from(frames);
         assert_eq!(
-            ahead[..],
-            plain[n..60 + n],
+            ahead[skip..],
+            plain[n + skip..60 + n],
             "run-ahead {frames} shows tick t+{n}"
         );
     }

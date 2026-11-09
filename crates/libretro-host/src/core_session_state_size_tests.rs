@@ -1,14 +1,21 @@
 //! State-size rules on the fake core: cached by default, re-queried before every
 //! serialize with `set_state_size_requery` (PPSSPP), exact sizes refused up front
-//! (size 0 = no states), and the framebuffer name answered to threads other than the
-//! session's (PPSSPP's emulation thread).
+//! (size 0 = no states), the size per savestate context (ProSystem) and the
+//! framebuffer name answered to threads other than the session's (PPSSPP's emulation
+//! thread).
 
 use std::sync::atomic::Ordering;
 
-use super::fake_core_tests::start;
+use std::ffi::{c_int, c_void};
+
+use super::fake_core_tests::{fake_core, start, start_core};
 use super::tests::host_fns;
+use crate::core_library_loader::CoreLibrary;
+use crate::environment_callback::environment;
+use crate::ffi_types::{RETRO_AV_ENABLE_FAST_SAVESTATES, RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE};
 use crate::host_error::HostError;
 use crate::hw_render_test_fakes::{log_take, serial, FakeProvider, FAKE_FBO, FAKE_STATE_SIZE};
+use crate::savestate_context::SavestateContext::{Normal, RunaheadSameInstance as Fast};
 
 #[test]
 fn size_is_cached_unless_requery_is_on() {
@@ -114,4 +121,61 @@ fn reset_keeps_the_cached_size() {
     session.reset();
     FAKE_STATE_SIZE.store(8, Ordering::SeqCst);
     assert_eq!(session.serialize().unwrap().len(), 4, "still cached");
+}
+
+/// ProSystem-like: 4 bytes Normal, 8 with `FAST_SAVESTATES`; refuses the other size.
+fn context_size() -> usize {
+    let mut flags: c_int = 0;
+    // SAFETY: `int *` out-param of GET_AUDIO_VIDEO_ENABLE, answered by the host.
+    unsafe {
+        environment(
+            RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE,
+            (&raw mut flags).cast(),
+        )
+    };
+    if flags & RETRO_AV_ENABLE_FAST_SAVESTATES != 0 {
+        8
+    } else {
+        4
+    }
+}
+unsafe extern "C" fn sized_by_context() -> usize {
+    context_size()
+}
+unsafe extern "C" fn serialize_checked(_: *mut c_void, size: usize) -> bool {
+    size == context_size()
+}
+unsafe extern "C" fn unserialize_checked(_: *const c_void, size: usize) -> bool {
+    size == context_size()
+}
+
+#[test]
+fn each_savestate_context_gets_its_own_size() {
+    let _serial = serial();
+    let core = CoreLibrary {
+        serialize_size: sized_by_context,
+        serialize: serialize_checked,
+        unserialize: unserialize_checked,
+        ..fake_core()
+    };
+    let mut session = start_core(core, &FakeProvider::default()).expect("session loads");
+    session.set_exact_state_size(true);
+    let mut buf = Vec::new();
+    assert_eq!(session.serialize_into(&mut buf, Fast).unwrap(), 8);
+    session
+        .unserialize_from(&buf, Fast)
+        .expect("fast state in fast context");
+    assert!(
+        session.unserialize_from(&buf, Normal).is_err(),
+        "exact size per context"
+    );
+    assert_eq!(session.serialize_into(&mut buf, Normal).unwrap(), 4);
+    session
+        .unserialize_from(&buf, Normal)
+        .expect("normal state");
+    assert_eq!(
+        session.serialize_into(&mut buf, Fast).unwrap(),
+        8,
+        "both cached"
+    );
 }

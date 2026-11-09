@@ -1,6 +1,9 @@
 //! Serial normalisation per disc signature, for display and DAT matching.
 //!
 //! - PlayStation: `SLUS_012.34` → `SLUS-01234` (both the disc and Redump use it).
+//! - PlayStation 2: the disc's `BOOT2` name normalises to `SLUS-20312`; Redump adds
+//!   variant suffixes to duplicate blocks (`SLPM-65002-0`, `SCES-53326/ANZ`,
+//!   `SLES-02375-P`), so the lookup key on both sides is the 10-char head.
 //! - Dreamcast: IP.BIN product numbers and Redump serials differ in form (`MK-51035`
 //!   on the disc, `51035` in the US DAT entry; `T7001D  50` vs `T-7001D-50`; comma
 //!   lists; `-0`/`-1` disc suffixes). Display = trimmed, upper-cased, blanks → `-`;
@@ -18,10 +21,13 @@ use system_catalog::DiscSignature;
 
 use crate::playstation_disc_id::normalize_serial;
 
+/// `XXXXNNNNN`: letters + digits of a PlayStation 2 serial (dashes not counted).
+const PS2_SERIAL_ALNUM: usize = 9;
+
 /// The serial as shown to the user; `None` when `raw` holds no serial.
 pub fn display_serial(signature: DiscSignature, raw: &str) -> Option<String> {
     match signature {
-        DiscSignature::PlayStation => normalize_serial(raw),
+        DiscSignature::PlayStation | DiscSignature::PlayStation2 => normalize_serial(raw),
         DiscSignature::Dreamcast => dreamcast_display(raw),
         DiscSignature::Psp => psp_normalize_serial(raw),
         DiscSignature::GameCube | DiscSignature::Wii => {
@@ -38,6 +44,7 @@ pub fn serial_lookup_keys(signature: DiscSignature, raw: &str) -> Vec<String> {
     for part in raw.split(',') {
         match signature {
             DiscSignature::PlayStation => keys.extend(normalize_serial(part)),
+            DiscSignature::PlayStation2 => keys.extend(ps2_key(part)),
             DiscSignature::Dreamcast => keys.extend(dreamcast_keys(part)),
             DiscSignature::Psp => keys.extend(psp_key(part)),
             DiscSignature::GameCube | DiscSignature::Wii => keys.extend(nintendo_game_code(part)),
@@ -45,6 +52,18 @@ pub fn serial_lookup_keys(signature: DiscSignature, raw: &str) -> Vec<String> {
     }
     keys.dedup();
     keys
+}
+
+/// Lookup key of one PS2 serial: its first 9 letters/digits, normalised, so a
+/// Redump variant (`SLPM-65002-0`, `SCES-53326/ANZ`, `SLES---54150`) meets the
+/// disc's `SLPM-65002`.
+pub fn ps2_key(raw: &str) -> Option<String> {
+    let head: String = raw
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .take(PS2_SERIAL_ALNUM)
+        .collect();
+    normalize_serial(&head)
 }
 
 /// PSP serial for display and lookup: `ulus10041 ` → `ULUS-10041`; `None` when blank.

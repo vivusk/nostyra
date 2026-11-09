@@ -103,6 +103,8 @@ fn state_quality_port_devices_and_exact_size_per_core() {
             "ppsspp" => (Serialized, false, false),
             "melonds_ds" => (Deterministic, false, true),
             "dolphin-emu" => (Serialized, true, false),
+            "pcee2" => (Serialized, true, true),
+            "handy" => (Deterministic, false, true),
             _ => (Deterministic, false, false),
         };
         let actual = (
@@ -112,11 +114,7 @@ fn state_quality_port_devices_and_exact_size_per_core() {
         );
         assert_eq!(actual, expected, "{}", core.id);
     }
-    assert_eq!(
-        FLYCAST.port_devices,
-        [1, 1, 0, 0],
-        "all four ports, pads on 1-2"
-    );
+    assert_eq!(FLYCAST.port_devices, [1, 1, 0, 0], "pads on 1-2");
 }
 
 #[test]

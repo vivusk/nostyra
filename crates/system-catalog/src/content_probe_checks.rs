@@ -3,6 +3,7 @@
 
 use crate::foreign_executable_probe::checks_elf_head;
 use crate::nds_header_probe::check_nds_header;
+use crate::per_extension_probe::{check_for, ExtCheck};
 use crate::rom_header_rules::ContentProbe;
 
 impl ContentProbe {
@@ -12,6 +13,9 @@ impl ContentProbe {
         match self {
             Self::Magic { .. } | Self::MagicAny { .. } | Self::NdsHeader => true,
             Self::MagicForExtensions { .. } => self.checks_content(ext),
+            Self::PerExtension(checks) => {
+                matches!(check_for(checks, ext), Some(ExtCheck::Magic { .. }))
+            }
             // Disc probes read the image themselves; GameCube / Wii `.elf` heads are
             // checked first for a foreign CPU (`foreign_executable_probe`).
             Self::Disc(signature) => checks_elf_head(*signature, ext),
@@ -28,19 +32,31 @@ impl ContentProbe {
             Self::MagicForExtensions {
                 exts, quiet_exts, ..
             } => has_ext(exts, ext) || has_ext(quiet_exts, ext),
+            // A DAT-gated extension is decided by content too (its hashes).
+            Self::PerExtension(checks) => !matches!(check_for(checks, ext), Some(ExtCheck::Any)),
         }
     }
 
     /// True when a failed check on a file with extension `ext` means the file is no
     /// ROM at all (the scanner ignores it silently, see `ClassifyError::NotRom`).
     pub fn is_quiet(&self, ext: &str) -> bool {
-        matches!(self, Self::MagicForExtensions { quiet_exts, .. } if has_ext(quiet_exts, ext))
+        match self {
+            Self::MagicForExtensions { quiet_exts, .. } => has_ext(quiet_exts, ext),
+            Self::PerExtension(checks) => {
+                matches!(
+                    check_for(checks, ext),
+                    Some(ExtCheck::Magic { quiet: true, .. })
+                )
+            }
+            _ => false,
+        }
     }
 
     /// `Ok` when `first_bytes` (the start of a file with extension `ext`) pass, else
     /// the failure reason. A disc signature cannot be decided from bytes: the
     /// classifier hands it to a [`DiscProbe`](crate::DiscProbe) instead, so here it
-    /// always fails.
+    /// always fails; so does a DAT-gated extension (the classifier skips it first) and
+    /// an extension no group of a per-extension probe lists (a registry bug).
     pub fn check(&self, ext: &str, first_bytes: &[u8]) -> Result<(), &'static str> {
         match *self {
             Self::Any => Ok(()),
@@ -59,6 +75,17 @@ impl ContentProbe {
                 .iter()
                 .find_map(|bytes| magic_at(first_bytes, &[offset], bytes, missing).ok())
                 .ok_or(missing),
+            Self::PerExtension(checks) => match check_for(checks, ext) {
+                Some(ExtCheck::Any) => Ok(()),
+                Some(ExtCheck::Magic {
+                    offset,
+                    bytes,
+                    missing,
+                    ..
+                }) => magic_at(first_bytes, &[offset], bytes, missing),
+                Some(ExtCheck::DatHash) => Err("listed only when the DAT knows the file"),
+                None => Err("no content check for this extension"),
+            },
             Self::MagicForExtensions {
                 offsets,
                 bytes,

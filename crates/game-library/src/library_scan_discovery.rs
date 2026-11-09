@@ -43,7 +43,10 @@ pub(crate) fn discover_folder(
     }
     let discovered = discover_rom_files_with_options(root, systems, options);
     let known = file_fingerprints(&lock(db), folder.id)?;
-    let present: HashSet<&str> = discovered.files.iter().map(|f| f.path.as_str()).collect();
+    // DAT-pending files are present too (resolved in pass B), not vanished.
+    let present: HashSet<&str> = (discovered.files.iter().map(|f| f.path.as_str()))
+        .chain(discovered.dat_pending.iter().map(|f| f.path.as_str()))
+        .collect();
     // Entries the walk could not read are unknown, not vanished: keep their games.
     let unreadable: Vec<PathBuf> = discovered.failures.iter().map(|f| f.path.clone()).collect();
     let vanished: Vec<String> = known

@@ -23,6 +23,8 @@ const MIGRATION_LIST: &[M<'static>] = &[
     M::up(include_str!("../migrations/009_psp_platform.sql")),
     M::up(include_str!("../migrations/010_nds_platform.sql")),
     M::up(include_str!("../migrations/011_gamecube_wii_platforms.sql")),
+    M::up(include_str!("../migrations/012_atari_platforms.sql")),
+    M::up(include_str!("../migrations/013_ps2_platform.sql")),
 ];
 const MIGRATIONS: Migrations<'static> = Migrations::from_slice(MIGRATION_LIST);
 

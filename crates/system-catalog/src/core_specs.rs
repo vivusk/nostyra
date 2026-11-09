@@ -1,15 +1,17 @@
 //! The libretro cores Nostyra can download and run. One core may serve several
 //! systems (add the system id to `systems`).
 
+use crate::atari_core_specs::{HANDY, PROSYSTEM, STELLA};
 use crate::core_fixed_options::{MUPEN64PLUS_NEXT_OPTIONS, PCSX_REARMED_OPTIONS};
 pub use crate::core_spec_types::{
-    BiosOptionSwitch, CoreAssets, CoreSpec, FirmwareFile, MemoryCardSlot, SaveStateQuality,
-    CORE_DEFAULTS, DEFAULT_MAX_STATE_BYTES,
+    BiosOptionSwitch, CoreAssets, CoreSpec, FirmwareFile, FirmwareRule, MemoryCardSlot,
+    SaveStateQuality, CORE_DEFAULTS, DEFAULT_MAX_STATE_BYTES,
 };
 use crate::dreamcast_core_spec::FLYCAST;
 use crate::firmware_lists::PCSX_REARMED_BIOS;
 use crate::gamecube_wii_core_spec::DOLPHIN;
 use crate::nds_core_spec::MELONDS_DS;
+use crate::ps2_core_specs::PCEE2;
 use crate::psp_core_spec::PPSSPP;
 use crate::system_specs::{system, SystemSpec, ALL_SYSTEMS};
 
@@ -129,7 +131,7 @@ pub const MUPEN64PLUS_NEXT: CoreSpec = CoreSpec {
 };
 
 /// Every known core.
-pub const CORES: [&CoreSpec; 10] = [
+pub const CORES: [&CoreSpec; 14] = [
     &SNES9X,
     &MESEN,
     &MGBA,
@@ -137,9 +139,13 @@ pub const CORES: [&CoreSpec; 10] = [
     &GENESIS_PLUS_GX,
     &MUPEN64PLUS_NEXT,
     &FLYCAST,
+    &PCEE2,
     &PPSSPP,
     &MELONDS_DS,
     &DOLPHIN,
+    &STELLA,
+    &PROSYSTEM,
+    &HANDY,
 ];
 
 /// Core by id.

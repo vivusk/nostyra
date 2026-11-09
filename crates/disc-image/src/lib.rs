@@ -6,14 +6,14 @@
 //! - [`cdi_image`]: DiscJuggler `.cdi` session/track table.
 //! - [`m3u_playlist`]: `.m3u` multi-disc playlists (≤ 8 discs, the core's limit).
 //! - [`disc_sector_reader`]: 2048-byte user data of any sector of the first data
-//!   track — raw 2352 MODE1/MODE2, ISO 2048, CSO ([`cso_image`]), or CHD
+//!   track — raw 2352 MODE1/MODE2, ISO 2048, CSO / ZSO ([`cso_image`]), or CHD
 //!   ([`chd_track_reader`], DVD: [`chd_dvd_reader`]).
 //! - [`disc_track_access`]: every track with its absolute LBA (sessions, GD-ROM
 //!   high-density area), data tracks opened by number or rcheevos-style pick and
 //!   read by absolute LBA (achievement hashing).
 //! - [`iso9660_root`]: primary volume descriptor + file lookup by path.
 //! - [`playstation_disc_id`]: PS1 recognition (system id + licence), boot serial,
-//!   region.
+//!   region; PS2 recognition (`BOOT2`), serial / volume identity key, `VMODE`.
 //! - [`dreamcast_disc_id`]: Dreamcast IP.BIN (hardware id, product number, title)
 //!   from a `.gdi` / `.cue` / `.chd` / `.cdi` / bare track.
 //! - [`disc_serial_rule`]: serial normalisation per disc signature (DAT matching).
@@ -59,6 +59,7 @@ mod nintendo_disc_probe;
 pub mod param_sfo;
 pub mod pbp_sfo;
 pub mod playstation_disc_id;
+mod ps2_disc_probe;
 pub mod psp_disc_id;
 mod sheet_text;
 
@@ -78,7 +79,11 @@ pub use nintendo_disc_header::{
 };
 pub use param_sfo::ParamSfo;
 pub use pbp_sfo::{PbpInfo, PbpKind};
-pub use playstation_disc_id::{is_playstation, normalize_serial, region, serial, DiscRegion};
+pub use playstation_disc_id::{
+    boot2_exe, boot2_serial, disc_video_mode, is_playstation, is_playstation2, normalize_serial,
+    region, serial, system_cnf, DiscRegion,
+};
+pub use ps2_disc_probe::{ps2_identity_key, Ps2IdentityKey};
 pub use psp_disc_id::{read_psp_identity, PspDiscId};
 
 /// Cue sheet extension (dot-less).
@@ -95,8 +100,12 @@ pub const CDI_EXT: &str = "cdi";
 pub const PBP_EXT: &str = "pbp";
 /// Compressed ISO extension (dot-less).
 pub const CSO_EXT: &str = "cso";
-/// Plain disc image extension (PS1, PSP, GameCube, Wii; dot-less).
+/// LZ4-compressed ISO extension (CISO layout, `ZISO` magic; PS2 only; dot-less).
+pub const ZSO_EXT: &str = "zso";
+/// Plain disc image extension (PS1, PS2, PSP, GameCube, Wii; dot-less).
 pub const ISO_EXT: &str = "iso";
+/// Raw track / bare image extension (PS1, PS2; dot-less).
+pub const BIN_EXT: &str = "bin";
 /// GameCube plain disc image extension (dot-less).
 pub const GCM_EXT: &str = "gcm";
 /// GameCube / Wii compact ISO extension (dot-less; not the PSP `cso`).
@@ -129,6 +138,12 @@ pub fn is_gdi_ext(ext: &str) -> bool {
     ext.eq_ignore_ascii_case(GDI_EXT)
 }
 
+/// Whether `ext` names a CISO-layout image the [`cso_image::CsoReader`] opens
+/// (`.cso` deflate or `.zso` LZ4; the magic decides the codec).
+pub fn is_cso_ext(ext: &str) -> bool {
+    ext.eq_ignore_ascii_case(CSO_EXT) || ext.eq_ignore_ascii_case(ZSO_EXT)
+}
+
 /// Whether `ext` is a sheet that references other files (`.cue` / `.gdi` / `.m3u`):
 /// such a file is a game entry, and the files it names are not.
 pub fn is_sheet_ext(ext: &str) -> bool {
@@ -148,8 +163,15 @@ pub mod test_images;
 /// Synthetic GameCube / Wii disc headers, containers and executables.
 #[cfg(any(test, feature = "test-images"))]
 pub mod test_nintendo_images;
+/// Synthetic PlayStation 2 volumes (`SYSTEM.CNF` with `BOOT2`) and the ZSO container.
+#[cfg(any(test, feature = "test-images"))]
+pub mod test_ps2_images;
 /// Synthetic PSP images (`PARAM.SFO`, ISO tree) and containers (PBP, CSO, DVD CHD).
 #[cfg(any(test, feature = "test-images"))]
 pub mod test_psp_containers;
 #[cfg(any(test, feature = "test-images"))]
 pub mod test_psp_images;
+/// A > 4 GiB disc served from memory (`VirtualDisc: ContentFileSource`, zero bytes
+/// on disk) for the LBA tests of the readers here and of the achievements cdreader.
+#[cfg(any(test, feature = "test-images"))]
+pub mod virtual_disc_source;

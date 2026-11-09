@@ -1,6 +1,6 @@
 # Nostyra — System Architecture
 
-Last updated: 2026-10-29 · Status: M0–M4 + M6–M15 implemented (Windows; manual checks pending)
+Last updated: 2026-11-09 · Status: M0–M4 + M6–M18 implemented (Windows; manual checks pending; M16 = web edition, M17 = Atari 2600 / 7800 / Lynx, M18 = PlayStation 2 on PCEE2)
 
 ## 1. High-Level View
 
@@ -60,8 +60,8 @@ nostyra/
 │   ├── input-mapping/         # SDL3 devices → RETRO_DEVICE_JOYPAD / ANALOG (sticks, triggers), pointer state (DS touch, Wii IR), config bindings [M0/M4/M10/M11/M13/M14]
 │   ├── ipc-protocol/          # launcher↔runner message types (serde); feature `native` = OS data roots, logs, on-disk game entry lookup; pure part (names, layout, sidecars, `web-*` state stems, pending sessions) builds for wasm32 [M1/M16]
 │   ├── storage-db/            # SQLite schema, migrations, repositories        [M1]
-│   ├── game-library/          # scanner (walkdir + rayon), storage-db writes, per-system catalogs; identity, metadat index and disc grouping rules via rom-identity [M1/M13/M14/M16]
-│   ├── rom-identity/          # identity without a DB (desktop + web wasm32): header-aware hashing (streamed > 32 MiB), single-ROM ZIP, disc identity, DS code, GC/Wii game ID, DAT parse + match, metadat index + metadata lookup, multi-file disc grouping (pure over content-file-source), state content tag [M16]
+│   ├── game-library/          # scanner (walkdir + rayon), storage-db writes, per-system catalogs; identity, metadat index and disc grouping rules via rom-identity; DAT-pending `.bin` resolution [M1/M13/M14/M16/M17]
+│   ├── rom-identity/          # identity without a DB (desktop + web wasm32): header-aware hashing (streamed > 32 MiB), single-ROM ZIP, disc identity, DS code, GC/Wii game ID, DAT parse + match, metadat index + metadata lookup, multi-file disc grouping (pure over content-file-source), state content tag, DAT-gated `.bin` lookup + hint [M16/M17]
 │   ├── content-file-source/   # std-only: every identity file read + `canonical` path form (OS by default; the web installs a virtual File System Access source per call, case-insensitive like Windows) [M16]
 │   ├── web-bindings/          # wasm-bindgen surface for the web edition (catalog + DAT/thumbnail names, scan verdicts, identify + DAT facts + metadat, disc grouping, zip, patch, naming, config text); built by scripts/build-web-wasm.* [M16]
 │   ├── rom-patch/             # IPS/UPS/BPS soft-patching (in memory)           [M2]
@@ -70,13 +70,13 @@ nostyra/
 │   ├── http-download-util/    # shared HTTPS client (offline switch), capped copy [M2]
 │   ├── artwork-cache/         # libretro-thumbnails index, download, re-encode   [M2]
 │   ├── config-layers/         # TOML layers global→system→core→game, merge, write; binding names; staged dir replace; feature `fs` = file I/O, pure parse/merge/edit builds for wasm32 [M3/M4/M12/M16]
-│   ├── system-catalog/        # std-only registry: systems, cores, ROM classification, header rules, BIOS status, touch-screen / aiming-pointer rule, web (EmulatorJS) core per system [M6, M8, M13, M14, M16]
+│   ├── system-catalog/        # std-only registry: systems, cores, ROM classification, header rules, BIOS status, touch-screen / aiming-pointer rule, web (EmulatorJS) core per system, per-extension probes [M6, M8, M13, M14, M16, M17]
 │   ├── disc-image/            # cue/gdi/m3u, CHD (CD + GD-ROM + DVD), CDI, CSO, sector reader, ISO9660 paths, PARAM.SFO, PS1 id + serial, DC IP.BIN, PSP disc id, GC/Wii disc headers (ISO/GCM/CISO/GCZ/WIA/RVZ/WBFS) + DOL/ELF HID4 scan, serial rules, DiscImageProbe, track list + absolute-LBA reads [M8/M11/M12/M14/M15]
 │   └── achievements/          # rcheevos FFI (private `ffi`, the only unsafe), safe single-thread rc_client wrapper, transports (ureq | fake), credentials, offline journal, hashing readers, memory regions, hardcore rules, snapshot schema [M15]
 ├── assets/fonts/              # Noto Sans Regular + Bold (OFL-1.1), embedded in the runner for the achievement overlay [M15]
 ├── third-party/libretro/      # vendored libretro.h (MIT)
 ├── third-party/rcheevos/      # vendored rcheevos v12.5.0 include/ + src/ (MIT, unmodified), built by crates/achievements/build.rs (cc) [M15]
-├── third-party/libretro-database/ # No-Intro DATs (SNES [M1], NES [M6], GB/GBC/GBA [M7], Sega [M9], N64 [M10], NDS Decrypted [M13]), Redump PS1 [M8] + Dreamcast [M11] + PSP [M12] + GameCube / Wii [M14] + metadat attribute DATs (developer, publisher, genre, releaseyear, maxusers) [M2], CC-BY-SA-4.0
+├── third-party/libretro-database/ # No-Intro DATs (SNES [M1], NES [M6], GB/GBC/GBA [M7], Sega [M9], N64 [M10], NDS Decrypted [M13]), Redump PS1 [M8] + Dreamcast [M11] + PSP [M12] + GameCube / Wii [M14] + PlayStation 2 [M18], No-Intro Atari 2600 / 7800 / Lynx [M17] + metadat attribute DATs (developer, publisher, genre, releaseyear, maxusers) [M2], CC-BY-SA-4.0
 ├── docs/                    # plans/ is local-only (git-ignored)
 ```
 
@@ -96,7 +96,7 @@ loop {
   - Otherwise (e.g. 59/61/120/144 Hz, or refresh unknown) → **audio-sync mode**: emulation at core fps, block until queued ≤ target; audio ratio = `core_rate / round(core_rate)` only (no display factor; optional DRC around it). Present once per emulated frame: Immediate → Mailbox → Fifo (warn if display_hz ≤ core_fps; audio wait throttles). `--audio-sync` forces it.
 
 - Run-ahead (M3, `latency.run_ahead_frames` 0–2, single instance): per due frame the real frame runs (video off, audio on) → `serialize` (`RUNAHEAD_SAME_INSTANCE` context, reused buffer) → N−1 hidden frames (AV off) → 1 frame video on / audio off → present → `unserialize`. Catch-up ticks run plain frames for all but the last due frame. SRAM tick, audio pacing and rewind capture see only real-timeline frames. Bypassed while fast-forward, rewind or the pause menu is active; refused for cores with the `INCOMPLETE` serialization quirk and switched off for the session on a serialize error (OSD "Run-ahead unavailable"). Debug log every 10 s: avg/max emulate time per tick (`emulate_time_stats`).
-- Serialize plumbing (`libretro-host`): `serialize_into` / `unserialize_from` reuse one buffer, cache `serialize_size` (re-queried for `CORE_VARIABLE_SIZE`), honour `SET_SERIALIZATION_QUIRKS` (`MUST_INITIALIZE` → `SerializeNotReady`), answer `GET_SAVESTATE_CONTEXT` (`NORMAL` for slots, `RUNAHEAD_SAME_INSTANCE` for run-ahead/rewind); `AvEnable{video,audio}` replaces the single skip flag.
+- Serialize plumbing (`libretro-host`): `serialize_into` / `unserialize_from` reuse one buffer, cache `serialize_size` **per savestate context** (M17, `state_size_cache.rs`: `StateSizes{normal, fast}`, `CoreSession::state_size_in(context)` asks `retro_serialize_size` inside `with_context(context)`, so a core whose fast state differs in size works in run-ahead / rewind — ProSystem 49 221 B normal / 83 968 B fast, Stella 1 001 B / 1 MiB; the exact-size check of `unserialize_from` uses the same entry; `reset` keeps both; re-queried for `CORE_VARIABLE_SIZE`), honour `SET_SERIALIZATION_QUIRKS` (`MUST_INITIALIZE` → `SerializeNotReady`), answer `GET_SAVESTATE_CONTEXT` (`NORMAL` for slots, `RUNAHEAD_SAME_INSTANCE` for run-ahead/rewind); `AvEnable{video,audio}` replaces the single skip flag.
 - Achievement hooks (M15, only while an achievement session runs, §3.7): `rc_client_do_frame` after every real-timeline frame (`RealTimeline::after_real_frame`) and every fast-forward frame (skipped + preview); run-ahead's hidden frames never reach it (rollback = the real state, so no achievement progress in run-ahead snapshots). `rc_client_idle` on every paused and rewinding redraw; `rc_client_reset` from the menu reset; disc swap → own hash → `begin_change_media`. No session (logged out, disabled, unsupported system) = no hook cost.
 - Soft-patching (runner start): `rom-patch::find_patches_for_rom` builds the chain beside the ROM — `<rom stem>.bps`, `.bps1`, `.bps2`, … then `.ups…`, then `.ips…` (unnumbered file optional, numbering stops at the first gap) — and `apply_patch_chain` applies it in order (any failure → unpatched, never half-patched); the patched bytes go to the core via `SessionConfig::rom_data` (cores needing the full path ignore it, with a warning). UPS/BPS verify CRC32s (retried on the headerless image for 512-byte copier headers); a failing chain is logged and the game starts unpatched. Saves stay keyed by ROM name (shared with the unpatched game).
 
@@ -123,6 +123,7 @@ Call order: `retro_set_environment` → `retro_init` → `retro_set_video_refres
     - `keep_library_loaded`: `FreeLibrary` after any `retro_unserialize` (and after a failed boot) hangs the session thread's exit, so `SessionConfig::keep_library_loaded` keeps the library mapped from the start of `CoreSession::start` (unload + deinit still run). Its DLL-detach / static-destructor phase can also hang a normal process exit, so `main` ends every session of such a core with `process_hard_exit::exit_now` (Windows `TerminateProcess`, Unix `_exit`) after the unload, save writes, IPC `Stopped` and the pending play-session record; `loaded_session_run` flags it just before `CoreSession::load`, so a failed load counts too.
     - `strict_state_version`: see the state guard (§5.1, GameCube / Wii).
   - *Teardown watchdog (M14, all cores)*: `process_hard_exit/teardown_watchdog.rs` (open core issue #520: unload hang). `TeardownGuard` arms on drop and is declared after the value owning the session on each path (after `CoreSession::load` with `EXIT_RUNTIME` for `?` early returns; re-bound after `app.finish()` (now `&mut self`) on the window path and to 0 at the end of `headless_runner::run`); `main` disarms before its own `reporter.finished`. After `TEARDOWN_TIMEOUT` (10 s; debug `NOSTYRA_TEST_TEARDOWN_TIMEOUT_MS` / `_DELAY_MS`) it logs a warning, reports `finished(code, "core teardown timed out")` through the shared `SessionReporter` (`Arc`, started state read at fire time, an atomic "reported" flag so only one side reports: IPC `Stopped` + pending play-session record) and calls `exit_now(code)`; code = the run's own (0 on a normal quit). Not armed during a failed load (keep-loaded covers Dolphin there).
+  - *PCEE2 (M18, PlayStation 2)*: asks `RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT` (`44 | EXPERIMENTAL`; libretro.h reuses 44 for the plain `SET_SERIALIZATION_QUIRKS`, so after the experimental-bit strip the two are indistinguishable — `environment_callback.rs` answers the shared-context request **before** the strip: false + one info line, `environment_hw_render::shared_context_refused`, no state change), then "tries anyway": captures the frontend's WGL context, creates its **own shared 4.6 context for its GS thread**, asks `OPENGL_CORE 3.3` (accepted on today's context) and delivers frames through `get_current_framebuffer` on the session thread — no host shared-context work. `pcsx2_renderer=opengl` fixed; with GL refused or no provider the core falls back to its own Vulkan readback device (software `video_refresh`, XRGB8888, one extra frame of latency, correct picture), so `hw_render_required` stays false (PPSSPP-style warning only, never exit 6). Upscale 1× (`pcsx2_upscale_multiplier=1`: spike GL 1× run_frame p95 11.7 ms / readback 10.5 ms; 2× p95 31 ms). `pcsx2_skip_duplicate_frames=disabled` (the default makes one `retro_run` wait for a unique GS frame = 2 fields), `pcsx2_frame_limiter=frontend`. `SET_GEOMETRY` 640×480 → 640×448 / 512×448 at boot never resizes the window (same 4:3). Max av 2732×2048 (FBO ~22 MB), 59.94 fps, 48 kHz.
   - *Next backends*: another GL core needs no host change beyond what it asks for (`OpenGlCore` above 3.3 → raise `MAX_CORE` after testing; Dolphin's bounding box would need it). Vulkan (ParaLLEl-RDP, Dolphin) = a new `HwRenderProvider` crate plus the `SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE` / `GET_HW_RENDER_INTERFACE` env ids; a zero-copy backend hands a GPU texture to a GPU-side sink through the same `deliver_frame` seam instead of reading back. Context loss / re-init is not handled (we never re-init video).
 - **Two screens (M13, melonDS DS)**: software `XRGB8888`, both DS screens composited by the core into one frame (top-bottom 256×384 → window 480×720 by the start-up rule). R3 switches the core's layout (`SET_GEOMETRY` → 512×192 left-right and back). On a base-geometry aspect change the runner resizes a normal window to the start-up size for the new shape (`emulation_main_loop/window_resize_on_geometry.rs`: `resize_target` pure, `apply_geometry` from the av-change hook; `runner_window::window_size_for` shared with start-up); fullscreen / maximised windows, an unchanged aspect (relative < 1e-3) or an unknown previous aspect only re-fit the picture. Generic for every core (others keep one aspect). `SET_ROTATION` stays unhandled (rotated layouts are not offered).
 - Upload to wgpu texture, draw fullscreen quad; scaling modes: aspect-correct (8:7 PAR → 4:3), integer scale, stretch.
@@ -272,11 +273,13 @@ Artwork rows: transient failures (offline, timeouts) write nothing, so the next 
 named `<game_id>-cover.jpg` / `<game_id>-hero.png`: any future code that deletes games must delete
 their artwork files first**, or a reused id would show another game's art.
 
-### 5.1 Systems, classification and relink (M6, M7, M8, M9, M10, M11, M12, M13, M14)
+### 5.1 Systems, classification and relink (M6, M7, M8, M9, M10, M11, M12, M13, M14, M17, M18)
 - **Registry** (`crates/system-catalog`, std only): `SystemSpec` (id, labels, extensions, content probe,
   header rule, size limits, default core, DAT / metadat file, thumbnails repo/folder, pad actions, pad
   labels = the system's own button names per RetroPad action, e.g. Mega Drive `y` → "A") and
-  `CoreSpec` (id, library stem, systems, licence, `fixed_options`, firmware, memory cards, `savestates`), plus
+  `CoreSpec` (id, library stem, systems, licence, `fixed_options`, firmware, `firmware_rule` (M18: `KnownFiles` =
+  the md5 / size list, `Ps2Romdir { subdir, option }` = any 4–8 MiB dump with a ROMDIR `ROMVER`), memory cards,
+  `savestates`, `hardcore_required_options`), plus
   `SystemSpec.analog_sticks` (M10: raw sticks; `AnalogSticks` enum since M13, §3.5) and
   `SystemSpec.touch_screen` (M13: pointer rule; M14 adds the aiming variant `WiiRemoteIr`, §3.5). `CoreSpec.savestates: SaveStateQuality` (the libretro
   `.info` field): `Deterministic`, or `Serialized` (serialize advances the emulation to a safe point, e.g.
@@ -301,8 +304,30 @@ their artwork files first**, or a reused id would show another game's art.
   `ContentProbe::MagicAny` (M10) accepts any of several magics at one offset: N64 `80 37 12 40` (z64),
   `37 80 40 12` (v64), `40 12 37 80` (n64) at 0 for `.z64` / `.v64` / `.n64` (the magic, not the extension,
   decides the byte order); a miss = scan failure "missing N64 header".
+  `ContentProbe::PerExtension(&[ExtensionCheck])` (M17, `per_extension_probe.rs`): one `ExtCheck` per extension
+  group — `Any` (by extension; 7800 `.a78` and Lynx `.lnx` too: GoodTools names headerless dumps with these
+  extensions and both cores read either form), `Magic{offset, bytes, missing, quiet}` (Lynx `.o` / `.bll`
+  `BS93`@6 **quiet**: a C object `.o` is `NotRom`) or `DatHash` (2600 / 7800 `.bin`). The classifier **skips** a `DatHash` candidate before the size
+  check (no Ok, no error), so a `.bin` still runs GENESIS → PSX exactly as before; the DAT gate runs in the
+  scanner (below).
   Registry order is classification order: cartridges before discs (`ALL_SYSTEMS = [SNES, NES, GB, GBC,
-  GBA, N64, NDS, GENESIS, SMS, GG, SG1000, PSX, DREAMCAST, PSP]`; discs shared by extension are probed PS1 → DC → PSP), so a `.bin` reads the cheap magic before the disc probe.
+  GBA, N64, NDS, GENESIS, SMS, GG, SG1000, ATARI2600, ATARI7800, LYNX, PSX, PS2, DREAMCAST, PSP, GC, WII]` (20 since
+  M18); discs shared by extension are probed PS1 → PS2 → DC → PSP → GC / Wii: a PS2 CD `.bin/.cue` must fail the
+  PS1 licence check first, and the PS2 probe is cheaper than the DC / PSP / GC / Wii ones), so a `.bin` reads the
+  cheap magic before the disc probe.
+  `DISPLAY_ORDER` (UI only) groups by maker (Nintendo, Sony, Sega, Atari).
+- **DAT-gated `.bin` (M17, loose files only)**: a `.bin` that is still a scan failure after classification
+  **and after disc grouping** (sheet tracks are hidden first, never pending) and whose extension / size fits a
+  `DatHash` system becomes a `DatPendingFile{path, size, mtime_ns, reason, candidates}` in
+  `DiscoveredFiles.dat_pending` (pass A, `game_library::dat_pending_resolution::split_dat_pending`, one
+  `fs::metadata`; runs even when disc grouping is skipped). Pass B (`resolve_dat_pending`, before the
+  failures are stored) reads it capped at the largest candidate `max_bytes` + 1 and calls
+  `rom_identity::dat_identified_system` (primary + headerless hashes per candidate, registry order 2600 → 7800,
+  first DAT hit wins) → a normal `DiscoveredFile` of that system; a miss keeps the old reason +
+  `dat_pending_hint` ("…; also not a known Atari 2600 / Atari 7800 dump (homebrew: use .a26 / .a78)", built from
+  display names and first extensions). No rescan cache (pending files are re-read every scan; a stored hit keeps
+  its row through the normal unchanged / relink path). ZIP members are never DAT-gated: the ZIP read paths
+  (pass B hashing, runner, web `zip_single_rom`) classify without DATs.
 - **Hashing / identification**: SNES skips a copier header; Mega Drive SMD files (size `n × 16 KiB + 512`,
   no `SEGA` at 0x100; `HeaderRule::MegaDriveSmd`) hash as their de-interleaved raw image
   (`system_catalog::rom_image_for_hash`, the same rule Genesis Plus GX applies on load), so an `.smd`
@@ -311,7 +336,11 @@ their artwork files first**, or a reused id would show another game's art.
   (`hash_rom_file` owns the buffer, no 64 MiB copy), so every order matches the DAT's `.z64` row and shares one
   content id; the core still gets the file's own bytes (it detects the order itself); GB/GBC/GBA/SMS/GG/SG-1000 hash
   the whole file; NES hashes the whole file and, on a DAT miss,
-  the bytes after the header (+ trainer) against the DAT's `.unh` entries (re-headered dumps). Large
+  the bytes after the header (+ trainer) against the DAT's `.unh` entries (re-headered dumps).
+  `HeaderRule::MagicHeader{offset, magic, len}` (M17; 7800 `ATARI7800`@1 / 128 B, Lynx `LYNX\0`@0 / 64 B) works
+  the same way: primary hash = whole file (content id, `hash_skip_len` 0), fallback (`hash_headerless`) = the
+  bytes after the header when the magic is present, so headered `.a78` / `.lnx` dumps match No-Intro's
+  headerless entries, while an `.a78` and its `.bin` twin keep separate content ids / save folders. Large
   cartridges (M13): with `HeaderRule::None` and a file over `STREAM_HASH_THRESHOLD` (32 MiB) `hash_rom_file`
   streams CRC32 + SHA1 (never the whole file in RAM: 4 hash threads × 512 MiB DS games) and returns an empty
   byte buffer (callers that need bytes use header rules, which never stream); the threshold is injectable
@@ -323,9 +352,10 @@ their artwork files first**, or a reused id would show another game's art.
   joined via `DatEntry.metadata_crc32` (the headered `.nes` CRC of the game name). DAT + metadat load
   lazily per system (`game_library::SystemCatalogs`); startup warms the systems already in the library.
 - **Two-pass scan** (`scan_library`): pass A walks every folder and flags vanished files missing, pass B
-- **Single-ROM ZIPs** (opt-in, 2026-11-04, contributed in PR #1 by jnovax): DB setting `scan_zip_archives` (`library_scan_options`; Settings → ROM folders toggle, changing it rescans). `rom_archive` reads a ZIP holding exactly one NES / SNES / Mega Drive / Master System / Game Gear / SG-1000 / GBA ROM (documents, `__MACOSX`, `._*` ignored): discovery decodes only the ROM head (`PROBE_BYTES`) for `classify_with_head`; hashing / play decode the whole member capped at `max_bytes + 1` and must match the declared size (zip-bomb guard). `io::ErrorKind::Unsupported` = not a single-ROM ZIP of a supported system (several ROMs, other system, no ROM, nested ZIP, out of size) → skipped like a non-ROM file; damaged archives, unsafe member names (`..`, `\`, `:`), bad dumps and undecodable compression (the workspace `zip` build has Store / Deflate only; encrypted members too) → scan problems. Identity: the archive path is the file row; content sha1 = hash of the ROM bytes (a ZIP and the same loose ROM share saves). Turning the option off keeps ZIP games (only vanished archives are flagged missing). Runner: `archived_content::PreparedContent` writes the ROM to `<data>/staged-content/<pid>/archive-*/content.<ext>` (never a member-controlled path, `TempDir` removed after the session, stale dirs by `staged_content_cleanup`); core, soft patches (looked up beside the ZIP) and achievement hashing use the extracted file, saves / config / session records the ZIP path.
-  hashes/upserts per folder — a file moved between folders relinks whatever the folder order. A missing
+  hashes/upserts per folder — a file moved between folders relinks whatever the folder order (M17: DAT-pending
+  `.bin` files join pass A's present set and are resolved at the start of pass B, see above). A missing
   folder root is reported and its rows are left untouched.
+- **Single-ROM ZIPs** (opt-in, 2026-11-04, contributed in PR #1 by jnovax): DB setting `scan_zip_archives` (`library_scan_options`; Settings → ROM folders toggle, changing it rescans). `rom_archive` reads a ZIP holding exactly one ROM of a `ZIP_ARCHIVE_SYSTEMS` system (NES, SNES, GBA, Mega Drive, Master System, Game Gear, SG-1000, Atari 2600 / 7800 / Lynx since M17; problem texts list them from the registry, `zip_archive_messages.rs`) (documents, `__MACOSX`, `._*` ignored): discovery decodes only the ROM head (`PROBE_BYTES`) for `classify_with_head`; hashing / play decode the whole member capped at `max_bytes + 1` and must match the declared size (zip-bomb guard). `io::ErrorKind::Unsupported` = not a single-ROM ZIP of a supported system (several ROMs, other system, no ROM, nested ZIP, out of size) → skipped like a non-ROM file; damaged archives, unsafe member names (`..`, `\`, `:`), bad dumps and undecodable compression (the workspace `zip` build has Store / Deflate only; encrypted members too) → scan problems. Identity: the archive path is the file row; content sha1 = hash of the ROM bytes (a ZIP and the same loose ROM share saves). Turning the option off keeps ZIP games (only vanished archives are flagged missing). Runner: `archived_content::PreparedContent` writes the ROM to `<data>/staged-content/<pid>/archive-*/content.<ext>` (never a member-controlled path, `TempDir` removed after the session, stale dirs by `staged_content_cleanup`); core, soft patches (looked up beside the ZIP) and achievement hashing use the extracted file, saves / config / session records the ZIP path.
 - **Per-game file names** (`ipc_protocol::game_folder_key`): save folder `saves/<system>/<rom key> [<ID>]/`
   and game config `config/game/<system>/<rom key> [<ID>].toml`, `<ID>` = first 8 hex digits (upper case)
   of the game's content sha1 (`games.sha1`: cartridge per header rule, disc = first data track of the first
@@ -344,7 +374,7 @@ their artwork files first**, or a reused id would show another game's art.
   running, another row has the same content id, the target exists, or the name is not the app's
   (`<old key> [<ID>]` — a name the user chose is kept); a legacy `<old key>` entry gets its id on the way
   unless another game with that file name may share it. Files are never deleted or overwritten.
-- **Adding a system**: (1) a `SystemSpec` in `system_specs.rs` + `ALL_SYSTEMS`; (2) its core in
+- **Adding a system**: (1) a `SystemSpec` in `system_specs.rs` (or a family file) + `ALL_SYSTEMS` + `DISPLAY_ORDER`; (2) its core in
   `core_specs.rs` (or the system id in an existing core's `systems`) + `scripts/fetch-<core>-core.*`;
   (3) its DAT name in `scripts/update-libretro-dat.*`, run it, commit the files; (4) a storage-db
   migration inserting the `platforms` row; (5) a self-written test ROM if the runner suites should cover
@@ -399,6 +429,31 @@ their artwork files first**, or a reused id would show another game's art.
   `keep_library_loaded` (§3.3); Redump GC + Wii DATs + metadat, migration `011_gamecube_wii_platforms.sql`, test
   programs `nostyra-test.dol` / `nostyra-test-wii.dol` (Python PowerPC, `ppc_emitter.py`; Wii = the same code +
   one `mtspr HID4` word).
+  M17 example (three cartridge systems, three small cores, shared `.bin`): `atari2600` / `atari7800` / `lynx` in
+  `atari_system_specs.rs` (after SG-1000 in `ALL_SYSTEMS` → 19; `PerExtension` probes, `.bin` = `DatHash`,
+  `MagicHeader` for 7800 / Lynx, no SAVE_RAM, RA 25 / 51 / 13, `web_core` stella2014 / prosystem / handy) → cores
+  `stella`, `prosystem`, `handy` in `atari_core_specs.rs` (all `Deterministic`; Handy `fixed_options`
+  `handy_refresh_rate=60`, `exact_state_size`, `strict_state_version` (`SINGLE_SESSION` quirk) and the new
+  `stage_content`); `ZIP_ARCHIVE_SYSTEMS` 10; No-Intro DATs + metadat at the same pin, migration
+  `012_atari_platforms.sql`; test ROMs `nostyra-test.{a26,a78,o,lnx}` + `nostyra-test-7800.bin` (Python, shared
+  `mos6502_emitter.py` taken out of the NES builder; `.lnx` boots through the cc65 zlib first-stage loader). No
+  BIOS entries: a hand-copied `7800 BIOS (U/E).rom` / `lynxboot.img` in `<system>/` is the core's business.
+  Handy writes the cartridge EEPROM itself (`GET_SAVE_DIRECTORY`) as `<save folder>/content.eeprom` on
+  `retro_reset` and `retro_deinit` (a crash loses the session's writes); Handy rotates vertical games itself
+  (`SET_GEOMETRY` 102×160, the existing resize rule follows; host `SET_ROTATION` still unhandled). The window
+  resize threshold was not changed (Stella's geometry events never move the display aspect).
+  M18 example (fifth GPU core, first system that needs the user's BIOS): `ps2` in `ps2_system_spec.rs` (after PSX
+  in `ALL_SYSTEMS` → 20, between PSX and PSP in `DISPLAY_ORDER`; `DiscSignature::PlayStation2`; `iso bin cue chd cso
+  zso m3u`, 16 B .. 9 GiB; DualShock 2 labels, `l3` / `r3`, `AnalogSticks::Both`, RA 21, `web_core: None`) → core
+  `pcee2` in `ps2_core_specs.rs` (14 fixed `pcsx2_*` options, `firmware_rule: Ps2Romdir { "pcsx2/bios",
+  "pcsx2_bios" }`, `Serialized`, `exact_state_size`, 128 MiB cap, `strict_state_version`, ports `[JOYPAD, JOYPAD,
+  NONE, NONE]`, `hardcore_required_options` = cheats / EE cycle rate `0` / cycle skip `0` / widescreen /
+  no-interlacing patches off — rcheevos has no PCSX2 row, the registry is the only source); `LARGE_STATE_SYSTEMS` +=
+  `ps2`; Redump PS2 DAT + developer metadat (publisher / genre / releaseyear / maxusers are 404 upstream →
+  header-only placeholders), migration `013_ps2_platform.sql`; test program + disc `nostyra-test-ps2.{elf,iso}`
+  (Python EE MIPS on the Allegrex emitter; the ISO needs root L/M path tables and ≥ 2 MiB padding or the kernel
+  never starts the ELF). LRPS2 ("ParaLLEl PS2") was spiked and not shipped (GL 3.3 shader failures, cwd shader
+  dumps, off-thread `GET_VARIABLE`, title-screen stall); `scripts/fetch-lrps2-core.*` stays for evaluation.
 - **Disc systems (M8, PlayStation on PCSX ReARMed)** — `SystemSpec.media = Media::Disc` switches every
   disc path:
   - *Probe*: `ContentProbe::Disc(DiscSignature)` is data in the std-only registry; the `DiscProbe` trait is
@@ -524,9 +579,9 @@ their artwork files first**, or a reused id would show another game's art.
     `.elf` (`dol_elf_executable.rs`): DOL section table / ELF32 big-endian PowerPC sanity, then a scan of the
     text sections (≤ 32 MiB) for `mtspr HID4` (Wii-only) or a section in MEM2 → Wii, else GC.
   - *Probe / classifier*: GC / Wii are the last disc candidates (PSX / PSP probes fail after one ISO9660 read).
-    Reject texts depend on the extension (`.iso` "not a PlayStation, PSP, GameCube or Wii disc"; `.wbfs` "not a
-    Wii disc"; other GC/Wii-only extensions "not a GameCube or Wii disc"; `.m3u` "not a PlayStation, Dreamcast or
-    GameCube playlist"). `ClassifyError::outranks` (`classify_error.rs`): a later generic "not a … disc /
+    Reject texts depend on the extension (`.iso` "not a PlayStation, PlayStation 2, PSP, GameCube or Wii disc";
+    `.wbfs` "not a Wii disc"; other GC/Wii-only extensions "not a GameCube or Wii disc"; `.m3u` "not a PlayStation,
+    PlayStation 2, Dreamcast or GameCube playlist"; `.bin` (M18) "not a PlayStation or PlayStation 2 disc"). `ClassifyError::outranks` (`classify_error.rs`): a later generic "not a … disc /
     playlist" reject never replaces an earlier specific reason (PSP "UMD Video", "not a valid GDI sheet" …). A
     valid ELF that is not ELF32 BE PowerPC is no GC/Wii candidate → quiet `NotRom` ("not a PowerPC executable",
     `foreign_executable_probe.rs`, head-byte pre-check); a malformed PowerPC ELF / DOL stays a problem row.
@@ -546,12 +601,92 @@ their artwork files first**, or a reused id would show another game's art.
     (serde defaults; old sidecars load unchecked). Every save stamps them; every load runs
     `state_file_guard.rs`: core name → version (lenient: warn; `CoreSpec.strict_state_version`: refuse "made
     by another Dolphin version") → content tag (`game_library::state_content_tag`: GC/Wii disc `ID6:disc:rev`,
-    `.m3u` `m3u:ID6`, else `None`; mismatch "made from another disc or revision", untagged sides pass) → cap
+    `.m3u` `m3u:ID6`, PS2 (M18, `ps2_state_content_tag.rs`) `<BOOT2 exe>:<CRC32 of its first 64 KiB>` /
+    `m3u:<first disc tag>`, else `None`; mismatch "made from another disc or revision", untagged sides pass) → cap
     (`max_state_bytes`) → length → read → CRC → core (Dolphin accepts or truncates any blob silently). Sidecar is
     written first: a crash between the two writes reads as "state file is damaged", never reaches the core.
     `SaveStateSlots::for_game` takes the strict flag from the registry and the tag from `RunnerDataPaths`. The
     launcher applies the same rule (`state-incompatible`, §4). States ~91–116 MiB (`requery_state_size`;
     size 0 before frame 1 → existing startup hold).
+- **PlayStation 2 discs (M18, PCEE2)** — the sixth disc system reuses the M8 / M11 / M14 paths and adds:
+  - *Probe* (`disc-image` `ps2_disc_probe.rs`, `playstation_disc_id.rs`): ISO9660 system id `PLAYSTATION` **and** a
+    root `SYSTEM.CNF` with a `BOOT2 = cdrom0:\…` line (`boot2_exe` / `boot2_serial`; PS1 discs have `BOOT` + the
+    licence text and are claimed first; `boot_serial` still ignores `BOOT2`). `disc_video_mode` reads `VMODE`
+    (`Ps2VideoMode { Ntsc, Pal }`, owned by `system-catalog`). Works through every reader: 2048 ISO, raw 2352
+    `.bin`, DVD / CD CHD, CISO `.cso` and LZ4 `.zso` (`cso_image.rs` decodes `ZISO` blocks with `lz4_flex`, dropping
+    alignment padding by retry; `ZSO_EXT` / `is_cso_ext` dispatch in `disc_sector_reader` and `disc_track_access`;
+    `check_psp` still refuses LZ4 data). CSO / ZSO / I/O errors are reported verbatim; `.bin` misses read
+    `NOT_ANY_BIN`, others "not a PlayStation 2 disc".
+  - *Identity* (`rom-identity` `ps2_disc_identity.rs`): **no file hash** — content id = `sha1("ps2:<SERIAL>")`
+    (`SLPS-25497`, normalised from `SLPS_254.97`), size = the Redump-listed file for the DAT tie-break; Redump
+    match by the 10-char serial key on both sides (`disc_serial_rule.rs`: first 9 alphanumerics, so variant blocks
+    `SLPM-65002-0` / `SLES---54150` / `SCES-53326/ANZ` collapse), title + metadata from the developer metadat. A
+    `BOOT2` that names no serial-shaped executable (homebrew / demos) gives
+    `sha1("ps2:vol:<VOLUME ID>/<BOOT2 path>")` (header-only, no DAT match). Scan and runner read ≤ 64 KiB per disc
+    (counting-reader test; the user's 4.3 GB disc reads 22 528 B), proven on a virtual > 4 GiB `.iso` served by the
+    test-only `VirtualDisc: ContentFileSource` under `content_file_source::with_source` (no file on disk).
+    Consequence: all dumps of one serial share saves / states and the first DAT block's name; no Redump hash
+    verification.
+  - *BIOS* (`system-catalog` `ps2_bios_romdir.rs`, `firmware_scan_rule.rs`, `ps2_bios_pick.rs`): the first system
+    with **no HLE fallback**. `parse_ps2_bios(bytes)` walks the 16-byte ROMDIR records from `RESET` to `ROMVER`
+    (14 ASCII bytes → `Ps2BiosVersion { major, minor, region, console, date }`, `Ord` newest-first; label
+    "v1.60 · USA · 2002-02-07", region J / A / E → JP / US / EU else `ANY_REGION`, v1.00 "discouraged" warning);
+    valid iff ROMVER found and 4 MiB ≤ size ≤ 8 MiB, **no md5 table** (`.ROM1` / `.DIFF` have no ROMVER → invalid).
+    `scan_firmware` dispatches on `CoreSpec.firmware_rule`: `KnownFiles` = the unchanged PS1 / DC flow,
+    `Ps2Romdir` = every regular 4–8 MiB file under `<system>/pcsx2/bios/` that parses (`BiosFileStatus` +=
+    `label`, `ps2_version`). One picker for both consumers — `ps2_bios_pick::choose(report, disc_region)`: valid
+    files of the disc region (PAL → EU; NTSC: serial prefix SLUS / SCUS → US, SLPS / SLPM / SCPS / SCAJ / SLKA → JP,
+    SLES / SCES → EU), else any valid, highest version, then name order — feeds the Settings region rows
+    (`bios_region_views.rs`) and the runner (`bios_option_switch/ps2_bios_option.rs`: one scan per launch memoised
+    per folder, `.m3u` → first disc, answers `pcsx2_bios=<file>` + one log line "PlayStation 2 BIOS: <file>
+    (<label>)"). Import (launcher `ps2_bios_import.rs` + `bios_sidecar_import.rs`): any extension (`.BIN`, `.ROM0`;
+    picker filter `bin / rom0`), 8 MiB cap, stored as `<stem lower>.bin`, sidecars `<stem>.{ROM1,ROM2,EROM,NVM,MEC}`
+    copied as `<stored stem>.<ext lower>` (`.part` + rename, existing targets kept, never `.DIFF` / `.INF`);
+    refusal "`<name>` is not a PlayStation 2 BIOS (no ROMDIR/ROMVER entry; .ROM1 / .DIFF / .NVM are not the
+    BIOS)." Settings shows the labels, the v1.00 warning and "No BIOS: PlayStation 2 cannot start without your own
+    console's BIOS dump." instead of the HLE text. **Zero valid BIOS → the runner refuses before loading the core**
+    (`runner_session_config::prepare_core(system, core, system_dir, rom)` after `ensure_core_assets`;
+    `runner_exit_codes/ps2_bios_check.rs` → `RomValidationError::Unplayable` "PlayStation 2 needs your BIOS dump —
+    Settings → BIOS" → exit 4; the launcher toast shows the generic exit-4 headline + this detail). **The launcher
+    checks first**: `play_game` → `commands/bios_required_check::require_bios` (core without HLE fallback + no valid
+    file in `scan_firmware`) → typed `CommandError::bios_missing` (`kind: "bios_missing"`, `coreId`) →
+    `BiosRequiredDialog` (mounted by `AppShell` inside `NavigationProvider` — not by `ResumeFlowProvider`, which
+    sits outside it; its "Settings" button needs `useNavigation`): "Choose BIOS file…" runs the
+    Settings import (`useAddBiosFile`) and plays the game when a file was added, "Settings" opens the BIOS section;
+    the runner's exit-4 refusal stays as the last line of defence (folder emptied between the check and the launch).
+    PCEE2 itself
+    would load with no BIOS and show a silent black screen (spike). The core writes `<stem>.nvm` (1 KiB) / `.mec`
+    (4 B) beside the dump, so the folder must stay writable; `disc_bios_log` stays a no-op (no firmware list).
+  - *Runner / states*: `need_fullpath` (native paths only — PCEE2's VM init fails silently on a forward-slash
+    Windows path; the test `repo()` helper builds native separators). `Serialized` → run-ahead / rewind refused;
+    `serialize_size` is a constant 96 MiB from before frame 1 (no `requery_state_size`, no boot hold: a real state
+    `unserialize`s before frame 1 and runs), serialize ≈ 0.1–0.25 s, `exact_state_size`, 128 MiB cap,
+    `strict_state_version` (states are core-specific), host length + CRC guard (the core accepts half-length and
+    middle-flipped blobs), PS2 content tag (above; the core loads a state from another disc silently). Resume point
+    every 3 min (`LARGE_STATE_SYSTEMS`). `keep_library_loaded` (§3.3, as Dolphin): after `retro_unload_game` +
+    `retro_deinit` the core still has a thread / window callback inside its DLL — `FreeLibrary` made the runner
+    hang ~8 s and die with `0xC000041D` in `pcee2_libretro.dll_unloaded` (first manual Quit, 2026-11-09) — so the
+    library stays mapped and `main` ends the session with `process_hard_exit::exit_now` after saves + reporting. Pads: DualShock 2 on ports 1–2 (`SET_INPUT_DESCRIPTORS` ids: Cross = B,
+    Square = Y, Circle = A, Triangle = X, L1 / R1 / L2 / R2 / L3 / R3, both sticks analog idx 0 / 1); pressure
+    (analog idx 2) not exposed, `GET_RUMBLE_INTERFACE` refused (no host interface), `pcsx2_multitap` /
+    `pcsx2_lightgun` / `pcsx2_usb_mouse` disabled. LT / RT hold hotkeys yield to `l2` / `r2`
+    (`input_conflicts_ps2_tests.rs`).
+  - *Files*: no SAVE_RAM, `memory_cards: &[]`; shared cards `<system>/pcsx2/memcards/Mcd001.ps2` / `Mcd002.ps2`
+    (8 650 752 B each, created by the core on the first VM start; `pcsx2_memcard_slot1_file` would accept any name,
+    kept shared on purpose); the core also creates `<system>/pcsx2/{cache, inis, …}`; nothing in the save folder
+    but states, nothing in the cwd. `data_folder_move` copies `system/` whole → BIOS + cards move (test); there is
+    no backup feature.
+  - *RA*: console 21, `rc_hash_ps2` through `hash_cd_reader` (path-based; `.chd` / `.cso` / `.zso` hash like the
+    `.iso` while rcheevos' default reader returns `None`); LBA math `u64` end to end (`FileTrackReader`, `DiscTrack`,
+    the FFI `cd_read_sector`, and the pure `chd_dvd_reader::hunk_of`) proven at sector 2 097 157 (> 4 GiB) over the
+    virtual disc; memory maps EE 0x0 32 MiB + scratchpad 0x70000000 16 KiB = rcheevos' layout (regions ready at
+    frame 1). Hardcore rules = registry only (`hardcore_rules_tests::pcee2_rules_come_from_the_registry_alone`).
+  - *Tests*: probe / identity / RA-hash / LBA / BIOS-rule / picker / option / exit-4 tests need no DLL and no BIOS.
+    The real-core suites (`ps2_real_core_suite_tests.rs`, achievements loader arm, RA memory row, launcher parity
+    case, `tests/runner_ps2_real_core_tests.rs`) are gated on **`NOSTYRA_PS2_BIOS_DIR`** (a flat folder with the
+    user's dump; `ps2_bios_test_gate.rs` copies the files that parse as `<stem lower>.bin`, never sidecars) and
+    skip with one note otherwise — so they never run in CI (`ci.yml` fetches the core only). No BIOS in the repo,
+    ever.
 - **Battery memory** (runner `sram_persistence`): `SAVE_RAM` → `save.srm`, and `RETRO_MEMORY_RTC` →
   `rtc.bin` when the core keeps a cartridge clock apart from SRAM (mGBA's Game Boy MBC3 games: 48 bytes,
   restored before the first frame so the in-game clock advances by the time the game was closed; GBA
@@ -569,7 +704,11 @@ their artwork files first**, or a reused id would show another game's art.
   the bytes to `<data>/temp/staged-content/<pid>/content.<ext>` (same extension: the core picks the
   system by it) and passes that path; the file is deleted after unload, and folders of crashed runners
   older than 1 h are removed at the next runner start. A staged path of 256+ bytes itself fails with
-  `HostError::StageContent` (exit 4). Discs are never preloaded.
+  `HostError::StageContent` (exit 4). Discs are never preloaded. `CoreSpec.stage_content` (M17, Handy;
+  `SessionConfig.stage_content`): the runner always preloads the cartridge and the host stages it even though
+  the core is not `need_fullpath` (rule `need_fullpath || stage_content`; data pointer still passed). Handy
+  ignores the bytes and re-reads `info->path`, so soft patches apply and its EEPROM is always named
+  `content.eeprom` (stable across ROM rename, ZIP and patch).
 
 ### 5.2 Web edition library and player (M16, `apps/launcher/src/backend/web/`)
 The browser build (`vite --mode web`) runs the same React launcher over in-page
@@ -585,10 +724,15 @@ OPFS, desktop migrations unchanged); the desktop `nostyra.db` is never opened.
   (`classify_for_scan` / `zip_single_rom`; unchanged cartridges keep their stored system)
   → `group_disc_files` → non-web systems counted only; page marks vanished rows missing.
   Pass B = changed entries → `identify` (hash + DAT + metadat, desktop rules) → upsert in
-  batches of 50 (guarded statements: update / sha1 relink / insert). Fingerprint = size +
+  batches of 50 (guarded statements: update / sha1 relink / insert). DAT-gated `.bin` (M17, desktop
+  rules, loose files only): `scan-dat-pending.ts` `splitDatPending` moves still-failing `.bin` files to a
+  pending list after `hiddenFailures` (archives never pending; pending paths count as present);
+  `scan-hashing.ts` `resolvePending` asks wasm `dat_pending_candidates(path)` and `dat_hit(path, systemId,
+  &WebDat)` (borrowed DAT handle) per candidate in registry order with the cached system DAT, first hit →
+  a normal game; miss → `dat_pending_hint`; a DAT load error stays a problem, retried next scan. Fingerprint = size +
   `File.lastModified` (ms, stored in `file_mtime_ns`). Cancel terminates the worker.
 - **DAT/metadat:** `scripts/copy-web-libretro-database.*` copies the web systems' files
-  (registry-driven via the wasm catalog, ~21 MB) to `public/libretro-database/`
+  (registry-driven via the wasm catalog, ~23 MB for 13 systems since M17) to `public/libretro-database/`
   (`publicDir` only in web mode), fetched lazily per system (`catalog/system-dat.ts`).
 - **Artwork** (`artwork/`): TS port of the thumbnail name rules (tests = desktop table);
   GitHub tree index per repo cached 7 d in OPFS `artwork/index/` (+ETag); images from
@@ -601,7 +745,11 @@ OPFS, desktop migrations unchanged); the desktop `nostyra.db` is never opened.
   `scripts/fetch-emulatorjs.*` (sha256 pinned per file; runtime from the EJS CDN, core builds
   from npm `@emulatorjs/core-*`, core list checked against the registry's `web_core`) into
   `public/emulatorjs/4.2.3/` (git-ignored; `-legacy-wasm.data` per core + PCSX `-wasm.data`,
-  reports, 7z/zip extractors, LICENSE, SOURCE.txt). Play opens one same-origin
+  reports, 7z/zip extractors, LICENSE, SOURCE.txt). Eight web cores (`WEB_CORES`): fceumm, snes9x, mgba,
+  genesis_plus_gx, pcsx_rearmed and (M17) stella2014, prosystem, handy. `fceumm` and `stella2014` are web-only
+  (`WEB_ONLY_CORES`: no shared `config/core/` layer; 2600 web states never meet desktop Stella); prosystem and
+  handy are the desktop's libretro cores (`SAME_LIBRETRO_CORE`, shared core layer). Atari saves on the web =
+  states only (no SRAM; Handy's `.eeprom` is not synced). Play opens one same-origin
   `public/player.html` iframe (plain `player-boot.js`, no inline code; z 45 above the launcher,
   React Exit button + slot picker above it) and posts `boot` (content `File`, BIOS bytes,
   SRAM bytes, state to load); the iframe sets the `EJS_*` globals (no core options, D6;
@@ -660,9 +808,10 @@ OPFS, desktop migrations unchanged); the desktop `nostyra.db` is never opened.
   refocuses the player; `player-input.js` focuses its window at start and on pointerdown.
 - **Packaging + hosting** (phase 09): `scripts/build-web.{ps1,sh}` → `build-web.mjs` runs the
   wasm build, EmulatorJS fetch (sha256), DAT copy, licence notices (`public/notices/`: Nostyra
-  GPL-3.0, cargo-about over `crates/web-bindings` for `wasm32` with `about-web.hbs`, npm notices
+  GPL-3.0, `GPL-2.0.txt` + `Handy-zlib.txt` from `third-party/core-licences/` (M17: the Stella 2014 and Handy
+  archives ship no `license.txt`), cargo-about over `crates/web-bindings` for `wasm32` with `about-web.hbs`, npm notices
   `--web` without Tauri), `npm run build:web`, `check-web-bundle`, then writes
-  `dist/nostyra-web-<version>/` = `play/` (served at nostyra.com/play/, ~32 MB / 125 files),
+  `dist/nostyra-web-<version>/` = `play/` (served at nostyra.com/play/, ~35 MB / ~150 files),
   `vercel.headers.json`, `DEPLOY.md` (= `docs/web-edition-deploy-guide.md`), `build-info.json`,
   + zip; prints bytes per part and checks Vercel's 100 MB / 15,000-file CLI upload limits.
   Headers have one source, `apps/launcher/web-headers.mjs` (rules never set one key twice on a
@@ -687,18 +836,19 @@ Root = `ipc_protocol::data_root()`: the folder chosen in Settings → Data folde
 ├── config/       # M3: global.toml, system/<id>.toml, core/<id>.toml, game/<platform>/<rom> [<ID>].toml
 ├── sessions/pending/ # M1: runner play-session records awaiting import by the launcher; M16: <ms>-web.json from the web edition (rom_path = web:<folder>/<path>, matched by content_sha1 = games.sha1, any case; kept up to 30 days while no game has that sha1, then dropped)
 ├── temp/staged-content/<pid>/ # M9: content.<ext> staged for a path-loading core while a game runs
-├── saves/        # <platform>/<rom> [<ID>]/ = one folder per game: save.srm, rtc.bin (cartridge clock, M7), slotN.state + slotN.json {core_name, core_version, created_at, sram_crc32?, rom_patch_crc32?, state_len?, state_crc32?, content_tag? (M14)} + slotN.png thumbnail (clean core frame); auto.* = resume point (M4); M16 web edition files in the same folder: web-slot0..9.* / web-auto.* (never listed, loaded or deleted by the desktop; removing a missing game deletes them with the folder), save.web.srm (web-only SRAM, never read by the desktop); User/ = Dolphin's GCI memory card, Wii NAND and shader cache (gc / wii, M14)
+├── saves/        # <platform>/<rom> [<ID>]/ = one folder per game (ps2: save states only, M18): save.srm, rtc.bin (cartridge clock, M7), slotN.state + slotN.json {core_name, core_version, created_at, sram_crc32?, rom_patch_crc32?, state_len?, state_crc32?, content_tag? (M14)} + slotN.png thumbnail (clean core frame); auto.* = resume point (M4); M16 web edition files in the same folder: web-slot0..9.* / web-auto.* (never listed, loaded or deleted by the desktop; removing a missing game deletes them with the folder), save.web.srm (web-only SRAM, never read by the desktop); User/ = Dolphin's GCI memory card, Wii NAND and shader cache (gc / wii, M14); content.eeprom = Lynx cartridge EEPROM written by Handy (lynx, M17)
 ├── achievements/ # M15: credentials.json {user, token} (plaintext, 0600 on Unix), pending/<ms>-<rand>.json offline journal, games/<sha1>.json runner snapshot for the launcher tab, offline-cache/<user>/ last server answers (login2.json incl. the token, sets/<hash>.json, sessions/<hash>.json; removed on logout / login expiry / account switch)
 ├── cache/achievement-badges/ # M15: <badge>.png, <badge>_lock.png, game_<icon>.png (shared by runner and launcher)
 ├── logs/         # v0.1.0: launcher-<YYYYMMDD-HHMMSS>.log per launcher start, runner-<stamp>-<system>.log per game session (10 MiB cap), nostyra-bug-report-<stamp>.zip; cleanup at every start keeps 10 launcher + 30 runner logs, drops logs > 14 days and zips > 7 days (`ipc_protocol::log_files`); not moved by a data-folder change
 ├── artwork/      # M2: <game_id>-cover.jpg (≤ 600 px, JPEG q85), <game_id>-hero.png (snap/title), index/<system>-tree.json(+.etag) per system; served via asset:// (scope = this folder + `saves/` for state thumbnails); clearable in Settings
-└── system/       # core system dir (BIOS/firmware if a core needs it); dolphin-emu/Sys/ = Dolphin's system files, copied from <cores>/dolphin-emu/ (M14); melonDS DS/ = wfcsettings.bin written by melonDS DS (M13); PPSSPP/ = PPSSPP's system files, copied from <cores>/PPSSPP/ (M12); dc/ = dc_boot.bin + dc_nvmem.bin (Flycast, M11); Mupen64plus/ = Mupen64Plus-Next's mupen64plus.ini + GLideN64 shader cache (M10)
+└── system/       # core system dir (BIOS/firmware if a core needs it); pcsx2/bios/ = the user's PS2 BIOS dump(s) as <stem>.bin + .rom1/.rom2/.erom/.nvm/.mec sidecars (imported by Settings → BIOS; the core writes .nvm/.mec there) and pcsx2/memcards/Mcd001.ps2 + Mcd002.ps2 = the shared PS2 memory cards (M18; both move with the data folder, no backup feature); dolphin-emu/Sys/ = Dolphin's system files, copied from <cores>/dolphin-emu/ (M14); melonDS DS/ = wfcsettings.bin written by melonDS DS (M13); PPSSPP/ = PPSSPP's system files, copied from <cores>/PPSSPP/ (M12); dc/ = dc_boot.bin + dc_nvmem.bin (Flycast, M11); Mupen64plus/ = Mupen64Plus-Next's mupen64plus.ini + GLideN64 shader cache (M10)
 ```
 Chrome swap files (`*.crswap`, `ipc_protocol::is_browser_swap_file`) are what an interrupted web write leaves beside its target: the desktop skips them (state listing, pending-session import, legacy-entry copies), the runner removes ones older than 1 day (`STALE_BROWSER_SWAP_AGE`) in the game's folder when a game starts, the import does the same in `sessions/pending/`, and a data-folder move drops them instead of copying.
 
 ## 7. Platform Notes
 - **Windows**: DX12/Vulkan via wgpu; MSI/NSIS via Tauri bundler.
 - **OpenGL cores (M10)**: need an OpenGL 3.3 driver (the hidden GL context may sit on an iGPU of a hybrid laptop: CPU readback cost only). macOS has no 3.x compatibility profile, and Mupen asks for a compat context → GLideN64 likely fails there (open question: map to a 3.3 core forward-compatible context); SDL windows are main-thread only on macOS, so the in-binary GL suite skips there. Linux CI runs the GL tests on Mesa llvmpipe (`SDL_VIDEO_DRIVER=offscreen`, `NOSTYRA_REQUIRE_GL=1`).
+- **PCEE2 tests (M18)**: every real-core PS2 suite needs the user's BIOS (`NOSTYRA_PS2_BIOS_DIR`), so none runs in CI on any OS; with GL refused the suites take the core's readback path. Linux / macOS builds of the core exist on the buildbot (`fetch-pcee2-core.sh`) but are untested; Windows is the only verified target so far.
 - **Dolphin tests (M14)**: Null-renderer suites (`dolphin_renderer=Null`: boot, MEM1 field counter, pad words, audio, clean state refusal) run on every OS; the GL suites (pixels and every state / slot / guard / strict-version / content-tag / resume suite) are GL-gated, so they run on Linux CI (llvmpipe) and a dev GPU but **not on Windows CI** (no GL 3.3 there; accepted) and not on macOS (SDL main-thread limit). Suites stay in-process in the runner test binary (keep-loaded makes several Dolphin sessions per process safe); process tests that spawn a Dolphin runner use `support::output_within` (deadline, kill on timeout). macOS arm64 JIT needs the `allow-jit` entitlement for a hardened runner (unverified).
 - **macOS**: Metal; universal or per-arch builds; cores must be signed/notarized.
 - **Linux/Steam Deck**: Vulkan; Flatpak primary (deferred, Later); gamescope single-fullscreen-window behavior must be validated (launcher may hide while runner active).

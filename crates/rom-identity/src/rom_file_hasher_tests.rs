@@ -1,7 +1,10 @@
 //! Hash vectors, header rules and the owned/borrowed entry points of `rom_file_hasher`.
 
 use super::*;
-use system_catalog::{n64_to_order, raw_to_smd, N64ByteOrder, GENESIS, NES, NINTENDO_64, SNES};
+use system_catalog::{
+    n64_to_order, raw_to_smd, N64ByteOrder, ATARI2600, ATARI7800, GENESIS, LYNX, NES, NINTENDO_64,
+    SNES,
+};
 
 #[test]
 fn known_vectors() {
@@ -155,4 +158,36 @@ fn whole_file_cartridges_over_the_threshold_are_streamed() {
     // Header rules that rewrite bytes never stream.
     let (_, bytes) = hash_rom_file_with(&path, &SNES, 1024).unwrap();
     assert_eq!(bytes.len(), data.len());
+}
+
+#[test]
+fn atari_headered_dumps_fall_back_to_the_headerless_image() {
+    let data: Vec<u8> = (0..16 * 1024u32).map(|i| (i * 7) as u8).collect();
+    let mut a78 = vec![0u8; 128];
+    a78[1..10].copy_from_slice(b"ATARI7800");
+    a78.extend_from_slice(&data);
+    // Primary = whole file (content id); fallback = the `.bin` twin's hashes.
+    assert_eq!(hash_rom_bytes(&a78, &ATARI7800).size, a78.len() as u64);
+    assert_eq!(
+        hash_headerless(&a78, &ATARI7800),
+        Some(hash_rom_bytes(&data, &ATARI7800))
+    );
+    assert_eq!(hash_headerless(&data, &ATARI7800), None, "no magic");
+    assert_eq!(
+        hash_headerless(&a78[..128], &ATARI7800),
+        None,
+        "header only"
+    );
+    let mut lnx = b"LYNX\0".to_vec();
+    lnx.resize(64, 0);
+    lnx.extend_from_slice(&data);
+    assert_eq!(
+        hash_headerless(&lnx, &LYNX),
+        Some(hash_rom_bytes(&data, &LYNX))
+    );
+    assert_eq!(
+        hash_headerless(&data, &ATARI2600),
+        None,
+        "2600 has no header"
+    );
 }

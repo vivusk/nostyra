@@ -19,6 +19,7 @@ use crate::app_state::{lock, ActiveSession, AppState};
 use crate::command_error::{CommandError, CommandResult};
 use crate::commands::achievements_commands::{on_achievement_update, runner_login_env};
 use crate::commands::achievements_mode::{hardcore_for_game, launch_load_slot};
+use crate::commands::bios_required_check::require_bios;
 use crate::commands::core_resolution::installed_core_for_platform;
 use crate::commands::game_data_target::GameDataTarget;
 use crate::commands::save_state_commands::load_state_args;
@@ -47,7 +48,13 @@ pub fn play_game(
             "The ROM file was not found. Rescan your library.",
         ));
     }
-    let (_, core) = installed_core_for_platform(&state.paths.cores_dir, &game.platform_id)?;
+    let (spec, core) = installed_core_for_platform(&state.paths.cores_dir, &game.platform_id)?;
+    // A core without an HLE BIOS (PS2) needs a valid dump: typed error → BIOS picker.
+    require_bios(
+        &ipc_protocol::system_dir(&state.paths.data_root),
+        spec,
+        &game.platform_id,
+    )?;
     // The runner must own the pads alone: stop any capture (waits until SDL is
     // dropped) and refuse new ones until the session is registered (then the
     // capture's own session check refuses). Taken before the session lock: a

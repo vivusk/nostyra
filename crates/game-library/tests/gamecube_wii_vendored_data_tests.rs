@@ -72,7 +72,7 @@ fn foreign_iso_and_headerless_containers_are_one_problem_row_each() {
             ("Not Wii.wbfs".into(), "not a Wii disc".into()),
             (
                 "Pc Dvd.iso".into(),
-                "not a PlayStation, PSP, GameCube or Wii disc".into()
+                "not a PlayStation, PlayStation 2, PSP, GameCube or Wii disc".into()
             ),
         ]
     );

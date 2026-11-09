@@ -6,8 +6,9 @@ pub const BROKEN_REASON: &str =
     "track file 'Brig_D13.bin' not found — fix the FILE line or rename the file";
 
 /// M8: a cue game with an audio track, a playlist in the root with its discs in a
-/// subfolder, a bare `.bin` and an `.iso`, a PS2-like disc, an audio-only `.bin`, and a
-/// broken cue whose renamed track hides but whose neighbours stay listed.
+/// subfolder, a bare `.bin` and an `.iso`, a PS2 disc (a `ps2` row since M18), an
+/// audio-only `.bin`, and a broken cue whose renamed track hides but whose
+/// neighbours stay listed.
 pub fn write_ps1_tree(lib: &TempLibrary) {
     use disc_image::test_images::{ps1_sectors, to_iso, to_raw, US_LICENCE};
     let disc = |exe: &str| ps1_sectors(Some(US_LICENCE), &format!(r"BOOT = cdrom:\{exe};1"));
