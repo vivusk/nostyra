@@ -3,11 +3,35 @@
 //! runner after `retro_load_game` (phase 04 `fingerprint_source.rs`), compared in the
 //! `Hello` handshake, never sent to the server. A difference refuses the joiner with
 //! the exact field ("Different core version: 1.62 vs 1.63").
+//!
+//! Cross-platform (e.g. Windows host, macOS guest): the core binaries always differ,
+//! so the core build hash is not compared; the core id + version still must match,
+//! and both cores must report portable states (no platform / endian serialization
+//! quirk), else "Different platform" refuses. A divergence that still happens is
+//! caught by the RAM desync check and fixed with Resync.
 
 use serde::{Deserialize, Serialize};
 
-/// Platform tag of this build (states may be platform / endian dependent).
-pub const PLATFORM: &str = "windows-x86_64";
+/// Platform tag of this build ("<os>-<arch>"), e.g. `windows-x86_64`, `macos-aarch64`.
+pub const PLATFORM: &str = platform_tag();
+
+const fn platform_tag() -> &'static str {
+    if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
+        "windows-x86_64"
+    } else if cfg!(all(target_os = "windows", target_arch = "aarch64")) {
+        "windows-aarch64"
+    } else if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+        "macos-aarch64"
+    } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        "macos-x86_64"
+    } else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
+        "linux-x86_64"
+    } else if cfg!(all(target_os = "linux", target_arch = "aarch64")) {
+        "linux-aarch64"
+    } else {
+        "other"
+    }
+}
 
 /// The compatibility fingerprint of one peer's loaded session.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -27,6 +51,8 @@ pub struct SessionFingerprint {
     /// `av_info` fps × 1000 (mixed PAL / NTSC refused: ggrs runs one fps).
     pub fps_milli: u32,
     pub platform: String,
+    /// The core's states load on other platforms (no platform / endian quirk).
+    pub portable_states: bool,
     pub analog: bool,
     /// `MUST_INITIALIZE` warm-up frames before the first state (both sides equal).
     pub warmup_frames: u32,
@@ -140,9 +166,14 @@ impl SessionFingerprint {
                 other.max_players.to_string(),
             ),
         ];
+        // Another OS / CPU always has another core binary: only the version counts,
+        // as long as both cores' states are portable (see module doc).
+        let cross_platform = self.platform != other.platform;
+        let portable = self.portable_states && other.portable_states;
         // Hashes are shortened for display only: compare their full values.
         let differs = |field: F, ours: &str, theirs: &str| match field {
-            F::CoreBuild => self.core_sha256 != other.core_sha256,
+            F::CoreBuild => !cross_platform && self.core_sha256 != other.core_sha256,
+            F::Platform => cross_platform && !portable,
             F::Content => self.content_sha1 != other.content_sha1,
             F::Bios => self.bios_md5s != other.bios_md5s,
             _ => ours != theirs,

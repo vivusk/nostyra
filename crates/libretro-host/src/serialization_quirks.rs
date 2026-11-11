@@ -55,6 +55,12 @@ impl SerializationQuirks {
         self.0 & CORE_VARIABLE_SIZE != 0
     }
 
+    /// States can be loaded by this core built for another OS / CPU (no platform or
+    /// endian quirk): required for cross-platform netplay.
+    pub fn portable(self) -> bool {
+        self.0 & (PLATFORM_DEPENDENT | ENDIAN_DEPENDENT) == 0
+    }
+
     /// The same quirks with a variable state size (host re-query rule).
     pub(crate) fn with_variable_size(self) -> Self {
         Self(self.0 | CORE_VARIABLE_SIZE)

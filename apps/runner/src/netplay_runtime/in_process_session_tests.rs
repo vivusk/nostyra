@@ -29,6 +29,7 @@ fn fingerprint(warmup_frames: u32) -> SessionFingerprint {
         system: "snes".into(),
         fps_milli: 60_000,
         platform: PLATFORM.into(),
+        portable_states: true,
         analog: false,
         warmup_frames,
         max_players: 2,

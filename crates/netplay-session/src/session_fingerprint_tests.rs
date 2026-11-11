@@ -12,7 +12,8 @@ pub(crate) fn sample() -> SessionFingerprint {
         options_hash: 7,
         system: "snes".into(),
         fps_milli: 60_099,
-        platform: PLATFORM.into(),
+        platform: "windows-x86_64".into(),
+        portable_states: true,
         analog: false,
         warmup_frames: 0,
         max_players: 2,
@@ -100,6 +101,7 @@ fn each_field_has_a_readable_text() {
         (
             SessionFingerprint {
                 platform: "linux-x86_64".into(),
+                portable_states: false,
                 ..sample()
             },
             "Different platform: windows-x86_64 vs linux-x86_64",
@@ -157,4 +159,48 @@ fn hashes_equal_in_their_short_form_still_differ() {
         ..sample()
     };
     assert_eq!(only(&a, &b).field, FingerprintField::CoreBuild);
+}
+
+#[test]
+fn cross_platform_ignores_core_build_when_states_are_portable() {
+    let mac = SessionFingerprint {
+        platform: "macos-aarch64".into(),
+        core_sha256: "cc".repeat(32),
+        ..sample()
+    };
+    assert!(sample().diff(&mac).is_empty());
+    let older_version = SessionFingerprint {
+        core_version: "1.61".into(),
+        ..mac.clone()
+    };
+    assert_eq!(
+        only(&sample(), &older_version).field,
+        FingerprintField::CoreVersion
+    );
+    let not_portable = SessionFingerprint {
+        portable_states: false,
+        ..mac
+    };
+    assert_eq!(
+        only(&sample(), &not_portable).field,
+        FingerprintField::Platform
+    );
+}
+
+#[test]
+fn same_platform_still_requires_the_same_core_build() {
+    let other_build = SessionFingerprint {
+        core_sha256: "cc".repeat(32),
+        ..sample()
+    };
+    assert_eq!(
+        only(&sample(), &other_build).field,
+        FingerprintField::CoreBuild
+    );
+}
+
+#[test]
+fn platform_tag_names_this_build() {
+    assert!(PLATFORM.contains(std::env::consts::OS), "{PLATFORM}");
+    assert!(PLATFORM.ends_with(std::env::consts::ARCH), "{PLATFORM}");
 }

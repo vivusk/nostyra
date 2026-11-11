@@ -116,7 +116,8 @@ fn garbage_short_and_trailing_bytes_are_refused() {
         decode_lobby(&packet),
         Err(NetplayError::Protocol(_))
     ));
-    let junk = [1, 0, 250, 250, 250, 250];
+    let mut junk = LOBBY_PROTOCOL_VERSION.to_le_bytes().to_vec();
+    junk.extend_from_slice(&[250, 250, 250, 250]);
     assert!(matches!(
         decode_lobby(&junk),
         Err(NetplayError::Protocol(_))

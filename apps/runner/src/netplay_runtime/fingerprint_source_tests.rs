@@ -81,6 +81,7 @@ fn content_crc_uses_the_patched_bytes_and_skips_discs() {
         system_dir: dir.path(),
         core_options: &[],
         fps: 60.0988,
+        portable_states: true,
         warmup_frames: 0,
         max_players: 2,
     };

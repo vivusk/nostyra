@@ -32,6 +32,7 @@ fn options() -> RuntimeOptions {
             system: "snes".into(),
             fps_milli: 60_000,
             platform: PLATFORM.into(),
+            portable_states: true,
             analog: false,
             warmup_frames: 0,
             max_players: 2,

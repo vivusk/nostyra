@@ -10,7 +10,8 @@ use crate::session_fingerprint::{FingerprintMismatch, SessionFingerprint};
 use crate::{NetplayError, PeerKey};
 
 /// Version of the lobby protocol (bump on any message change).
-pub const LOBBY_PROTOCOL_VERSION: u16 = 1;
+/// 2: `SessionFingerprint::portable_states` (cross-platform netplay).
+pub const LOBBY_PROTOCOL_VERSION: u16 = 2;
 /// Largest accepted message (a sync chunk plus framing fits easily).
 pub const MAX_LOBBY_MESSAGE_BYTES: usize = 256 * 1024;
 /// Sync chunk payload size (well under the SCTP message limit).

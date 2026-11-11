@@ -27,6 +27,8 @@ pub(crate) struct FingerprintInputs<'a> {
     /// The option map handed to the core at load.
     pub core_options: &'a [(String, String)],
     pub fps: f64,
+    /// The core reports no platform / endian serialization quirk.
+    pub portable_states: bool,
     pub warmup_frames: u32,
     pub max_players: u8,
 }
@@ -48,6 +50,7 @@ pub(crate) fn build_fingerprint(
         system: input.system.id.to_owned(),
         fps_milli: (input.fps * 1000.0).round().clamp(0.0, f64::from(u32::MAX)) as u32,
         platform: PLATFORM.to_owned(),
+        portable_states: input.portable_states,
         analog: input.system.analog_sticks != system_catalog::AnalogSticks::None,
         warmup_frames: input.warmup_frames,
         max_players: input.max_players,

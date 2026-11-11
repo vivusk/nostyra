@@ -80,6 +80,7 @@ pub fn start(
         system_dir: &facts.paths.system_dir,
         core_options: facts.core_options,
         fps: session.av_info().timing.fps,
+        portable_states: session.serialization_quirks().portable(),
         warmup_frames,
         max_players: launch.env.max_players,
     })?;
