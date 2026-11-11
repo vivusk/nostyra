@@ -48,6 +48,7 @@ const backend: Backend = {
     dataFolderMove: false,
     updateCheck: false,
     cloudSaves: false,
+    netplay: false,
   },
   invoke: async <T>(command: string, args: Record<string, unknown> = {}) => {
     const handler = commands[command];

@@ -34,6 +34,15 @@ export interface GameplayConfig {
   "achievements.leaderboard_popups": boolean;
   /** Unknown soft-patched game: use the original ROM's achievements (softcore). */
   "achievements.patched_rom_fallback": boolean;
+  /** Play online (global layer only; Settings → Netplay). Empty = Windows user name. */
+  "netplay.nickname": string;
+  /** Signaling server (`wss://…`). */
+  "netplay.server_url": string;
+  /** "auto" or "0" – "10" frames. */
+  "netplay.input_delay": string;
+  "netplay.hud": boolean;
+  /** Prefer the TURN relay (best effort). */
+  "netplay.relay_only": boolean;
 }
 
 export type GameplayConfigKey = keyof GameplayConfig;

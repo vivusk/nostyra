@@ -1,0 +1,56 @@
+# Netplay server + coturn (M20) for netplay.nostyra.com.
+#   cp .env.example .env   # fill in the secrets (never commit .env)
+#   docker compose up -d --build
+# nginx (already on the VPS) terminates TLS and proxies to 127.0.0.1:3536; see
+# nginx-netplay.conf.example. No Caddy, no new 443 listener.
+
+# coturn logs peer addresses: keep docker logs small and short-lived.
+x-bounded-logs: &bounded-logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  netplay-server:
+    build:
+      context: ../..
+      dockerfile: deploy/netplay-server/Dockerfile
+    image: nostyra/netplay-server:local
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NETPLAY_BIND: 0.0.0.0:3536
+    # Loopback only: nginx on the host is the single entry point.
+    ports:
+      - "127.0.0.1:3536:3536"
+    # The VPS hosts other sites: cap what a misbehaving client can make this take.
+    mem_limit: 256m
+    pids_limit: 256
+    healthcheck:
+      # No curl in the slim image: bash's /dev/tcp is enough for a liveness probe.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/3536 && printf 'GET /healthz HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q ok <&3"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *bounded-logs
+
+  coturn:
+    image: coturn/coturn:4.6.3
+    restart: unless-stopped
+    # Host networking: the relay opens a UDP port range, bridge port mapping of 241
+    # ports is impractical. Listens on 3478 udp+tcp and relays on 49160-49400/udp.
+    network_mode: host
+    # Only what coturn needs (compose reads these from .env beside this file).
+    environment:
+      TURN_SECRET: ${TURN_SECRET:?set TURN_SECRET in .env}
+      PUBLIC_HOST: ${PUBLIC_HOST:-netplay.nostyra.com}
+      TURN_EXTERNAL_IP: ${TURN_EXTERNAL_IP:-}
+      TURN_RELAY_IP: ${TURN_RELAY_IP:?set TURN_RELAY_IP in .env}
+    volumes:
+      - ./turnserver.conf.template:/etc/coturn/turnserver.conf.template:ro
+      - ./coturn-entrypoint.sh:/usr/local/bin/coturn-entrypoint.sh:ro
+    # The template gets TURN_SECRET / PUBLIC_HOST / TURN_EXTERNAL_IP / TURN_RELAY_IP filled in at start,
+    # so the secret is neither in the image nor on the command line.
+    entrypoint: ["sh", "/usr/local/bin/coturn-entrypoint.sh"]
+    logging: *bounded-logs

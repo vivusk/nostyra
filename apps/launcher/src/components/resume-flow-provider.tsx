@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { gameplayCommands, type ResumeInfo } from "../api/tauri-commands-gameplay";
 import { queryKeys } from "../api/query-keys";
 import { capabilities } from "../backend";
-import { useLaunchGame } from "../hooks/use-game-session";
+import { useLaunchGame, type PlayRequest } from "../hooks/use-game-session";
+import { useNetplayHost, type NetplayHostOptions } from "../hooks/use-netplay-play";
 import { PlayGameContext, resumeDecision } from "../hooks/use-play-game";
 import { CloudPrePlayContext, useCloudPrePlayState } from "../hooks/use-cloud-pre-play";
 import { CloudConflictDialog } from "./cloud-conflict-dialog";
@@ -18,14 +19,25 @@ import { ResumeDialog } from "./resume-dialog";
  *  resume decision on the resulting files; also hosts the other cloud dialogs. */
 export function ResumeFlowProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const { mutate: launch } = useLaunchGame();
+  const { mutate: launchLocal } = useLaunchGame();
+  const { mutate: host } = useNetplayHost();
   const { syncBeforePlay, pending: cloudConflict } = useCloudPrePlayState();
-  const [asking, setAsking] = useState<{ gameId: number; info: ResumeInfo } | null>(null);
+  const [asking, setAsking] = useState<{ gameId: number; info: ResumeInfo; online?: NetplayHostOptions } | null>(null);
   // One decision at a time: a double click must not launch twice.
   const deciding = useRef(false);
 
+  // Play online (host): the same pull + resume choice, then `netplay_host`.
+  const launchWith = useCallback(
+    (request: PlayRequest, online?: NetplayHostOptions) => {
+      if (!online) return launchLocal(request);
+      const target = typeof request === "number" ? { gameId: request } : request;
+      host({ ...target, ...online });
+    },
+    [launchLocal, host],
+  );
   const play = useCallback(
-    async (gameId: number) => {
+    async (gameId: number, online?: NetplayHostOptions) => {
+      const launch = (request: PlayRequest) => launchWith(request, online);
       if (deciding.current) return;
       deciding.current = true;
       try {
@@ -39,7 +51,7 @@ export function ResumeFlowProvider({ children }: { children: ReactNode }) {
         const decision = resumeDecision(info);
         if (decision === "fresh") launch(gameId);
         else if (decision === "continue") launch({ gameId, loadState: "auto" });
-        else setAsking({ gameId, info });
+        else setAsking({ gameId, info, online });
       } catch (error) {
         // No resume info (e.g. no ROM to key saves on): launch normally; play_game
         // reports any real problem.
@@ -49,9 +61,9 @@ export function ResumeFlowProvider({ children }: { children: ReactNode }) {
         deciding.current = false;
       }
     },
-    [queryClient, launch, syncBeforePlay],
+    [queryClient, launchWith, syncBeforePlay],
   );
-  const playGame = useCallback((gameId: number) => void play(gameId), [play]);
+  const playGame = useCallback((gameId: number, online?: NetplayHostOptions) => void play(gameId, online), [play]);
 
   return (
     <PlayGameContext.Provider value={playGame}>
@@ -72,8 +84,8 @@ export function ResumeFlowProvider({ children }: { children: ReactNode }) {
         <ResumeDialog
           gameId={asking.gameId}
           info={asking.info}
-          onContinue={() => launch({ gameId: asking.gameId, loadState: "auto" })}
-          onStartFresh={() => launch(asking.gameId)}
+          onContinue={() => launchWith({ gameId: asking.gameId, loadState: "auto" }, asking.online)}
+          onStartFresh={() => launchWith(asking.gameId, asking.online)}
           onClose={() => setAsking(null)}
         />
       )}

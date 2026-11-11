@@ -26,6 +26,8 @@ pub(super) fn root_label(item: RootItem) -> &'static str {
         RootItem::ResetCore => "Reset game",
         RootItem::Options => "Options",
         RootItem::Quit => "Quit",
+        RootItem::NetplayInfo => "Netplay",
+        RootItem::Resync => "Resync",
     }
 }
 

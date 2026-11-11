@@ -11,6 +11,10 @@ use crate::dreamcast_core_spec::FLYCAST;
 use crate::firmware_lists::PCSX_REARMED_BIOS;
 use crate::gamecube_wii_core_spec::DOLPHIN;
 use crate::nds_core_spec::MELONDS_DS;
+use crate::netplay_core_multitap::{
+    GENESIS_PLUS_GX_MULTITAP, MESEN_MULTITAP, PCSX_REARMED_MULTITAP, SNES9X_MULTITAP,
+};
+use crate::netplay_spec_types::{NetplaySupport, SINGLE_PLAYER};
 use crate::ps2_core_specs::PCEE2;
 use crate::psp_core_spec::PPSSPP;
 use crate::system_specs::{system, SystemSpec, ALL_SYSTEMS};
@@ -29,6 +33,8 @@ pub const SNES9X: CoreSpec = CoreSpec {
     savestates: SaveStateQuality::Deterministic,
     port_devices: &[],
     exact_state_size: false,
+    netplay: NetplaySupport::Yes,
+    multitap: SNES9X_MULTITAP,
     ..CORE_DEFAULTS
 };
 
@@ -47,6 +53,8 @@ pub const MESEN: CoreSpec = CoreSpec {
     savestates: SaveStateQuality::Deterministic,
     port_devices: &[],
     exact_state_size: false,
+    netplay: NetplaySupport::Yes,
+    multitap: MESEN_MULTITAP,
     ..CORE_DEFAULTS
 };
 
@@ -65,6 +73,9 @@ pub const MGBA: CoreSpec = CoreSpec {
     savestates: SaveStateQuality::Deterministic,
     port_devices: &[],
     exact_state_size: false,
+    netplay: NetplaySupport::Yes,
+    // One pad per unit (no link cable): host plays, others watch.
+    multitap: &[SINGLE_PLAYER],
     ..CORE_DEFAULTS
 };
 
@@ -87,6 +98,9 @@ pub const PCSX_REARMED: CoreSpec = CoreSpec {
     savestates: SaveStateQuality::Deterministic,
     port_devices: &[],
     exact_state_size: false,
+    // Passed the synctest with HLE BIOS + test disc only; 4-pad read is a manual check.
+    netplay: NetplaySupport::Experimental,
+    multitap: PCSX_REARMED_MULTITAP,
     ..CORE_DEFAULTS
 };
 
@@ -107,6 +121,8 @@ pub const GENESIS_PLUS_GX: CoreSpec = CoreSpec {
     savestates: SaveStateQuality::Deterministic,
     port_devices: &[],
     exact_state_size: false,
+    netplay: NetplaySupport::Yes,
+    multitap: GENESIS_PLUS_GX_MULTITAP,
     ..CORE_DEFAULTS
 };
 

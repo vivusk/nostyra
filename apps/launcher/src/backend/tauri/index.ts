@@ -21,6 +21,7 @@ const backend: Backend = {
     dataFolderMove: true,
     updateCheck: true,
     cloudSaves: true,
+    netplay: true,
   },
   invoke: (command, args) => invoke(command, args),
   listen: (event, handler) => listen(event, handler),

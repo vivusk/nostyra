@@ -1,24 +1,29 @@
 import { useGameSession } from "../hooks/use-game-session";
 import { useGameDetail } from "../hooks/use-game-detail-queries";
 import { useCloudPrePlay } from "../hooks/use-cloud-queries";
+import { useNetplayLobby } from "../hooks/use-netplay-session";
 
 /** "Syncing saves…" while the Play path pulls the game's cloud saves (≤ 15 s), then
  *  "Launching…" until the runner reports Started (≈0.7 s GPU init), then a slim
  *  "Now playing" bar while the game window is open. Rendered by the shell, so Play
- *  from any page shows it; the title comes from the (cached) game detail. */
+ *  from any page shows it; the title comes from the (cached) game detail. Play
+ *  online says "Opening room…" / "Joining room…" while the room is set up. */
 export function LaunchingOverlay() {
   const { data: session } = useGameSession();
   const syncingGame = useCloudPrePlay();
   const { data: detail } = useGameDetail(session?.gameId ?? syncingGame);
-  if (!session && syncingGame === null) return null;
+  const { data: lobby } = useNetplayLobby();
+  const joining = Boolean(lobby?.opening && lobby.role !== "host");
+  if (!session && syncingGame === null && !joining) return null;
   const title = detail?.title ?? "game";
+  const launchingText = session?.online === "host" ? "Opening room…" : joining || session?.online === "join" ? "Joining room…" : `Launching ${title}…`;
 
   if (!session || session.phase === "launching") {
     return (
       <div role="status" className="fixed inset-0 z-40 flex items-center justify-center bg-app-bg/80 backdrop-blur-sm">
         <div className="flex items-center gap-4 rounded-card border border-border-strong bg-surface-raised px-7 py-5">
           <span aria-hidden="true" className="size-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-          <span className="font-display text-lg font-semibold">{session ? `Launching ${title}…` : "Syncing saves…"}</span>
+          <span className="font-display text-lg font-semibold">{session || joining ? launchingText : "Syncing saves…"}</span>
         </div>
       </div>
     );

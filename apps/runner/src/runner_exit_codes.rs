@@ -9,6 +9,7 @@ use libretro_host::HostError;
 use system_catalog::{ContentProbe, DiscProbe, SystemSpec};
 
 use crate::core_system_assets::MissingCoreAssets;
+use crate::netplay_runtime::netplay_exit::NetplayExit;
 
 mod nds_rom_check;
 pub(crate) mod ps2_bios_check;
@@ -99,6 +100,9 @@ pub fn validate_rom(
 /// Maps an error chain to the process exit code.
 pub fn exit_code_for(err: &anyhow::Error) -> u8 {
     for cause in err.chain() {
+        if let Some(netplay) = cause.downcast_ref::<NetplayExit>() {
+            return netplay.code;
+        }
         if cause.downcast_ref::<RomValidationError>().is_some() {
             return EXIT_ROM_LOAD;
         }

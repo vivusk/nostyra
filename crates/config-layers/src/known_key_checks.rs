@@ -11,6 +11,7 @@ use toml::{Table, Value};
 use crate::achievements_config::ACHIEVEMENTS_KEY_CHECKS;
 use crate::cloud_config::CLOUD_KEY_CHECKS;
 use crate::input_binding_schema::{binding_key_checks, drop_unknown_binding_keys};
+use crate::netplay_config::NETPLAY_KEY_CHECKS;
 use crate::resolved_config_schema::{
     is_valid_shader, MAX_RUN_AHEAD_FRAMES, REWIND_BUFFER_MB_RANGE,
 };
@@ -52,7 +53,7 @@ const MENU_OPTION_KEY_CHECKS: [KeyCheck; 5] = [
     }),
 ];
 
-/// Every known key in schema order: menu options, resume, achievements, cloud, then the binding
+/// Every known key in schema order: menu options, resume, achievements, cloud, netplay, then the binding
 /// sections (built from the name tables, hence not a `const`).
 pub(crate) fn key_checks() -> &'static [KeyCheck] {
     static CHECKS: LazyLock<Vec<KeyCheck>> = LazyLock::new(|| {
@@ -61,6 +62,7 @@ pub(crate) fn key_checks() -> &'static [KeyCheck] {
             .chain(RESUME_KEY_CHECKS)
             .chain(ACHIEVEMENTS_KEY_CHECKS)
             .chain(CLOUD_KEY_CHECKS)
+            .chain(NETPLAY_KEY_CHECKS)
             .chain(binding_key_checks())
             .collect()
     });

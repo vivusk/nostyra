@@ -1,6 +1,6 @@
 # Nostyra — System Architecture
 
-Last updated: 2026-11-09 · Status: M0–M4 + M6–M18 implemented (Windows; manual checks pending; M16 = web edition, M17 = Atari 2600 / 7800 / Lynx, M18 = PlayStation 2 on PCEE2)
+Last updated: 2026-11-10 · Status: M0–M4 + M6–M20 implemented (Windows; manual checks pending; M16 = web edition, M17 = Atari 2600 / 7800 / Lynx, M18 = PlayStation 2 on PCEE2, M19 = cloud saves, M20 = online co-op netplay, §3.8)
 
 ## 1. High-Level View
 
@@ -51,7 +51,8 @@ nostyra.com/play (static files, Chrome / Edge)
 nostyra/
 ├── apps/
 │   ├── launcher/              # Tauri 2: src-tauri/ (Rust) + src/ (React)       [M1]
-│   └── runner/                # bin: nostyra-runner                             [M0]
+│   ├── runner/                # bin: nostyra-runner                             [M0]
+│   └── netplay-server/        # bin: signaling server (rooms, tokens, TURN creds, matchbox WS); VPS only [M20]
 ├── crates/
 │   ├── libretro-host/         # libretro FFI, core loading, callbacks           [M0]
 │   ├── video-renderer/        # wgpu frame upload, scaling, shaders             [M0/M3]
@@ -72,11 +73,14 @@ nostyra/
 │   ├── config-layers/         # TOML layers global→system→core→game, merge, write; binding names; staged dir replace; feature `fs` = file I/O, pure parse/merge/edit builds for wasm32 [M3/M4/M12/M16]
 │   ├── system-catalog/        # std-only registry: systems, cores, ROM classification, header rules, BIOS status, touch-screen / aiming-pointer rule, web (EmulatorJS) core per system, per-extension probes [M6, M8, M13, M14, M16, M17]
 │   ├── disc-image/            # cue/gdi/m3u, CHD (CD + GD-ROM + DVD), CDI, CSO, sector reader, ISO9660 paths, PARAM.SFO, PS1 id + serial, DC IP.BIN, PSP disc id, GC/Wii disc headers (ISO/GCM/CISO/GCZ/WIA/RVZ/WBFS) + DOL/ELF HID4 scan, serial rules, DiscImageProbe, track list + absolute-LBA reads [M8/M11/M12/M14/M15]
+│   ├── netplay-wire/          # serde-only `NetplayInput` (buttons u16 + 4 axes i16), `WIRE_VERSION`, `NETPLAY_PORTS = 4`; builds for wasm32 [M20]
+│   ├── netplay-session/       # netplay: room REST client (`rest`), session env, fingerprint, lobby protocol + state machine, sync transfer, ggrs driver + matchbox socket thread (`native`, runner only) [M20]
 │   └── achievements/          # rcheevos FFI (private `ffi`, the only unsafe), safe single-thread rc_client wrapper, transports (ureq | fake), credentials, offline journal, hashing readers, memory regions, hardcore rules, snapshot schema [M15]
 ├── assets/fonts/              # Noto Sans Regular + Bold (OFL-1.1), embedded in the runner for the achievement overlay [M15]
 ├── third-party/libretro/      # vendored libretro.h (MIT)
 ├── third-party/rcheevos/      # vendored rcheevos v12.5.0 include/ + src/ (MIT, unmodified), built by crates/achievements/build.rs (cc) [M15]
 ├── third-party/libretro-database/ # No-Intro DATs (SNES [M1], NES [M6], GB/GBC/GBA [M7], Sega [M9], N64 [M10], NDS Decrypted [M13]), Redump PS1 [M8] + Dreamcast [M11] + PSP [M12] + GameCube / Wii [M14] + PlayStation 2 [M18], No-Intro Atari 2600 / 7800 / Lynx [M17] + metadat attribute DATs (developer, publisher, genre, releaseyear, maxusers) [M2], CC-BY-SA-4.0
+├── deploy/netplay-server/     # Docker compose (server + coturn), nginx snippet, .env.example [M20]
 ├── docs/                    # plans/ is local-only (git-ignored)
 ```
 
@@ -186,6 +190,61 @@ Call order: `retro_set_environment` → `retro_init` → `retro_set_video_refres
 - **Hardcore gate** (behind `achievements::HARDCORE_UI_ENABLED = false`; debug `NOSTYRA_RA_HARDCORE_UI=1`): shared `HardcoreGate` (`hardcore_gate.rs`) checked first in `SaveStateSlots::load` (F4, menu) and in startup / `--load-state` loads (no file read, no core call); rewind captures nothing and plays nothing ("Disabled in hardcore"); `open_menu` asks `rc_client_can_pause` ("Pause available in N s"); a fixed / `--core-option` value refused by `rc_libretro_is_setting_allowed` or the registry's `CoreSpec.hardcore_required_options` (melonDS DS must be DS mode: rcheevos keys its table on "melonDS") → softcore for the session + popup. rc_client disabling hardcore (unknown disc), an unhashable swapped disc or a stopped client lift the gate. Saving, auto-save, fast-forward and run-ahead stay allowed. Launcher: `hardcore_effective` (flag ∧ enabled ∧ hardcore ∧ logged in ∧ RA system) → resume point `available=false` + "Hardcore: resume disabled" hint, slots marked unloadable, `play_game` drops `--load-state`.
 - **Overlay** (`achievement_overlay/`): FIFO popup queue, one visible (placard 5 s, mastery 6 s, others 4 s, 32 waiting), placard on game load (counts + mode, unknown game + hash, no memory), unlock / mastery / leaderboard / notice popups with badge, bottom-right trackers + challenge badges + progress (hides 2 s after the last update); pause-menu **Achievements** page from `rc_client_create_achievement_list(CORE, PROGRESS)` (locked badge variant while locked). Badge cache `<data>/cache/achievement-badges/<badge>.png` / `<badge>_lock.png` / `game_<icon>.png`, fetched once per session for window sessions only (headless never downloads), kept only if the PNG decodes, LRU 256 decoded images, grey placeholder meanwhile.
 - **Shutdown** (`achievement_client_shutdown.rs`): route arrived results → loop {fail every pending request with −2 `shutdown` → `rc_client_unload_game`} until none is pending (an award callback after destroy is a use-after-free) → `rc_client_destroy` → join the worker ≤ 2 s, else detach (a blocked ureq call holds only `Send` data). `achievements` is the first `EmulationApp` field, so even an unwinding drop releases it before the core session. The journal is already on disk.
+
+### 3.8 Online co-op netplay (M20, `crates/netplay-session` + runner `netplay_*`, `apps/netplay-server`)
+```
+launcher (Tauri)                        netplay-server (VPS, behind nginx)          other peers (runner)
+ Play online ─ netplay_host/join ─HTTPS─► POST /v1/rooms[/code/join]  → room id, seat token, ICE (TURN creds), max_players
+   │ spawn runner: --netplay host|player|spectator --netplay-players N; env NOSTYRA_NETPLAY_SESSION (JSON, taken + removed at start)
+   ▼                                          ▲ WSS /v1/ws/{room}?token=  (matchbox signaling, full mesh)
+ nostyra-runner ── network thread (matchbox message loop: signaling, ICE, data channels) ◄══ WebRTC (direct or coturn relay) ══►
+   core thread: lobby poll per redraw (reliable channel 1: Hello/Welcome/fingerprint, sync blobs, Start, Resync)
+                RollbackDriver::tick per emulated frame (unreliable channel 0: ggrs packets with a 1-byte epoch)
+   IPC stdout → RunnerEvent::Netplay{Lobby, Syncing, Started, Stats, Ended} → launcher lobby dialog; host's /start once on Started
+```
+- **Rollback**: ggrs 0.13 `P2PSession` (players) / `SpectatorSession` (host only). `SaveGameState` /
+  `LoadGameState` / `AdvanceFrame` map onto the run-ahead serialize path (`serialize_into` /
+  `unserialize_from`, new savestate context `RollbackNetplay`, ring of `max_prediction_window + 2`
+  reused buffers). Forward-path hooks (`frame > head_frame`: SRAM tick, achievements, presentation) run
+  once per new frame, never on re-simulation (F20). Host = handle 0, others by sorted `PeerId`
+  (the session builds the player list itself, not matchbox's uuid order). Desync detection: crc32 of
+  system RAM + SRAM every interval → HUD warning → host Resync (state re-sent, driver rebuilt with a new
+  epoch so stale packets of the old session are dropped).
+- **Lobby + sync** (`lobby_state/`, pure state machine, tested without network): guest `Hello` carries the
+  `SessionFingerprint` (core id / version / sha256, content sha1 / crc, patch, BIOS md5s / HLE, options
+  hash, system, fps, platform, analog, warm-up frames, `max_players`); mismatch → `Refused` naming the field.
+  Host Start (after `MUST_INITIALIZE` warm-up, ≥ 1 guest, all greeted) → `SyncBegin` → SRAM / RTC / state
+  blobs over the reliable channel (chunked, crc, cap) → everyone loads → `Start{epoch, input_delay}`.
+  Input delay auto from the worst lobby RTT (1–4 frames) or the user's fixed value.
+- **Input**: 4 ports (`PORT_COUNT = 4`); each peer drives exactly one port from its merged local devices
+  (`local_port_state`), the wire type is `netplay_wire::NetplayInput`; `NetplayInputSource` answers the core's
+  input callback from the confirmed / predicted frame inputs. Multitap per core is registry data
+  (`CoreSpec.multitap`: snes9x port 1 = 257, Mesen ports 2–3 = 257, GPGX MD Team Player 1537 / SMS Master
+  Tap 2049, PCSX option `pcsx_rearmed_multitap`), applied from the room's `max_players` on every role before
+  load (F21). Eligibility is registry data too (`CoreSpec.netplay`: Yes / Experimental / No) plus the
+  runtime serialization quirks; GL cores (`Serialized` quality) are always refused.
+- **Gates** (`netplay_gate.rs`, role × action table): rewind, fast-forward, run-ahead, load state, reset,
+  disc swap off for every role; save state host-only; the pause menu does not pause (non-pausing menu mode,
+  local input neutral while open); guests write no SRAM / states / resume point (`netplay-guest`
+  skip reason); achievements softcore only, none for spectators.
+- **Threads**: only the matchbox message loop runs off the core thread (`socket_thread.rs`,
+  `futures::executor::block_on` on a std thread); channels are lock-free; the frame driver keeps its own
+  pacer (cap 12 frames per tick, slowdown on `WaitRecommendation`). Stall > 500 ms → "Waiting for …";
+  disconnect timeout → the peer is dropped, the host continues; host gone → guests end (exit 9).
+- **Server** (`apps/netplay-server`, axum + `matchbox_protocol`): REST rooms (6-char Crockford codes,
+  HMAC seat tokens 30 min, coturn REST credentials 2 h), own WebSocket handler (token checked and live
+  seat reserved before the upgrade, so refusals are real HTTP statuses) speaking the matchbox full-mesh
+  protocol, per-IP rate limits behind nginx (`X-Real-IP` from trusted proxies only), in-memory rooms with GC.
+  Ops: [deployment-guide.md § Netplay server](deployment-guide.md#netplay-server).
+- **Privacy rules**: full mesh → every peer (spectators too) learns every other peer's IP; "Prefer relay"
+  only orders TURN first (matchbox 0.15 has no `ice_transport_policy`), so it is best effort. Room codes,
+  tokens, ICE lists and candidates never reach logs: the session env is removed from the process env and
+  redacted in `RunnerLaunch` Debug, webrtc / rtc / matchbox / tungstenite log targets are always off, the
+  launcher's bug-report scrub masks the netplay keys, the server logs only a room-id hash.
+- **Exit codes**: 7 ineligible core / system, 8 incompatible fingerprint / refused, 9 host left
+  (`ipc_protocol::EXIT_NETPLAY_*`), mapped to `SessionErrorKind::Netplay` in the launcher.
+- **Web edition**: `capabilities.netplay = false` (no Play online); `netplay-wire` and the pure part of
+  `netplay-session` build for wasm32 so a later web peer (M20b) can join the same rooms.
 
 ## 4. Launcher ↔ Runner IPC (M1)
 Contract in `crates/ipc-protocol`; launcher side in `crates/runner-session` (Tauri-free).

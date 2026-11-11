@@ -1,0 +1,16 @@
+# BuildKit reads this file for deploy/netplay-server/Dockerfile (context = repo root).
+# Only the Cargo workspace goes in: cargo needs every member manifest + sources to load
+# the workspace, even though only netplay-server is compiled.
+*
+!Cargo.toml
+!Cargo.lock
+!rust-toolchain.toml
+!apps/runner
+!apps/netplay-server
+!apps/launcher/src-tauri
+!crates
+**/target
+apps/launcher/src-tauri/gen
+apps/launcher/src-tauri/icons
+**/.env
+**/*.log

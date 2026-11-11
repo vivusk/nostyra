@@ -30,6 +30,8 @@ export interface Capabilities {
   updateCheck: boolean;
   /** Cloud saves (Google Drive / OneDrive / Dropbox / Local folder sync). */
   cloudSaves: boolean;
+  /** Play online (rollback netplay through the signaling server; the runner owns it). */
+  netplay: boolean;
 }
 
 /** Which edition this build is. */

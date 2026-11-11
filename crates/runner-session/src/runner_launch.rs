@@ -9,6 +9,9 @@ use std::path::PathBuf;
 /// Env var whose value `Debug` hides (mirrors `achievements::TOKEN_ENV`; this crate
 /// stays free of the achievements dependency).
 pub const REDACTED_ENV: &str = "NOSTYRA_RA_TOKEN";
+/// Every env var whose value `Debug` hides: the RA token and the netplay session
+/// JSON (room token, TURN credential, room code; M20).
+pub const REDACTED_ENVS: [&str; 2] = [REDACTED_ENV, "NOSTYRA_NETPLAY_SESSION"];
 
 /// Everything needed to start a game.
 #[derive(Clone)]
@@ -32,7 +35,7 @@ impl std::fmt::Debug for RunnerLaunch {
             .env
             .iter()
             .map(|(name, value)| {
-                let shown: &OsStr = if name == REDACTED_ENV {
+                let shown: &OsStr = if REDACTED_ENVS.iter().any(|secret| name == secret) {
                     OsStr::new("<redacted>")
                 } else {
                     value
@@ -85,10 +88,15 @@ mod tests {
             env: vec![
                 ("NOSTYRA_RA_USER".into(), "Tester".into()),
                 (REDACTED_ENV.into(), "tok-secret-123".into()),
+                (
+                    "NOSTYRA_NETPLAY_SESSION".into(),
+                    r#"{"token":"np-secret"}"#.into(),
+                ),
             ],
         };
         let text = format!("{launch:?}");
         assert!(!text.contains("tok-secret-123"), "{text}");
+        assert!(!text.contains("np-secret"), "{text}");
         assert!(
             text.contains("<redacted>") && text.contains("Tester"),
             "{text}"

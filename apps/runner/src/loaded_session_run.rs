@@ -19,6 +19,7 @@ use crate::emulation_main_loop::EmulationApp;
 use crate::game_save_data::GameSaveData;
 use crate::headless_runner;
 use crate::hw_render_setup::HwRenderSetup;
+use crate::netplay_launch::{self, LoadedFacts, NetplayLaunch};
 use crate::process_hard_exit::teardown_watchdog::{TeardownWatchdog, TestTeardownDelay};
 use crate::rom_soft_patching::{self, SoftPatchedRom};
 use crate::runner_cli_args::RunnerCliArgs;
@@ -40,6 +41,8 @@ pub struct PreparedLaunch {
     pub core_options: Vec<(String, String)>,
     /// RetroAchievements login from the launcher's env (cleared at process start).
     pub ra_login: Option<achievements::Credentials>,
+    /// `--netplay`: the checked room seat (M20).
+    pub netplay: Option<NetplayLaunch>,
 }
 
 /// Loads the core + game and plays it (see the module doc for the guard).
@@ -57,6 +60,7 @@ pub fn run(
         patched,
         core_options,
         ra_login,
+        netplay,
     } = launch;
     let system = paths.system;
     // Disc images are never preloaded (multi-file, hundreds of MB).
@@ -86,7 +90,8 @@ pub fn run(
     .with_context(|| format!("cannot start {} with {}", rom.display(), core.display()))?;
     let _slow_teardown = TestTeardownDelay; // debug test hook: drops after the guard armed
     let guard = watchdog.guard(EXIT_RUNTIME);
-    runner_session_config::configure_session(&mut session, system)?;
+    let players = netplay_launch::players(netplay.as_ref());
+    runner_session_config::configure_session(&mut session, system, players)?;
     let config = EffectiveConfig::resolve(&paths, rom, &session.core_info().name, args);
     if args.print_config {
         let printed = runner_effective_config::print(config.resolved(), system.id);
@@ -111,7 +116,11 @@ pub fn run(
         core_options: &core_options,
         hardcore_ui: achievements::hardcore_ui_enabled(),
     };
-    let achievements = start_for_runner(start, reporter);
+    // Spectators never play: no achievement session.
+    let spectator = netplay_launch::is_spectator(netplay.as_ref());
+    let achievements = (!spectator)
+        .then(|| start_for_runner(start, reporter))
+        .flatten();
 
     if let Some(frames) = args.headless_frames {
         reporter.started(&session.core_info().name, &paths.pending_sessions_dir);
@@ -121,12 +130,25 @@ pub fn run(
 
     let saves =
         GameSaveData::load(&paths, &mut session, args.start_slot()).with_soft_patch(&patched);
+    let facts = LoadedFacts {
+        core_path: core,
+        content_rom: &content_rom,
+        patched: &patched,
+        paths: &paths,
+        core_options: &core_options,
+    };
+    let netplay = netplay
+        .map(|launch| netplay_launch::start(launch, &mut session, &facts, reporter))
+        .transpose()?;
     let (sdl, gamepads) = SdlRuntime::init().context("cannot initialise SDL")?;
     let event_loop = EventLoop::new().context("cannot create event loop")?;
     let mut app = EmulationApp::new(
         session, hw_render, saves, sdl, gamepads, args, reporter, &paths, config,
     );
     app.attach_achievements(achievements);
+    if let Some(netplay) = netplay {
+        app.attach_netplay(netplay);
+    }
     let ran = event_loop.run_app(&mut app).context("event loop failed");
     let finished = app.finish(); // resume point + final SRAM flush (flush even if the loop errored)
     let result = ran.and(finished);

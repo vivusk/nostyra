@@ -139,6 +139,7 @@ impl TestHost {
         *self.0.session.lock().unwrap() = Some(ActiveSession {
             game_id: 99,
             unit_keys: session_unit_keys(target),
+            control: None,
         });
     }
 }

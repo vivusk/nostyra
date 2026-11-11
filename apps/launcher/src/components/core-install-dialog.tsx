@@ -4,6 +4,7 @@ import { queryKeys } from "../api/query-keys";
 import { useCoreStatus } from "../hooks/use-game-session";
 import { useSetupState } from "../hooks/use-library-queries";
 import { usePlayGame } from "../hooks/use-play-game";
+import type { NetplayHostOptions } from "../hooks/use-netplay-play";
 import { CoreDownloadPanel } from "./core-download-panel";
 
 /** Play was refused because the game's core is not installed (`core_missing`). */
@@ -11,6 +12,8 @@ export interface CoreInstallPrompt {
   coreId: string;
   gameId: number;
   message: string;
+  /** Set when Play online (host) was refused: Play reopens the room. */
+  online?: NetplayHostOptions;
 }
 
 /** Offers the missing core (download with progress), then Play once it is installed.
@@ -64,7 +67,7 @@ function PromptDialog({ prompt, onClose }: { prompt: CoreInstallPrompt; onClose:
             disabled={!status?.installed}
             onClick={() => {
               onClose();
-              play(prompt.gameId);
+              play(prompt.gameId, prompt.online);
             }}
             className="h-11 cursor-pointer rounded-control border-0 bg-accent-strong px-5 font-body font-bold text-white hover:bg-accent disabled:cursor-default disabled:opacity-50"
           >

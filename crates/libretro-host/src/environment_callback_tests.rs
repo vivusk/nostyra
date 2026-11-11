@@ -102,6 +102,11 @@ fn savestate_context_follows_the_session_value() {
     };
     assert_eq!(query(SavestateContext::Normal), 0);
     assert_eq!(query(SavestateContext::RunaheadSameInstance), 1);
+    assert_eq!(
+        query(SavestateContext::RollbackNetplay),
+        3,
+        "reserved, libretro value"
+    );
 }
 
 #[test]

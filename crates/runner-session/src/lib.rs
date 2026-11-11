@@ -18,8 +18,8 @@ pub use pending_session_import::{
 };
 pub use runner_core_probe::{probe_core_with_runner, ProbedCore};
 pub use runner_exit_classification::{classify_exit, SessionErrorKind};
-pub use runner_launch::{runner_args, RunnerLaunch, REDACTED_ENV};
-pub use runner_session_manager::{spawn_runner_session, RunnerSession};
+pub use runner_launch::{runner_args, RunnerLaunch, REDACTED_ENV, REDACTED_ENVS};
+pub use runner_session_manager::{spawn_runner_session, RunnerKiller, RunnerSession};
 pub use session_update::{AchievementUpdate, SessionError, SessionOutcome, SessionUpdate};
 
 /// No `Started` within this → the UI leaves its "Launching…" state.

@@ -35,6 +35,7 @@ mod dreamcast_real_core_checks_tests;
 mod dreamcast_real_core_suite_tests;
 mod emulation_main_loop;
 mod frame_pacer;
+mod game_launch;
 mod game_save_data;
 #[cfg(test)]
 mod handheld_real_core_suite_tests;
@@ -48,6 +49,14 @@ mod loaded_session_run;
 mod loop_timing;
 #[cfg(test)]
 mod n64_real_core_suite_tests;
+mod netplay_gate;
+mod netplay_launch;
+mod netplay_overlay;
+mod netplay_runtime;
+#[cfg(feature = "netplay-spike")]
+mod netplay_spike;
+#[cfg(test)]
+mod netplay_synctest_core_tests;
 mod on_screen_status;
 mod pause_menu;
 mod periodic_resume_save;
@@ -76,7 +85,6 @@ mod runner_core_options;
 mod runner_data_paths;
 mod runner_effective_config;
 mod runner_exit_codes;
-#[cfg(test)]
 mod runner_held_input;
 mod runner_log_file;
 #[cfg(test)]
@@ -103,24 +111,24 @@ mod state_policy_core_tests;
 mod state_thumbnail_writer;
 
 use std::cell::Cell;
-use std::path::Path;
 use std::process::ExitCode;
 
-use anyhow::Context;
 use clap::Parser;
-use system_catalog::Media;
 
-use crate::loaded_session_run::{code_of, PreparedLaunch};
+use crate::loaded_session_run::code_of;
 use crate::process_hard_exit::teardown_watchdog::TeardownWatchdog;
 use crate::runner_cli_args::RunnerCliArgs;
-use crate::runner_data_paths::RunnerDataPaths;
 use crate::runner_exit_codes::EXIT_GRAPHICS;
-use crate::sdl_runtime::set_process_hints;
 use crate::session_reporter::SessionReporter;
 
 fn main() -> ExitCode {
     // Before any other thread exists: the token must not linger in our environment.
     let ra_login = achievement_session::achievement_credentials::take_env_credentials();
+    let netplay_env = netplay_launch::take_session_env(); // same rule: before any thread
+    #[cfg(feature = "netplay-spike")]
+    if let Some(code) = netplay_spike::run_from_args() {
+        return code;
+    }
     let args = RunnerCliArgs::parse(); // exits with code 2 on bad arguments
                                        // Logs go to stderr (stdout is reserved for machine-readable output) and a log file.
     runner_log_file::start_runner_logging(&args);
@@ -135,7 +143,8 @@ fn main() -> ExitCode {
     let watchdog = TeardownWatchdog::reporting(&reporter);
     let core_kept_loaded = Cell::new(false); // set before a kept-loaded core is loaded
     let hooks = (&reporter, &watchdog, &core_kept_loaded);
-    let result = run(&args, core, rom, hooks, ra_login);
+    let secrets = (ra_login, netplay_env);
+    let result = game_launch::run(&args, (core, rom), hooks, secrets);
     let code = code_of(&result);
     let error = result.err().map(|err| {
         tracing::error!("{err:#}");
@@ -150,59 +159,4 @@ fn main() -> ExitCode {
         process_hard_exit::exit_now(code);
     }
     ExitCode::from(code)
-}
-
-fn run(
-    args: &RunnerCliArgs,
-    core: &Path,
-    rom: &Path,
-    session_hooks: (&SessionReporter, &TeardownWatchdog, &Cell<bool>),
-    ra_login: Option<achievements::Credentials>,
-) -> anyhow::Result<()> {
-    // Before any SDL init: an OpenGL core initialises SDL video inside `load`.
-    set_process_hints();
-    let data_root = match &args.data_dir {
-        Some(root) => root.clone(),
-        None => ipc_protocol::data_root().context("cannot determine the user data directory")?,
-    };
-    let staging_dir =
-        ipc_protocol::staged_content_dir(&data_root).join(std::process::id().to_string());
-    staged_content_cleanup::remove_stale(
-        &ipc_protocol::staged_content_dir(&data_root),
-        &staging_dir,
-        staged_content_cleanup::STALE_AGE,
-    );
-    let content =
-        archived_content::PreparedContent::prepare(rom, args.system.as_deref(), &staging_dir)?;
-    let system = content.system;
-    let paths = RunnerDataPaths::resolve(
-        Some(&data_root),
-        rom,
-        system,
-        content
-            .content_sha1
-            .as_deref()
-            .or(args.content_sha1.as_deref()),
-    )?;
-    // Disc images are never soft-patched nor preloaded (multi-file, hundreds of MB).
-    let patched = match system.media {
-        Media::Cartridge if content.path == rom => rom_soft_patching::load_soft_patched_rom(rom),
-        Media::Cartridge => rom_soft_patching::load_soft_patched_rom_from(rom, &content.path),
-        Media::Disc => rom_soft_patching::SoftPatchedRom::default(),
-    };
-    if system.media == Media::Disc {
-        disc_bios_log::log_bios_choice(system, &paths.system_dir, rom);
-    }
-    runner_session_config::prepare_core(system, core, &paths.system_dir, rom)?;
-    let bios = bios_option_switch::launch_option(system, &paths.system_dir, rom);
-    let overrides = [bios.into_iter().collect(), args.core_options.clone()].concat();
-    let core_options = runner_core_options::resolve(system, &overrides);
-    let launch = PreparedLaunch {
-        content_rom: content.path.clone(),
-        paths,
-        patched,
-        core_options,
-        ra_login,
-    };
-    loaded_session_run::run(args, (core, rom), session_hooks, launch)
 }

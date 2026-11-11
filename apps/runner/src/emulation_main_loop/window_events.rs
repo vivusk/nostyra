@@ -9,7 +9,7 @@ use std::time::Instant;
 use input_mapping::RunnerHotkey;
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, MouseButton, WindowEvent};
-use winit::event_loop::ActiveEventLoop;
+use winit::event_loop::{ActiveEventLoop, ControlFlow};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::WindowId;
 
@@ -51,6 +51,18 @@ impl ApplicationHandler for EmulationApp<'_> {
                 Ok(()) => self.report_started(),
                 Err(err) => self.fail(event_loop, err),
             }
+        }
+    }
+
+    /// A hidden window (`--window-hidden`, loopback tests) gets no redraws: its
+    /// redraw ticks run from here, polled.
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        if self.window.is_none() || !self.netplay.as_ref().is_some_and(|np| np.window_hidden) {
+            return;
+        }
+        event_loop.set_control_flow(ControlFlow::Poll);
+        if let Err(err) = self.tick(event_loop) {
+            self.fail(event_loop, err);
         }
     }
 

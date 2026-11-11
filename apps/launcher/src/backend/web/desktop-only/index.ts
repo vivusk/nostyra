@@ -1,6 +1,7 @@
 // Features the web edition does not have (capability off in the UI): core
 // download, RetroAchievements, logs / bug report, reveal in the file manager,
-// memory card import, moving the data folder, the update checker, cloud saves.
+// memory card import, moving the data folder, the update checker, cloud saves,
+// Play online (netplay).
 // Queries answer "nothing"; actions reject with the desktop-only message.
 import { constant, desktopOnly, type CommandTable } from "../web-command-table";
 
@@ -37,4 +38,10 @@ export const desktopOnlyCommands: CommandTable = {
   cloud_resolve_conflict: desktopOnly,
   cloud_resolve_all: desktopOnly,
   cloud_sync_now: desktopOnly,
+  // Play online: off on the web (capability `netplay`; the UI never calls these).
+  netplay_host: desktopOnly,
+  netplay_join: desktopOnly,
+  netplay_room_status: desktopOnly,
+  quit_session: desktopOnly,
+  open_netplay_privacy: desktopOnly,
 };

@@ -36,6 +36,8 @@
 /.claude/
 .env
 .env.*
+# Deploy template without secrets (M20 netplay server).
+!/deploy/netplay-server/.env.example
 *.log
 __pycache__/
 *.py[cod]

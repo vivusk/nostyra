@@ -10,13 +10,12 @@
 use video_renderer::{OverlayCanvas, TtfText};
 
 use super::achievement_list_view::paint_achievement_list;
-use super::menu_labels::{option_label, option_value, root_label};
-use super::menu_option_values::OPTION_ITEMS;
+use super::menu_body_view::{body_height, paint_body};
 use super::menu_panel_painter::{divider, paint_panel};
 use super::menu_rows_painter::Rows;
-use super::menu_types::{RootItem, Screen, SlotMode};
+use super::menu_types::Screen;
 use super::pause_menu_state::PauseMenuState;
-use super::slot_grid_view::{paint_grid, GridLayout};
+use super::slot_grid_view::GridLayout;
 use super::slot_thumbnail_cache::SlotThumbnailCache;
 use crate::achievement_overlay::BadgeCache;
 
@@ -144,82 +143,4 @@ pub fn paint_menu(
         m.stroke,
     );
     rows.footer(footer_y, state);
-}
-
-/// Height of the rows or the grid of the current screen.
-fn body_height(state: &PauseMenuState, m: &MenuMetrics, grid: &GridLayout) -> u32 {
-    let rows = match state.screen() {
-        // Every root row, incl. "Reset game", stays visible under a question.
-        Screen::Root | Screen::ConfirmQuit | Screen::ConfirmReset => state.root_items().len(),
-        Screen::Discs => state.discs().labels.len(),
-        Screen::Options => OPTION_ITEMS.len(),
-        Screen::Slots(_) | Screen::ConfirmOverwrite(_) => return grid.height(),
-        Screen::Achievements => 0, // its own page
-    };
-    rows as u32 * m.row_h
-}
-
-/// Rows (or the grid) of the current screen from `body_y` down.
-fn paint_body(
-    rows: &mut Rows,
-    body_y: u32,
-    state: &PauseMenuState,
-    (grid, thumbnails): (&GridLayout, &mut SlotThumbnailCache),
-) {
-    let row_h = rows.m.row_h;
-    let row_y = |index: usize| body_y + index as u32 * row_h;
-    match state.screen() {
-        Screen::Root | Screen::ConfirmQuit | Screen::ConfirmReset => {
-            for (index, item) in state.root_items().iter().enumerate() {
-                let enabled = *item != RootItem::LoadState || state.load_enabled();
-                let selected = index == state.root_cursor();
-                let opens_page = !matches!(
-                    item,
-                    RootItem::Resume | RootItem::ResetCore | RootItem::Quit
-                );
-                let trailing = opens_page.then(|| "›".to_string());
-                rows.row(row_y(index), root_label(*item), trailing, selected, enabled);
-            }
-        }
-        Screen::Options => {
-            for (index, item) in OPTION_ITEMS.iter().enumerate() {
-                let (value, enabled) = option_value(*item, state.options());
-                let selected = index == state.option_cursor();
-                rows.row(row_y(index), option_label(*item), value, selected, enabled);
-            }
-        }
-        Screen::Discs => {
-            let discs = state.discs();
-            for (index, label) in discs.labels.iter().enumerate() {
-                let inserted = (index == discs.current).then(|| "Inserted".to_string());
-                let selected = index == state.disc_cursor();
-                rows.row(row_y(index), label, inserted, selected, true);
-            }
-        }
-        Screen::Slots(mode) => {
-            let at = (rows.left, body_y);
-            paint_grid(
-                rows.canvas,
-                rows.text,
-                at,
-                (grid, rows.m),
-                state,
-                mode,
-                thumbnails,
-            );
-        }
-        Screen::ConfirmOverwrite(_) => {
-            let (at, mode) = ((rows.left, body_y), SlotMode::Save);
-            paint_grid(
-                rows.canvas,
-                rows.text,
-                at,
-                (grid, rows.m),
-                state,
-                mode,
-                thumbnails,
-            );
-        }
-        Screen::Achievements => {}
-    }
 }

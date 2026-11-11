@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 config-layers = { workspace = true, features = ["fs"] }
 libretro-host.workspace = true
+netplay-wire.workspace = true
 sdl3.workspace = true
 system-catalog.workspace = true
 tracing.workspace = true

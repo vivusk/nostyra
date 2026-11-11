@@ -2,6 +2,8 @@
 resolver = "2"
 members = [
     "apps/runner",
+    # Netplay signaling server (M20): deployed on the VPS, never shipped in the portable zip.
+    "apps/netplay-server",
     "apps/launcher/src-tauri",
     "crates/libretro-host",
     "crates/video-renderer",
@@ -24,10 +26,12 @@ members = [
     "crates/hw-render-gl",
     "crates/achievements",
     "crates/cloud-sync",
+    "crates/netplay-wire",
+    "crates/netplay-session",
 ]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 rust-version = "1.99"
 license = "GPL-3.0-or-later"
@@ -57,6 +61,9 @@ rom-identity = { path = "crates/rom-identity" }
 hw-render-gl = { path = "crates/hw-render-gl" }
 achievements = { path = "crates/achievements" }
 cloud-sync = { path = "crates/cloud-sync" }
+netplay-wire = { path = "crates/netplay-wire" }
+# default-features = false: the runner enables `native`, the launcher only `rest`.
+netplay-session = { path = "crates/netplay-session", default-features = false }
 
 libloading = "0.9.0"
 winit = "0.30.13"

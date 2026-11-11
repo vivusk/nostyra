@@ -6,6 +6,10 @@
 
 use serde::{Deserialize, Serialize};
 
+mod netplay_event;
+
+pub use netplay_event::{NetplayEndReason, NetplayEvent, NetplayRole, NetplayRosterEntry};
+
 /// Runner → launcher.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -29,6 +33,8 @@ pub enum RunnerEvent {
     AchievementUnlocked { id: u32, hardcore: bool },
     /// The server rejected the stored token: the launcher logs the user out.
     AchievementsLoginExpired,
+    /// Netplay session news (M20), `{"type":"Netplay","event":…}`.
+    Netplay(NetplayEvent),
     /// Answer to `--probe-core`.
     CoreInfo {
         name: String,

@@ -4,6 +4,7 @@
 //! `lynxboot.img` copied into `<data>/system/` by hand is used silently).
 
 use crate::core_spec_types::{CoreSpec, SaveStateQuality, CORE_DEFAULTS};
+use crate::netplay_spec_types::NetplaySupport;
 
 /// Stella 8 (Atari 2600): XRGB8888, RIOT RAM mapped for RetroAchievements, no
 /// SAVE_RAM. Variable-size states (1 001 B for the test ROM, 1 MiB in the fast
@@ -16,6 +17,8 @@ pub const STELLA: CoreSpec = CoreSpec {
     systems: &["atari2600"],
     license: "GPL-2.0-or-later",
     savestates: SaveStateQuality::Deterministic,
+    // Two joystick ports, no multitap.
+    netplay: NetplaySupport::Yes,
     ..CORE_DEFAULTS
 };
 
@@ -29,6 +32,8 @@ pub const PROSYSTEM: CoreSpec = CoreSpec {
     systems: &["atari7800"],
     license: "GPL-2.0",
     savestates: SaveStateQuality::Deterministic,
+    // Passed the synctest with the test ROM; RetroArch marks it `serialized`.
+    netplay: NetplaySupport::Experimental,
     ..CORE_DEFAULTS
 };
 
@@ -51,5 +56,7 @@ pub const HANDY: CoreSpec = CoreSpec {
     exact_state_size: true,
     strict_state_version: true,
     stage_content: true,
+    // RAM desyncs after re-simulation (spike 00): no netplay.
+    netplay: NetplaySupport::No,
     ..CORE_DEFAULTS
 };

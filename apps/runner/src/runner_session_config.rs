@@ -61,8 +61,12 @@ pub const HW_RENDER_REQUIRED: &str =
 
 /// After the load: the registry's hardware-render rules (`Err` = exit 6, the core
 /// is abandoned: no unload of a core running its black Null renderer), state-size
-/// rules and controller port devices.
-pub fn configure_session(session: &mut CoreSession, system: &SystemSpec) -> anyhow::Result<()> {
+/// rules and controller port devices (a netplay room of `players`: multitap).
+pub fn configure_session(
+    session: &mut CoreSession,
+    system: &SystemSpec,
+    players: u8,
+) -> anyhow::Result<()> {
     let core = system_catalog::core_for_system(system.id);
     let required = core.is_some_and(|core| core.hw_render_required);
     let refused = session.refused_hw_render().is_some();
@@ -76,7 +80,7 @@ pub fn configure_session(session: &mut CoreSession, system: &SystemSpec) -> anyh
     session.set_exact_state_size(runner_core_options::exact_state_size(system));
     // PPSSPP's state size changes after boot without saying so.
     session.set_state_size_requery(runner_core_options::state_size_requery(system));
-    session.set_controller_port_devices(runner_core_options::port_devices(system));
+    session.set_controller_port_devices(runner_core_options::port_devices_for(system, players));
     // PPSSPP falls back to its software renderer without a word when every
     // hardware request is refused (its own "Using … backend" log line says which).
     if let Some(reason) = session.refused_hw_render() {

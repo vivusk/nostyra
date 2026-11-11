@@ -109,7 +109,7 @@ impl SdlGamepadManager {
         if self.port_of(id).is_some() {
             return;
         }
-        let Some(slot) = self.ports.iter().position(Option::is_none) else {
+        let Some(slot) = first_free_port(&self.ports) else {
             tracing::info!(?id, "gamepad ignored: all ports in use");
             return;
         };
@@ -182,6 +182,11 @@ fn input_held(pad: &Gamepad, input: GamepadInput) -> bool {
 fn port_mask(bindings: &InputBindings, pad: &Gamepad, sticks: AnalogSticks) -> u16 {
     let dpad = left_stick_dpad(sticks, pad.axis(Axis::LeftX), pad.axis(Axis::LeftY));
     dpad | bindings.pad_mask(|input| input_held(pad, input))
+}
+
+/// Lowest free port for a new pad (`None`: all [`PORT_COUNT`] in use → ignored).
+fn first_free_port<T>(ports: &[Option<T>]) -> Option<usize> {
+    ports.iter().position(Option::is_none)
 }
 
 /// Suppressed buttons stay suppressed only while still held.

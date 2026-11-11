@@ -23,6 +23,7 @@ import { refreshAccountViews } from "./use-achievements-queries";
 import { openCloudConflict, refreshCloudViews } from "./use-cloud-queries";
 import { cloudCommands } from "../api/tauri-commands-cloud";
 import { useCreateBugReport } from "./use-bug-report";
+import { endNetplayLobby, subscribeNetplayEvents } from "./use-netplay-session";
 
 export function useBackendEventSync() {
   const queryClient = useQueryClient();
@@ -137,9 +138,11 @@ export function useBackendEventSync() {
         void queryClient.invalidateQueries({ queryKey: queryKeys.gameplayConfigRoot });
         void queryClient.invalidateQueries({ queryKey: queryKeys.gameAchievements(e.payload.gameId) });
         const error = e.payload.error;
+        // An online session's early end is explained by the lobby dialog instead.
+        const online = capabilities.netplay && endNetplayLobby(queryClient);
         // Game errors offer a bug-report zip (logs of this session included; the web
         // edition has no log files).
-        if (error) {
+        if (error && !(online && error.kind === "netplay")) {
           const report = capabilities.logs ? { label: "Create bug report", onClick: () => createBugReport() } : undefined;
           showError(error.message, error.detail, report);
         }
@@ -166,6 +169,7 @@ export function useBackendEventSync() {
         if (e.payload.error) showError("Artwork fetch failed", e.payload.error);
       }),
     ];
+    if (capabilities.netplay) subscriptions.push(subscribeNetplayEvents(queryClient));
     if (capabilities.cloudSaves) {
       const cloud = cloudSubscriptions();
       subscriptions.push(...cloud);

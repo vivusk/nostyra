@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+## 2026-11-11 — v0.6.0
+- Release v0.6.0 (`docs/release-notes-v0.6.0.md`): online co-op netplay (M20) — rollback (ggrs) over WebRTC (matchbox), own signaling server + coturn at `netplay.nostyra.com`, up to 4 players + 8 spectators; up to 4 local gamepads. Live test: SNES, two PCs on different networks, ~40 min, no desync. Fixes from live testing: coturn relay/listen IP pinned (`TURN_RELAY_IP`, `35e8b65`), Play online menu clipped (`1ec7892`), Host after core install launched offline (`1f78b5b`).
+
+### 2026-11-10 — M20 Online co-op netplay (implemented on Windows; VPS deployed 2026-11-10, check A passed 2026-11-11)
+- feat(netplay-server): new `apps/netplay-server` (axum, matchbox protocol): rooms with 6-character codes, HMAC seat tokens, coturn REST credentials, own full-mesh WebSocket signaling with real HTTP refusals, per-IP rate limits behind nginx, in-memory rooms + GC, logs with a room-id hash only; `deploy/netplay-server/` (Docker compose + coturn 4.6.3 host network, nginx snippet, `.env.example`), `scripts/netplay-server-smoke.sh` (`70c73c1`).
+- feat(netplay-input): 4 input ports, `crates/netplay-wire` (`NetplayInput`, wasm-safe), `NetplayInputSource`, multitap + netplay support as registry data per core (`CoreSpec.netplay`, `CoreSpec.multitap`), savestate context `RollbackNetplay` (`93f572b`).
+- feat(netplay-session): new `crates/netplay-session`: room REST client, session env, compatibility fingerprint, lobby protocol + state machine, SRAM / RTC / state sync transfer, ggrs 0.13 rollback driver with epoch-framed packets, matchbox 0.15 socket thread (`ebf212d`).
+- feat(netplay-runner): `--netplay host|player|spectator`, frame driver with forward-path hooks, gates (rewind / FF / run-ahead / load / reset / disc swap off, host-only saves, non-pausing menu), waiting room + HUD, desync warning + Resync, IPC `RunnerEvent::Netplay`, exit codes 7–9, transport crate logs off (`3eab97d`).
+- feat(netplay-launcher): `[netplay]` settings, `netplay_host` / `netplay_join` / `netplay_room_status` / `quit_session`, Play online menu (Host / Join / Watch), lobby dialog, Settings → Netplay, log scrub for netplay secrets, web `capabilities.netplay = false` (`3a00b83`).
+- docs: README Online co-op + Privacy (everyone in the room may learn your IP; Prefer relay is best effort), deployment guide § Netplay server, architecture §3.8, code standards netplay rules; release notes draft for v0.6.0 in the plan reports.
+
 ## 2026-11-09 — v0.5.0
 - Release v0.5.0 (`docs/release-notes-v0.5.0.md`): cloud saves with Google Drive and a Local folder (M19 phases 01–04, 07, 08; Google app published to production with `drive.file` only; client id + desktop secret embedded at build time from `NOSTYRA_GOOGLE_CLIENT_ID` / `NOSTYRA_GOOGLE_CLIENT_SECRET`, not committed; OneDrive / Dropbox show "not available in this version yet") and the update notice.
 

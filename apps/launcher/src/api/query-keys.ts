@@ -72,6 +72,10 @@ export const queryKeys = {
   cloudBulkPrompt: ["cloud-bulk-prompt"] as const,
   /** The window close waits for a cloud upload (modal until the app exits). */
   cloudClosingWait: ["cloud-closing-wait"] as const,
+  /** Online room shown by the lobby dialog (null = none); fed by netplay events. */
+  netplayLobby: ["netplay-lobby"] as const,
+  /** Room counts polled by the lobby dialog until the runner reports the roster. */
+  netplayRoomStatus: (code: string) => ["netplay-room-status", code] as const,
 };
 
 /** What the UI knows about the running game. */
@@ -79,4 +83,6 @@ export interface GameSessionState {
   gameId: number;
   /** "launching" until the runner reports Started (or the launch timeout passes). */
   phase: "launching" | "playing";
+  /** Play online: the overlay says "Opening room…" / "Joining room…". */
+  online?: "host" | "join";
 }

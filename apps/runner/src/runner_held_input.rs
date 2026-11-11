@@ -1,11 +1,16 @@
 //! Test input for the real-core suites: one port-0 input held for every frame,
 //! answered per device (RetroPad button, analog stick, analog trigger, a touch on
-//! the DS bottom screen or a raw pointer state), or nothing pressed.
+//! the DS bottom screen or a raw pointer state), or nothing pressed. Netplay's
+//! hidden `--netplay-scripted-input` reuses it as the local player's port
+//! (`pattern_parser`); the test-only variants are unused in release builds.
+#![cfg_attr(not(test), allow(dead_code))]
 
 use input_mapping::{
     fraction_to_pointer, PointerState, ANALOG_BUTTON_INDEX, ANALOG_MAX, TRIGGER_MAX,
 };
 use libretro_host::{RETRO_DEVICE_ANALOG, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_POINTER};
+
+pub(crate) mod pattern_parser;
 
 /// One DS screen; the core's default top-bottom frame is 256×384.
 const DS_SCREEN: (f64, f64) = (256.0, 192.0);

@@ -156,6 +156,7 @@ fn check_states_refused(session: &mut CoreSession, paths: &RunnerDataPaths) {
         started: true,
         loop_failed: false,
         real_frames: 10_000,
+        netplay_guest: false,
     };
     assert_eq!(
         skip_reason(facts),

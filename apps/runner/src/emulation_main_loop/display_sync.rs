@@ -17,6 +17,9 @@ impl EmulationApp<'_> {
         let (window, presenter) =
             open_game_window(event_loop, &av, self.start_fullscreen, gl_in_use)?;
         window.set_title(&self.saves.window_title(""));
+        if self.netplay.as_ref().is_some_and(|np| np.window_hidden) {
+            window.set_visible(false); // loopback test runners (`--window-hidden`)
+        }
         self.window = Some(window);
         self.presenter = Some(presenter);
         self.apply_scaling();

@@ -40,9 +40,26 @@ disc-image.workspace = true
 # Content sha1 of the game (save-folder id) when the launcher did not pass it.
 game-library.workspace = true
 tempfile.workspace = true
+# M20 netplay: room socket, lobby, sync and the ggrs rollback driver (native).
+netplay-session = { workspace = true, features = ["native"] }
+# ggrs types in the rollback host (`Frame`, `InputStatus`) and the synctest suite.
+ggrs = "0.13"
+# Netplay fingerprint: sha256 of the core DLL and of the core options.
+sha2.workspace = true
+# M20 phase-00 spike only (feature `netplay-spike`, default off): WebRTC loopback probes.
+matchbox_socket = { version = "0.15", features = ["ggrs"], optional = true }
+futures = { version = "0.3", optional = true }
+# Own ggrs packet framing (session epoch byte) on the shared channel; same bincode as matchbox.
+bincode = { version = "2", default-features = false, features = ["serde", "alloc"], optional = true }
+
+[features]
+netplay-spike = ["dep:matchbox_socket", "dep:futures", "dep:bincode"]
 
 [dev-dependencies]
 zip.workspace = true
+# Per-thread allocation counter (replaces the test binary's global allocator): M20
+# netplay hot-path test (lobby poll + HUD redraw allocation-free after warm-up).
+allocation-counter = "0.8"
 # Synthetic PS2 BIOS images for the BIOS option / refusal tests.
 system-catalog = { workspace = true, features = ["test-fixtures"] }
 # Synthetic Dreamcast images (GDI fixtures) for the runner's process tests.

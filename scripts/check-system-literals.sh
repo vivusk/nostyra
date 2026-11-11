@@ -36,6 +36,7 @@ ALLOW=(
   "crates/rom-identity/src/clrmamepro_dat_parser.rs" # DAT format: libretro NES DAT names headered ROMs *.nes
   "crates/ipc-protocol/src/shared_data_paths.rs" # RTC_FILE_NAME = "rtc.bin": RTC save file name, not a ROM extension
   "crates/cloud-sync/src/token_store_files.rs" # "refresh-token.bin": DPAPI token file name, not a ROM extension
+  "apps/launcher/src-tauri/src/commands/netplay_room_flow_fake_api.rs" # test-only module (#[cfg(test)] #[path] mod in netplay_room_flow.rs): fake room API game hint
   "apps/launcher/src/lib/cloud-file-labels.ts" # memory-card extensions ("ps2", "gci") / "GC" folder: file labels in cloud conflict dialog
 )
 

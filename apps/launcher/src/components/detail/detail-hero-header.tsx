@@ -3,6 +3,7 @@ import { useResumeInfo } from "../../hooks/use-resume-info-query";
 import { assetUrl, useResolvedAsset } from "../../lib/asset-url";
 import { detailMetaLine, monogram, tileColor } from "../../lib/game-display";
 import { CoverImage } from "../cover-image";
+import { PlayOnlineMenu } from "../netplay/play-online-menu";
 import { DetailBadges } from "./detail-badges";
 import { FavoriteToggleButton } from "./favorite-toggle-button";
 
@@ -17,7 +18,8 @@ interface DetailHeroHeaderProps {
 }
 
 /** 460 px header per mockup: blurred snap (else tile colour + big monogram), back pill,
- *  overlapping 150 px cover (letterboxed), badges, 52 px title, meta, Play + heart. */
+ *  overlapping 150 px cover (letterboxed), badges, 52 px title, meta, Play, Play
+ *  online ▾ (desktop) + heart. */
 export function DetailHeroHeader({ game, backLabel, onBack, sessionGameId, onPlay }: DetailHeroHeaderProps) {
   const snap = useResolvedAsset(assetUrl(game.heroPath));
   const meta = game.metadata;
@@ -78,6 +80,7 @@ export function DetailHeroHeader({ game, backLabel, onBack, sessionGameId, onPla
             </svg>
             {playLabel}
           </button>
+          <PlayOnlineMenu game={game} sessionRunning={sessionGameId !== null} />
           <FavoriteToggleButton gameId={game.id} favorite={game.favorite} />
           {resume?.hardcore && <span className="basis-full text-xs text-muted">Hardcore: resume disabled</span>}
         </div>

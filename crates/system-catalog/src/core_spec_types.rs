@@ -1,6 +1,8 @@
 //! [`CoreSpec`] and its value types: save-state quality, BIOS files, memory card
 //! slots, core system assets; [`CORE_DEFAULTS`] for the fields most cores leave off.
 
+use crate::netplay_spec_types::{MultitapSpec, NetplaySupport};
+
 /// Save-state quality of a core.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SaveStateQuality {
@@ -147,6 +149,11 @@ pub struct CoreSpec {
     /// the path and names its EEPROM file after it (`content.eeprom`, stable across a
     /// ROM rename, ZIP or soft patch).
     pub stage_content: bool,
+    /// Online play (M20): offered or not (spike 00 synctest per core).
+    pub netplay: NetplaySupport,
+    /// Netplay room size and multitap setup per system (no entry: 2 players, no
+    /// change to devices or options); applied only to rooms of more than 2 players.
+    pub multitap: &'static [MultitapSpec],
 }
 
 /// Defaults for the fields most cores do not use; registry entries end with
@@ -174,4 +181,6 @@ pub const CORE_DEFAULTS: CoreSpec = CoreSpec {
     keep_library_loaded: false,
     hardcore_required_options: &[],
     stage_content: false,
+    netplay: NetplaySupport::No,
+    multitap: &[],
 };

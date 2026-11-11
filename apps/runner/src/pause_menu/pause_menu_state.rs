@@ -10,6 +10,7 @@
 //! ```
 //! Back goes one level up; Back on the root resumes. The slot picker (F2) opens the
 //! grid alone: Enter makes the slot active and resumes, Back resumes unchanged.
+//! Netplay replaces the root rows (`netplay_rows`).
 
 use super::achievement_list_page_state::AchievementListPageState;
 use super::menu_option_values::OptionValues;
@@ -20,7 +21,9 @@ use super::menu_types::{
 mod achievement_list_screen;
 mod confirm_question;
 mod disc_list_screen;
+mod netplay_rows;
 mod options_screen;
+mod state_updates;
 
 pub struct PauseMenuState {
     screen: Screen,
@@ -36,6 +39,7 @@ pub struct PauseMenuState {
     discs: DiscList,
     disc: usize,
     achievements: AchievementListPageState,
+    netplay: Option<netplay_rows::NetplayRows>,
 }
 
 impl PauseMenuState {
@@ -54,6 +58,7 @@ impl PauseMenuState {
             discs: DiscList::default(),
             disc: 0,
             achievements: AchievementListPageState::default(),
+            netplay: None,
         }
     }
 
@@ -85,25 +90,6 @@ impl PauseMenuState {
     /// Load state is offered only when some slot holds a state.
     pub fn load_enabled(&self) -> bool {
         self.slots.iter().any(|slot| slot.used)
-    }
-
-    pub fn set_slot(&mut self, slot: u8, summary: SlotSummary) {
-        if let Some(cell) = self.slots.get_mut(usize::from(slot)) {
-            *cell = summary;
-        }
-    }
-
-    pub fn set_options(&mut self, options: OptionValues) {
-        self.options = options;
-    }
-
-    pub fn set_message(&mut self, message: impl Into<String>) {
-        self.message = Some(message.into());
-    }
-
-    /// Shows the grid as the slot picker (cursor on the active slot).
-    pub fn open_slot_picker(&mut self) {
-        self.screen = Screen::Slots(SlotMode::Select);
     }
 
     /// Applies one input; returns the action the loop must perform, if any.
@@ -142,6 +128,8 @@ impl PauseMenuState {
                 RootItem::Options => self.screen = Screen::Options,
                 RootItem::Disc => self.open_discs(),
                 RootItem::Achievements => self.screen = Screen::Achievements,
+                RootItem::NetplayInfo => {}
+                RootItem::Resync => return Some(MenuAction::Resync),
             },
             NavEvent::Left | NavEvent::Right => {}
         }

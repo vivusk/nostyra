@@ -21,7 +21,10 @@ impl StateSizes {
     fn slot(&mut self, context: SavestateContext) -> &mut Option<usize> {
         match context {
             SavestateContext::Normal => &mut self.normal,
-            SavestateContext::RunaheadSameInstance => &mut self.fast,
+            // Both are fast (RAM-only) contexts: the core answers the same size.
+            SavestateContext::RunaheadSameInstance | SavestateContext::RollbackNetplay => {
+                &mut self.fast
+            }
         }
     }
 }

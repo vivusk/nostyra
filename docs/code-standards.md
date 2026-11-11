@@ -1,6 +1,6 @@
 # Nostyra — Code Standards
 
-Last updated: 2026-10-29
+Last updated: 2026-11-10
 
 ## Principles
 - YAGNI · KISS · DRY. Build only what the current milestone needs.
@@ -26,6 +26,12 @@ Last updated: 2026-10-29
 - Hot paths (per-frame/per-sample): no allocation, no locks contended with UI thread.
 - Doc comments (`///`) on all public items; explain *why*, not *what*.
 - Web edition (M16): crates the browser uses (`rom-identity`, `system-catalog`, `rom-patch`, `disc-image`, `ipc-protocol` / `config-layers` without default features, `web-bindings`) must build for `wasm32-unknown-unknown` (`scripts/check-wasm-crates.sh`): OS access (`fs`, `directories`, clocks, logging setup) only behind the `native` / `fs` features; pure rules take bytes, text or a `read_at` callback. `wasm-bindgen` / `js-sys` only in `crates/web-bindings`, under `cfg(target_arch = "wasm32")`. A rule both editions need (naming, identity, config) is written once in Rust and exported to the web, never re-implemented in TS.
+
+- Netplay (M20): **never log, print or put in an error text** a room code, room / seat token, TURN username / credential, ICE server list, ICE candidate or a peer's IP address — in the launcher, the runner and the server (the server logs an 8-hex hash of the room id). The session env `NOSTYRA_NETPLAY_SESSION` is taken out of the process env at runner start and listed in `REDACTED_ENVS`; structs that carry secrets (`RunnerLaunch`, `NetplayPlay`, REST responses, `NetplaySessionEnv`) redact them in `Debug`; transport crate log targets (webrtc, rtc_*, matchbox, tungstenite) stay off in the shared log setup; new netplay keys go into the launcher's `log_secret_scrub` with a test. Codes travel in the env / REST bodies only, never on a command line.
+- Netplay is registry data: support level (`CoreSpec.netplay`: Yes / Experimental / No) and the 4-player setup (`CoreSpec.multitap`: devices per port, core options, room cap per system) live in `system-catalog`; eligibility goes through `netplay_eligibility` (registry + runtime serialization quirks), never `if core == …`. Port devices and options come from the room's `max_players` on **every** role before load (same function for host, players, spectators), so fingerprints agree.
+- Rollback path = hot path: `RollbackDriver::tick`, save / load into the reused state ring, `NetplayInputSource::set_frame_inputs` and the input callback allocate nothing per frame and take no locks shared with other threads; only the matchbox message loop runs on its own thread, and talks to the core thread through lock-free channels. Side effects (SRAM tick, achievements, presentation, IPC) run on the forward path only (`frame > head_frame`), never during re-simulation.
+- Netplay protocol changes bump the wire / lobby versions (`WIRE_VERSION`, lobby version tag) and the server API path (`/v1`); ggrs packets always go through the epoch-framed `SharedGgrsChannel`, never matchbox's own ggrs socket impl.
+- `netplay-session` keeps its layering: no tauri / tokio / input-mapping / libretro-host / SDL / winit; the launcher uses it with `default-features = false, features = ["rest"]` only (no webrtc / ggrs in the Tauri binary); the pure part (no default features) must stay wasm-buildable for web peers.
 
 ## TypeScript / React (M1+)
 - Strict TS, function components, hooks.

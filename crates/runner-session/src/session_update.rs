@@ -1,14 +1,15 @@
 //! What a running session reports to the launcher ([`SessionUpdate`]) and how it
 //! ended ([`SessionOutcome`]); runner achievement events map to one
-//! [`SessionUpdate::Achievements`] variant so each launcher `match` grows by one arm.
+//! [`SessionUpdate::Achievements`] variant so each launcher `match` grows by one arm;
+//! netplay events (M20) pass through as [`SessionUpdate::Netplay`].
 
-use ipc_protocol::RunnerEvent;
+use ipc_protocol::{NetplayEvent, RunnerEvent};
 use serde::Serialize;
 
 use crate::runner_exit_classification::SessionErrorKind;
 
 /// Progress of a running session, in order: `Started`?, `LaunchTimedOut`?,
-/// `Achievements`*, `Finished`.
+/// `Achievements`* / `Netplay`*, `Finished`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum SessionUpdate {
@@ -20,7 +21,20 @@ pub enum SessionUpdate {
     LaunchTimedOut,
     /// RetroAchievements news from the runner (snapshot file already rewritten).
     Achievements(AchievementUpdate),
+    /// Online session news (lobby, start, stats, end); never a code, token or address.
+    Netplay(NetplayEvent),
     Finished(SessionOutcome),
+}
+
+impl SessionUpdate {
+    /// The in-session update for a runner event (achievements, netplay); `None` for
+    /// lifecycle events the coordinator handles itself.
+    pub fn from_event(event: RunnerEvent) -> Option<Self> {
+        match event {
+            RunnerEvent::Netplay(event) => Some(Self::Netplay(event)),
+            other => AchievementUpdate::from_event(other).map(Self::Achievements),
+        }
+    }
 }
 
 /// RetroAchievements events of a session.
@@ -125,6 +139,26 @@ mod tests {
         );
         assert_eq!(
             AchievementUpdate::from_event(RunnerEvent::Stopped { play_seconds: 1 }),
+            None
+        );
+    }
+
+    #[test]
+    fn netplay_events_pass_through() {
+        let event = NetplayEvent::Started {
+            players: 2,
+            input_delay: 1,
+        };
+        assert_eq!(
+            SessionUpdate::from_event(RunnerEvent::Netplay(event.clone())),
+            Some(SessionUpdate::Netplay(event))
+        );
+        assert_eq!(
+            SessionUpdate::from_event(RunnerEvent::AchievementsLoginExpired),
+            Some(SessionUpdate::Achievements(AchievementUpdate::LoginExpired))
+        );
+        assert_eq!(
+            SessionUpdate::from_event(RunnerEvent::Stopped { play_seconds: 1 }),
             None
         );
     }

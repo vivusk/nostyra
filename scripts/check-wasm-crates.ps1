@@ -8,7 +8,7 @@ Push-Location $repoRoot
 try {
     $common = @('--target', 'wasm32-unknown-unknown', '--target-dir', 'target/wasm-check')
     $checks = @(
-        @('-p', 'content-file-source', '-p', 'system-catalog', '-p', 'rom-patch', '-p', 'disc-image', '-p', 'rom-identity', '-p', 'web-bindings'),
+        @('-p', 'content-file-source', '-p', 'system-catalog', '-p', 'rom-patch', '-p', 'disc-image', '-p', 'rom-identity', '-p', 'web-bindings', '-p', 'netplay-wire'),
         @('-p', 'ipc-protocol', '--no-default-features'),
         @('-p', 'config-layers', '--no-default-features')
     )

@@ -4,6 +4,7 @@
 
 use std::process::Child;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -13,12 +14,29 @@ use crate::runner_exit_classification::classify_exit;
 use crate::runner_launch::RunnerLaunch;
 use crate::runner_output_readers::{spawn_stderr_reader, spawn_stdout_reader, StderrTail};
 use crate::runner_process_command::runner_session_command;
-use crate::session_update::{AchievementUpdate, SessionError, SessionOutcome, SessionUpdate};
+use crate::session_update::{SessionError, SessionOutcome, SessionUpdate};
 
 /// A running session; drop the receiver to stop listening (the game keeps running).
 pub struct RunnerSession {
     pub pid: u32,
     pub updates: Receiver<SessionUpdate>,
+    /// Ends the process (online lobby Cancel: the runner has no command channel).
+    pub killer: RunnerKiller,
+}
+
+/// Kills the session's runner; the session still ends through `Finished`.
+#[derive(Debug, Clone)]
+pub struct RunnerKiller(Arc<Mutex<Child>>);
+
+impl RunnerKiller {
+    /// Best effort: a runner already exiting (its exit being awaited) is left alone.
+    pub fn kill(&self) {
+        if let Ok(mut child) = self.0.try_lock() {
+            if let Err(err) = child.kill() {
+                tracing::debug!(%err, "runner already gone");
+            }
+        }
+    }
 }
 
 /// Starts the runner with [`crate::runner_args`], the launch env and no console window.
@@ -36,6 +54,8 @@ pub fn spawn_runner_session(
     spawn_stdout_reader(stdout, event_tx)?;
     let stderr_thread = spawn_stderr_reader(stderr, tail.clone())?;
     let (update_tx, update_rx) = mpsc::channel();
+    let child = Arc::new(Mutex::new(child));
+    let killer = RunnerKiller(Arc::clone(&child));
     std::thread::Builder::new()
         .name("runner-session".into())
         .spawn(move || {
@@ -51,6 +71,7 @@ pub fn spawn_runner_session(
     Ok(RunnerSession {
         pid,
         updates: update_rx,
+        killer,
     })
 }
 
@@ -59,7 +80,7 @@ fn missing_pipe() -> std::io::Error {
 }
 
 struct Coordinator {
-    child: Child,
+    child: Arc<Mutex<Child>>,
     event_rx: Receiver<RunnerEvent>,
     update_tx: Sender<SessionUpdate>,
     tail: StderrTail,
@@ -89,8 +110,8 @@ impl Coordinator {
                 Ok(RunnerEvent::Error { message }) => error_message = Some(message),
                 // Stopped: play time comes from the pending file.
                 Ok(other) => {
-                    if let Some(update) = AchievementUpdate::from_event(other) {
-                        self.send(SessionUpdate::Achievements(update));
+                    if let Some(update) = SessionUpdate::from_event(other) {
+                        self.send(update);
                     }
                 }
                 Err(RecvTimeoutError::Timeout) => {
@@ -101,7 +122,10 @@ impl Coordinator {
                 Err(RecvTimeoutError::Disconnected) => break,
             }
         }
-        let exit_code = self.child.wait().ok().and_then(|status| status.code());
+        let exit_code = {
+            let mut child = self.child.lock().unwrap_or_else(|p| p.into_inner());
+            child.wait().ok().and_then(|status| status.code())
+        };
         if let Some(thread) = self.stderr_thread.take() {
             let _ = thread.join(); // complete tail before reading it
         }

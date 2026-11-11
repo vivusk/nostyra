@@ -6,8 +6,8 @@ use crate::commands::{
     bios_commands, cloud_commands, cloud_sign_in_commands, cloud_sync_commands, core_commands,
     data_folder_commands, dev_seed_commands, game_detail_commands, gamepad_capture_commands,
     gameplay_config_commands, home_commands, input_catalog_commands, library_commands,
-    log_commands, memory_card_commands, missing_game_removal_commands, play_commands,
-    resume_commands, save_state_commands, scan_commands, system_catalog_commands,
+    log_commands, memory_card_commands, missing_game_removal_commands, netplay_commands,
+    play_commands, resume_commands, save_state_commands, scan_commands, system_catalog_commands,
     update_check_commands,
 };
 
@@ -33,6 +33,11 @@ pub fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Sen
         core_commands::download_core,
         play_commands::play_game,
         play_commands::get_active_session,
+        play_commands::quit_session,
+        netplay_commands::netplay_host,
+        netplay_commands::netplay_join,
+        netplay_commands::netplay_room_status,
+        netplay_commands::open_netplay_privacy,
         game_detail_commands::get_game_detail,
         game_detail_commands::set_favorite,
         game_detail_commands::update_game_metadata,

@@ -19,6 +19,7 @@ use crate::state_thumbnail_writer::{StateThumbnailWriter, Thumbnail};
 
 mod game_window_title;
 mod hardcore_state_load;
+mod persist_switch;
 
 /// [`GameSaveData::load_state`] status after a successful load.
 pub const STATE_LOADED: &str = "Loaded";
@@ -39,6 +40,8 @@ pub struct GameSaveData {
     /// Real-timeline frames emulated this session (counted by [`Self::tick`]).
     real_frames: u64,
     boot: PreBootLoadGuard,
+    /// SRAM / clock / resume point reach the disk (netplay guests: never).
+    persist: bool,
 }
 
 impl GameSaveData {
@@ -55,6 +58,7 @@ impl GameSaveData {
             slot: slot.min(MAX_STATE_SLOT),
             real_frames: 0,
             boot: PreBootLoadGuard::new(session),
+            persist: true,
         }
     }
 
@@ -71,8 +75,10 @@ impl GameSaveData {
     /// playback), so it also counts the frames the auto-save rule needs.
     pub fn tick(&mut self, session: &mut CoreSession) {
         self.real_frames += 1;
-        self.sram.flush_if_due(session);
-        self.rtc.flush_if_due(session);
+        if self.persist {
+            self.sram.flush_if_due(session);
+            self.rtc.flush_if_due(session);
+        }
     }
 
     /// Real-timeline frames emulated this session.
@@ -113,30 +119,6 @@ impl GameSaveData {
         let path = self.states.thumbnail_path(id);
         self.thumbnails.queue(path, Thumbnail::from_frame(frame));
         Ok(())
-    }
-
-    /// Periodic resume point: SRAM + clock flushed first (the sidecar's `sram_crc32`
-    /// then matches the `.srm` on disk), the core serialized here, the files and the
-    /// thumbnail written by the background worker (no disk wait on the frame thread).
-    pub fn save_resume_point_in_background(
-        &mut self,
-        session: &mut CoreSession,
-        frame: &RgbaFrameBuffer,
-        progress: Option<String>,
-    ) -> anyhow::Result<()> {
-        self.flush(session);
-        let id = StateSlotId::Auto;
-        let files = self.states.prepare(session, id, progress)?;
-        tracing::info!(bytes = files.state_len(), "periodic resume point queued");
-        self.thumbnails.queue_files(files)?;
-        let path = self.states.thumbnail_path(id);
-        self.thumbnails.queue(path, Thumbnail::from_frame(frame));
-        Ok(())
-    }
-
-    /// Waits for queued background writes (before the exit save overwrites them).
-    pub fn wait_background_writes(&self) {
-        self.thumbnails.wait_idle();
     }
 
     /// F3: (status, the state's achievement progress). The progress is meaningful
@@ -205,6 +187,9 @@ impl GameSaveData {
 
     /// On exit: final SRAM + clock write.
     pub fn flush(&mut self, session: &mut CoreSession) {
+        if !self.persist {
+            return; // netplay guest: the host's save stays the host's
+        }
         self.sram.flush(session);
         self.rtc.flush(session);
     }

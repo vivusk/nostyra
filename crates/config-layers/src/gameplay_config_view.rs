@@ -75,9 +75,11 @@ pub fn is_input_key(key: &str) -> bool {
         .any(|prefix| key.starts_with(prefix))
 }
 
-/// Whether a dotted key is global-layer only (`[achievements]`, `[cloud]`).
+/// Whether a dotted key is global-layer only (`[achievements]`, `[cloud]`, `[netplay]`).
 pub fn is_global_only_key(key: &str) -> bool {
-    key.starts_with("achievements.") || key.starts_with("cloud.")
+    ["achievements.", "cloud.", "netplay."]
+        .iter()
+        .any(|prefix| key.starts_with(prefix))
 }
 
 /// Edits removing every binding key (gameplay and resume keys stay): "Reset controls".
@@ -136,8 +138,8 @@ mod tests {
         );
         assert_eq!(
             view.resolved.len(),
-            16,
-            "5 menu options + 2 resume + 5 achievements + 4 cloud keys"
+            21,
+            "5 menu options + 2 resume + 5 achievements + 4 cloud + 5 netplay keys"
         );
         assert_eq!(
             view.input.resolved.len(),
@@ -167,6 +169,8 @@ mod tests {
         assert!(settable_key_refusal("cloud.provider", true).is_some());
         assert_eq!(settable_key_refusal("cloud.sync_states", false), None);
         assert_eq!(settable_key_refusal("cloud.sync_on_start", false), None);
+        assert_eq!(settable_key_refusal("netplay.nickname", false), None);
+        assert!(settable_key_refusal("netplay.hud", true).is_some());
         for key in ["cloud.provider", "cloud.local_folder"] {
             assert!(settable_key_refusal(key, false).is_some(), "{key}");
         }

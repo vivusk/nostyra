@@ -10,6 +10,9 @@
 //! save is logged and never changes the exit code. Crash / kill → no save; the
 //! previous files stay intact (atomic writes).
 
+/// Skip reason of a netplay guest / spectator.
+pub const NETPLAY_GUEST: &str = "netplay-guest";
+
 /// 10 s of real-timeline frames at 60 fps.
 pub const AUTO_SAVE_MIN_FRAMES: u64 = 600;
 
@@ -26,6 +29,8 @@ pub struct ExitFacts {
     pub loop_failed: bool,
     /// Real-timeline frames emulated this session.
     pub real_frames: u64,
+    /// A netplay guest / spectator: plays on the host's save, writes nothing.
+    pub netplay_guest: bool,
 }
 
 /// Outcome, for logs and tests.
@@ -38,7 +43,9 @@ pub enum AutoSaveOutcome {
 
 /// Why the resume point must not be written, if it must not.
 pub fn skip_reason(facts: ExitFacts) -> Option<&'static str> {
-    if !facts.enabled {
+    if facts.netplay_guest {
+        Some(NETPLAY_GUEST)
+    } else if !facts.enabled {
         Some("resume.auto_save is off")
     } else if !facts.states_available {
         Some("save states need hardware rendering")
@@ -85,6 +92,7 @@ mod tests {
         started: true,
         loop_failed: false,
         real_frames: AUTO_SAVE_MIN_FRAMES,
+        netplay_guest: false,
     };
 
     fn outcome(facts: ExitFacts) -> (AutoSaveOutcome, bool) {
@@ -133,7 +141,16 @@ mod tests {
                 real_frames: 0,
                 ..GOOD
             },
+            ExitFacts {
+                netplay_guest: true,
+                ..GOOD
+            },
         ];
+        let guest = ExitFacts {
+            netplay_guest: true,
+            ..GOOD
+        };
+        assert_eq!(skip_reason(guest), Some(NETPLAY_GUEST));
         for facts in cases {
             let (result, called) = outcome(facts);
             assert!(matches!(result, AutoSaveOutcome::Skipped(_)), "{facts:?}");

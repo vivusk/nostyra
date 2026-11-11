@@ -17,6 +17,9 @@ use crate::runner_window::toggle_fullscreen;
 
 impl EmulationApp<'_> {
     pub(super) fn on_hotkey(&mut self, hotkey: RunnerHotkey) {
+        if let Some(refused) = self.netplay_gate().refusal_of_hotkey(hotkey) {
+            return self.show_status(refused.to_string(), refused.to_string());
+        }
         let status = match hotkey {
             RunnerHotkey::PauseMenu => return self.open_menu(),
             RunnerHotkey::ToggleFullscreen => {

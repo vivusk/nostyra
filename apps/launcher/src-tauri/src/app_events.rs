@@ -28,6 +28,9 @@ pub const CLOUD_STATUS_CHANGED: &str = "cloud-status-changed";
 pub const CLOUD_SIGN_IN_WAITING: &str = "cloud-sign-in-waiting";
 /// Window close held until a cloud job ends (≤ 15 s + a running apply pass).
 pub const CLOUD_CLOSING_WAIT: &str = "cloud-closing-wait";
+/// Online session news from the runner: `{ gameId, event, … }` (`NetplayEvent`
+/// fields; never a room code, token or address — M20 phase 04).
+pub const NETPLAY_EVENT: &str = "netplay-event";
 
 /// Live scan state; also returned by `get_scan_progress` for late subscribers.
 #[derive(Debug, Clone, Default, Serialize)]
@@ -127,6 +130,15 @@ pub struct SessionErrorPayload {
     pub message: String,
     /// Runner error / stderr tail, for "details".
     pub detail: String,
+}
+
+/// One runner netplay event of the running game.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NetplayEventPayload {
+    pub game_id: i64,
+    #[serde(flatten)]
+    pub event: ipc_protocol::NetplayEvent,
 }
 
 /// Emits to all windows; a failed emit (window closing) is only logged.

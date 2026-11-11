@@ -1,0 +1,20 @@
+[package]
+name = "netplay-wire"
+description = "Netplay per-frame input wire struct (serde only), shared by input-mapping and netplay-session; builds for wasm32."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+# serde only: the netplay session crate and a future wasm peer read this struct
+# without pulling input-mapping (libretro-host, SDL, winit).
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+# Same encoding ggrs / matchbox use on the wire (already in the lock).
+bincode = { version = "2.0.1", default-features = false, features = ["serde", "alloc"] }
+
+[lints]
+workspace = true

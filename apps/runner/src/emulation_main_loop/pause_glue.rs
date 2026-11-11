@@ -7,20 +7,20 @@
 //! are swallowed by the menu input adapter. Play time keeps counting while paused
 //! (M1 session semantics). In achievement hardcore a pause is granted only when
 //! rc_client allows it (`rc_client_can_pause`); otherwise the game keeps running
-//! with "Pause available in N s".
+//! with "Pause available in N s". In netplay the menu never pauses (F5,
+//! `menu_open_close`): frames keep ticking, the local port sends neutral input.
 
 use std::time::{Duration, Instant};
 
 use input_mapping::RunnerHotkey;
-use ipc_protocol::StateSlotId;
 use winit::event_loop::ActiveEventLoop;
 
 use super::EmulationApp;
-use crate::pause_menu::{
-    DiscList, NavEvent, OptionValues, PadRoute, SlotSummary, SlotThumbnailCache, SLOT_COUNT,
-};
+use crate::netplay_gate::menu_mode::menu_pauses;
+use crate::pause_menu::{NavEvent, PadRoute};
 
 mod menu_actions;
+mod menu_open_close;
 
 /// On-screen hint when the game window opens (Esc no longer quits).
 pub(super) const MENU_HINT: &str = "Esc: menu";
@@ -59,7 +59,8 @@ impl EmulationApp<'_> {
         if let Some(nav) = self.menu.poll_repeat(now) {
             self.menu_nav(event_loop, nav);
         }
-        let paused = self.menu.is_open();
+        // Netplay: the menu opens over the running game (F5), lockstep goes on.
+        let paused = menu_pauses(self.menu.is_open(), self.netplay_gate().active());
         if paused {
             self.achievements_idle();
             std::thread::sleep(PAUSED_REDRAW_SLEEP);
@@ -67,92 +68,10 @@ impl EmulationApp<'_> {
         paused
     }
 
-    /// Esc, a bound `pause_menu` key / pad input, Guide or the chord: pause and show the root screen.
-    pub(super) fn open_menu(&mut self) {
-        if self.menu.is_open() {
-            return;
-        }
-        if let Some(refused) = self.hardcore_pause_refusal() {
-            self.status.show(refused, Instant::now());
-            return;
-        }
-        self.input.release_keyboard();
-        self.release_pointer();
-        self.timing.resume_normal_speed(); // drops queued audio now; prefill on close
-        let slots = (0..SLOT_COUNT as u8)
-            .map(|slot| self.slot_summary(slot))
-            .collect();
-        let thumbnails = SlotThumbnailCache::new(
-            (0..SLOT_COUNT as u8)
-                .map(|slot| self.saves.thumbnail_path(slot))
-                .collect(),
-        );
-        let discs = self.disc_list();
-        self.menu.open(
-            slots,
-            self.option_values(),
-            self.saves.slot(),
-            thumbnails,
-            discs,
-        );
-        self.refresh_achievement_list(true);
-        self.set_title_status(PAUSED_TITLE);
-        tracing::debug!("pause menu opened");
-    }
-
-    /// F2 / `select_slot`: pause on the save-state grid to choose the active slot
-    /// (arrows + Enter pick it and resume, Esc cancels).
-    pub(super) fn open_slot_picker(&mut self) {
-        self.open_menu();
-        self.menu.open_slot_picker();
-    }
-
-    /// Resume: hide the menu and restart pacing and audio cleanly.
-    pub(super) fn close_menu(&mut self) {
-        self.menu.close();
-        self.input.gamepads_mut().suppress_held_buttons();
-        self.timing.resume_normal_speed();
-        self.set_title_status("");
-        tracing::debug!("pause menu closed");
-    }
-
     /// One navigation input for the open menu (keyboard via `route_key`, pad here).
     pub(super) fn menu_nav(&mut self, event_loop: &ActiveEventLoop, nav: NavEvent) {
         if let Some(action) = self.menu.handle(nav) {
             self.apply_menu_action(event_loop, action);
-        }
-    }
-
-    fn slot_summary(&self, slot: u8) -> SlotSummary {
-        SlotSummary {
-            used: self.saves.has_state(StateSlotId::Numbered(slot)),
-            saved_at: self.saves.saved_at(slot).and_then(format_saved_at),
-        }
-    }
-
-    /// Disc labels + inserted disc of a multi-disc game (empty list otherwise).
-    fn disc_list(&mut self) -> DiscList {
-        let Some(discs) = self.session.discs() else {
-            return DiscList::default();
-        };
-        DiscList {
-            labels: (0..discs.count()).map(|i| discs.label(i)).collect(),
-            current: discs.index() as usize,
-        }
-    }
-
-    /// Options-screen values from the live config.
-    fn option_values(&self) -> OptionValues {
-        OptionValues::from_config(
-            &self.config,
-            self.run_ahead.unavailable_reason(),
-            self.rewind.unavailable_reason(),
-        )
-    }
-
-    fn set_title_status(&self, status: &str) {
-        if let Some(window) = &self.window {
-            window.set_title(&self.saves.window_title(status));
         }
     }
 }

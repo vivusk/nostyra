@@ -47,7 +47,10 @@ pub use game_folder_key::{find_game_entry, resolve_game_entry};
 pub use native_data_roots::{game_config_path_for_game, portable_dir, saves_dir_for_game};
 pub use pending_session_record::{pending_session_file_name, PendingSessionRecord};
 pub use rom_key::rom_key;
-pub use runner_events::{decode_event_line, encode_event_line, LauncherCommand, RunnerEvent};
+pub use runner_events::{
+    decode_event_line, encode_event_line, LauncherCommand, NetplayEndReason, NetplayEvent,
+    NetplayRole, NetplayRosterEntry, RunnerEvent,
+};
 pub use save_state_files::{
     state_file, state_slot_file, StateSidecar, MAX_STATE_SLOT, SIDECAR_FILE_EXT, STATE_FILE_EXT,
     STATE_SLOT_FILE_EXTS, THUMBNAIL_FILE_EXT,
@@ -75,6 +78,13 @@ pub const EXIT_RUNTIME: i32 = 5;
 /// The core needs a GPU API this PC cannot provide (e.g. OpenGL 3.3 for the
 /// Nintendo 64): the game never started; a driver update may fix it.
 pub const EXIT_GRAPHICS: i32 = 6;
+
+/// Netplay (M20): the core / game cannot run a rollback session.
+pub const EXIT_NETPLAY_INELIGIBLE: i32 = 7;
+/// Netplay: the host refused this peer (different game, core, options …).
+pub const EXIT_NETPLAY_INCOMPATIBLE: i32 = 8;
+/// Netplay: the host left the session (guests quit 3 s later).
+pub const EXIT_NETPLAY_HOST_LEFT: i32 = 9;
 
 /// libretro API version the host implements (reported by `--probe-core`).
 pub const LIBRETRO_API_VERSION: u32 = 1;

@@ -5,6 +5,7 @@
 use super::super::menu_types::{
     cycle, root_items, DiscList, MenuAction, NavEvent, RootItem, Screen,
 };
+use super::netplay_rows::netplay_root_items;
 use super::PauseMenuState;
 
 impl PauseMenuState {
@@ -22,6 +23,9 @@ impl PauseMenuState {
     /// Root rows for this game ("Disc" only with more than one disc, "Achievements"
     /// only with an achievement session).
     pub fn root_items(&self) -> Vec<RootItem> {
+        if let Some(netplay) = &self.netplay {
+            return netplay_root_items(netplay.host);
+        }
         root_items(self.discs.is_multi_disc(), self.achievements.available())
     }
 

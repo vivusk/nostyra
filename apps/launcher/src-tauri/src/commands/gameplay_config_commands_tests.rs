@@ -153,8 +153,8 @@ fn view_keeps_controls_out_of_the_gameplay_maps() {
     );
     assert_eq!(
         with_game.resolved.len(),
-        16,
-        "incl. the 5 global-only achievements + 4 cloud keys"
+        21,
+        "incl. the 5 global-only achievements + 4 cloud + 5 netplay keys"
     );
     assert_eq!(
         with_game.input.resolved["input_gamepad.a"],

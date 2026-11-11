@@ -10,6 +10,7 @@ impl EmulationApp<'_> {
     /// Saves the `auto` slot in the background when its interval has passed.
     pub(super) fn save_periodic_resume_point(&mut self) {
         let allowed = self.config.resume.auto_save
+            && self.saves.persists() // netplay guests write nothing
             && self.session.states_available()
             && self.startup_load.is_none();
         let frames = self.saves.real_frames();

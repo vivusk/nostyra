@@ -4,6 +4,7 @@
 
 use crate::core_fixed_options::MELONDS_OPTIONS;
 use crate::core_specs::{CoreSpec, SaveStateQuality, CORE_DEFAULTS};
+use crate::netplay_spec_types::NetplaySupport;
 
 /// No firmware files (built-in system files only: encrypted dumps cannot boot). The
 /// state size is fixed per game and stable across reset (~18 MiB + the cart save),
@@ -24,5 +25,8 @@ pub const MELONDS_DS: CoreSpec = CoreSpec {
     process_env: &[("MELONDSDS_SKIP_ERROR_SCREEN", "1")],
     // DSi mode is not allowed in hardcore (rcheevos' melonDS rule).
     hardcore_required_options: &[("melonds_console_mode", "ds")],
+    // Deterministic, but one unserialize (p50 14 ms) costs about a frame: no
+    // netplay in v1 (spike 00).
+    netplay: NetplaySupport::No,
     ..CORE_DEFAULTS
 };

@@ -1,0 +1,42 @@
+[package]
+name = "netplay-session"
+description = "Netplay (M20): room REST client, session env, fingerprint, lobby protocol and state machine, sync transfer, ggrs rollback driver and the matchbox socket thread."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[features]
+default = ["native", "rest"]
+# ggrs rollback driver + matchbox WebRTC socket thread (runner only). Off: the pure
+# protocol / state-machine API a future wasm peer can use.
+native = ["dep:ggrs", "dep:matchbox_socket", "dep:futures", "dep:uuid"]
+# Blocking REST client for `/v1/rooms*` (launcher: `default-features = false,
+# features = ["rest"]`, so the Tauri binary never pulls webrtc / ggrs).
+rest = ["dep:http-download-util"]
+
+# No tauri, no tokio, no input-mapping (F25: it would drag libretro-host / SDL / winit).
+[dependencies]
+# Lobby messages on the reliable channel and our own ggrs packet framing (same
+# bincode 2 + serde config matchbox uses for ggrs packets).
+bincode = { version = "2.0.1", default-features = false, features = ["serde", "alloc"] }
+crc32fast.workspace = true
+netplay-wire.workspace = true
+serde.workspace = true
+# `NOSTYRA_NETPLAY_SESSION` env JSON and the REST bodies.
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+ggrs = { version = "0.13.0", optional = true }
+matchbox_socket = { version = "0.15.0", features = ["ggrs"], optional = true }
+# Runs matchbox's `MessageLoopFuture` on its own std thread (`executor::block_on`).
+futures = { version = "0.3.34", optional = true }
+# matchbox `PeerId(Uuid)` ↔ our `PeerKey(u128)` (same version matchbox locks).
+uuid = { version = "1.28.0", default-features = false, optional = true }
+# Shared blocking HTTPS client (ureq) + bounded body reads.
+http-download-util = { workspace = true, optional = true }
+
+[lints]
+workspace = true

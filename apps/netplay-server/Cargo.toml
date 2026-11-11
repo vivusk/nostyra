@@ -1,0 +1,43 @@
+[package]
+name = "netplay-server"
+description = "Netplay signaling server (M20): room codes, HMAC tokens, TURN REST credentials and matchbox WebRTC signaling."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+# Server only (VPS, behind nginx): never built by the launcher, the portable zip or the
+# wasm check. tokio / axum stay out of every other crate.
+[dependencies]
+anyhow.workspace = true
+axum = { version = "0.8.9", features = ["ws"] }
+base64.workspace = true
+# WebSocket split into sender / receiver halves.
+futures = "0.3.34"
+getrandom.workspace = true
+# Same governor the rate-limit layer uses (its `NoOpMiddleware` type is named here).
+governor = "0.10.4"
+# HMAC 0.12 = digest 0.10, hence sha1 / sha2 0.10 here (the workspace 0.11 pair is digest 0.11).
+hmac = "0.12.1"
+ipnet = "2.12.2"
+matchbox_protocol = { version = "0.15.0", features = ["json"] }
+# Signaling helpers (sender task, request parsing); the room mesh itself is ours.
+matchbox_signaling = "0.15.0"
+serde.workspace = true
+serde_json.workspace = true
+sha1 = "0.10.7"
+sha2 = "0.10.9"
+tokio = { version = "1.53.3", features = ["full"] }
+tower_governor = { version = "0.8.0", default-features = false, features = ["axum"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid = { version = "1.28.0", features = ["v4"] }
+
+[dev-dependencies]
+http-body-util = "0.1.5"
+tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["connect"] }
+tower = { version = "0.5.3", features = ["util"] }
+
+[lints]
+workspace = true

@@ -89,6 +89,7 @@ fn units_of_a_running_game_and_stopped_jobs_are_refused() {
     let session = Mutex::new(Some(ActiveSession {
         game_id: 1,
         unit_keys: BTreeSet::from(["sys/aaaa".to_string()]),
+        control: None,
     }));
     let job_stop = stop();
     let job = cloud

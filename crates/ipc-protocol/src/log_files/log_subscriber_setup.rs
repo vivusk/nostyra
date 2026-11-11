@@ -86,10 +86,42 @@ pub fn init_logging(request: Option<LogFileRequest<'_>>) -> Option<PathBuf> {
     path.filter(|_| installed)
 }
 
+/// Netplay transport crates (WebRTC / ICE / signaling) log peer addresses, ICE
+/// candidates and urls with tokens: always silenced, whatever the filter says.
+const SILENCED_TARGETS: [&str; 18] = [
+    "webrtc",
+    "rtc",
+    "rtc_crypto",
+    "rtc_datachannel",
+    "rtc_dtls",
+    "rtc_ice",
+    "rtc_interceptor",
+    "rtc_mdns",
+    "rtc_media",
+    "rtc_rtcp",
+    "rtc_rtp",
+    "rtc_sctp",
+    "rtc_sdp",
+    "rtc_shared",
+    "rtc_srtp",
+    "rtc_stun",
+    "rtc_turn",
+    "matchbox_socket",
+];
+
 fn env_filter() -> EnvFilter {
-    EnvFilter::try_from_env(LOG_FILTER_ENV)
+    let filter = EnvFilter::try_from_env(LOG_FILTER_ENV)
         .or_else(|_| EnvFilter::try_from_default_env())
-        .unwrap_or_else(|_| EnvFilter::new("info"))
+        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let quiet = SILENCED_TARGETS
+        .iter()
+        .chain(&["async_tungstenite", "tungstenite"]);
+    quiet.fold(filter, |filter, target| {
+        match format!("{target}=off").parse() {
+            Ok(directive) => filter.add_directive(directive),
+            Err(_) => filter,
+        }
+    })
 }
 
 /// Creates this process's log file, then trims the folder (never the new file).

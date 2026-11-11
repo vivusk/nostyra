@@ -44,6 +44,8 @@ pub enum MenuAction {
     ResetCore,
     /// Insert disc N (0-based) of a multi-disc game (root → "Disc").
     SwapDisc(u32),
+    /// Netplay host: resync every peer from the host's state (after a desync).
+    Resync,
     Quit,
 }
 
@@ -60,6 +62,10 @@ pub enum RootItem {
     ResetCore,
     Options,
     Quit,
+    /// Netplay: "Netplay · <role>, <n> players, ping <ms>" (information only).
+    NetplayInfo,
+    /// Netplay host: resync the session.
+    Resync,
 }
 
 /// Every root row in display order; [`root_items`] drops the ones a game lacks.

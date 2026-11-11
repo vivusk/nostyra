@@ -13,6 +13,7 @@ use crate::achievements_config::AchievementsConfig;
 use crate::cloud_config::CloudConfig;
 use crate::core_layer_id::BUNDLED_PRESETS;
 use crate::input_binding_schema::InputConfig;
+use crate::netplay_config::NetplayConfig;
 use crate::resume_config_schema::ResumeConfig;
 
 /// `video.shader` value for the plain nearest-neighbour quad (no shader chain).
@@ -34,6 +35,8 @@ pub struct ResolvedConfig {
     pub achievements: AchievementsConfig,
     /// Global layer only (`cloud_config`); launcher only.
     pub cloud: CloudConfig,
+    /// Global layer only (`netplay_config`); launcher only (runner gets flags).
+    pub netplay: NetplayConfig,
     /// Binding sections, flattened so they sit at the top level
     /// (`input_keyboard`, …) as in the TOML layers and `--print-config`.
     #[serde(flatten)]

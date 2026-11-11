@@ -44,6 +44,7 @@ mod input_catalog;
 mod input_conflicts;
 mod known_key_checks;
 mod known_values_view;
+mod netplay_config;
 mod resolved_config_diff;
 mod resolved_config_schema;
 mod resume_config_schema;
@@ -89,6 +90,10 @@ pub use known_key_checks::MENU_OPTION_KEYS;
 #[cfg(feature = "fs")]
 pub use known_values_view::layer_known_values;
 pub use known_values_view::{known_values_of_layer, resolved_known_values};
+pub use netplay_config::{
+    valid_input_delay, valid_server_url, NetplayConfig, MAX_NETPLAY_INPUT_DELAY,
+    MAX_NICKNAME_CHARS, NETPLAY_DEFAULT_SERVER_URL, NETPLAY_SECTION,
+};
 pub use resolved_config_diff::{changed_keys, known_keys};
 pub use resolved_config_schema::{
     is_valid_shader, LatencyConfig, ResolvedConfig, RewindConfig, VideoConfig, VideoScaling,

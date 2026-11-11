@@ -4,6 +4,7 @@
 // decision rule and the context the pages read.
 import { createContext, useContext } from "react";
 import type { ResumeInfo } from "../api/tauri-commands-gameplay";
+import type { NetplayHostOptions } from "./use-netplay-play";
 
 /** What Play does with a game's resume info. */
 export type ResumeDecision = "fresh" | "continue" | "ask";
@@ -16,8 +17,9 @@ export function resumeDecision(info: ResumeInfo): ResumeDecision {
   return "ask";
 }
 
-/** Starts the Play flow for a game (fire-and-forget; errors surface as toasts). */
-export type PlayGame = (gameId: number) => void;
+/** Starts the Play flow for a game (fire-and-forget; errors surface as toasts);
+ *  `online` hosts a Play online room with the chosen save instead. */
+export type PlayGame = (gameId: number, online?: NetplayHostOptions) => void;
 
 export const PlayGameContext = createContext<PlayGame>(() => {});
 

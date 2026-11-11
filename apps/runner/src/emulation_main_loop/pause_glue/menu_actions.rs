@@ -17,6 +17,9 @@ use crate::state_thumbnail_writer::Thumbnail;
 
 impl EmulationApp<'_> {
     pub(super) fn apply_menu_action(&mut self, event_loop: &ActiveEventLoop, action: MenuAction) {
+        if let Some(refused) = self.netplay_gate().refusal_of_menu(&action) {
+            return self.menu.set_message(refused); // rows hidden in netplay; last guard
+        }
         let mut live = self.config.clone();
         match action {
             MenuAction::Resume => return self.close_menu(),
@@ -30,6 +33,7 @@ impl EmulationApp<'_> {
             MenuAction::ResetGameSettings => return self.reset_game_config(),
             MenuAction::ResetCore => return self.reset_core(),
             MenuAction::SwapDisc(index) => return self.swap_disc(index),
+            MenuAction::Resync => return self.request_netplay_resync(),
             MenuAction::SetShader(shader) => live.video.shader = shader,
             MenuAction::SetScaling(scaling) => live.video.scaling = scaling,
             MenuAction::SetRunAhead(frames) => live.latency.run_ahead_frames = frames,

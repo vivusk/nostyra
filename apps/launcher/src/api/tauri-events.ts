@@ -22,6 +22,8 @@ export const EVENTS = {
   cloudStatusChanged: "cloud-status-changed",
   /** Window close held until a cloud upload ends (no payload). */
   cloudClosingWait: "cloud-closing-wait",
+  /** Online session news from the runner (`NetplayEventPayload`). */
+  netplayEvent: "netplay-event",
 } as const;
 
 export interface CloudSyncProgressEvent {
@@ -98,9 +100,41 @@ export type SessionErrorKind =
   | "rom"
   | "runtime"
   | "graphics"
+  | "netplay"
   | "crashed";
 
 export interface SessionEndedEvent {
   gameId: number;
   error: { kind: SessionErrorKind; message: string; detail: string } | null;
 }
+
+/** Seat in an online room (runner spelling). */
+export type NetplayRole = "host" | "player" | "spectator";
+
+/** One waiting-room line (field names as the runner sends them). */
+export interface NetplayRosterEntry {
+  nick: string;
+  role: NetplayRole;
+  /** Lobby round trip to the host; null on the host's own line. */
+  ping_ms: number | null;
+  relayed: boolean | null;
+}
+
+export type NetplayEndReason =
+  | { kind: "HostLeft" }
+  | { kind: "Ineligible"; reason: string }
+  | { kind: "Refused"; mismatches: string[] }
+  | { kind: "Quit" }
+  | { kind: "Error"; message: string };
+
+/** Runner netplay events (`ipc_protocol::NetplayEvent`); never a code, token or address. */
+export type NetplayEvent =
+  | { event: "Lobby"; role: NetplayRole; roster: NetplayRosterEntry[]; experimental: boolean }
+  | { event: "Syncing"; percent: number }
+  | { event: "Started"; players: number; input_delay: number }
+  | { event: "Stats"; ping_ms: number | null; rollback_fps: number; relayed: boolean }
+  | { event: "Desync"; frame: number }
+  | { event: "PeerLeft"; nick: string }
+  | { event: "Ended"; reason: NetplayEndReason };
+
+export type NetplayEventPayload = NetplayEvent & { gameId: number };

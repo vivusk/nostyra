@@ -1,7 +1,8 @@
 //! Maps a runner exit status to a user-facing error category.
 
 use ipc_protocol::{
-    EXIT_CORE_LOAD, EXIT_GRAPHICS, EXIT_OK, EXIT_ROM_LOAD, EXIT_RUNTIME, EXIT_USAGE,
+    EXIT_CORE_LOAD, EXIT_GRAPHICS, EXIT_NETPLAY_HOST_LEFT, EXIT_NETPLAY_INCOMPATIBLE,
+    EXIT_NETPLAY_INELIGIBLE, EXIT_OK, EXIT_ROM_LOAD, EXIT_RUNTIME, EXIT_USAGE,
 };
 use serde::Serialize;
 
@@ -19,6 +20,9 @@ pub enum SessionErrorKind {
     Runtime,
     /// Exit 6: the core needs a graphics API this PC cannot provide (OpenGL 3.3).
     Graphics,
+    /// Exits 7–9: an online session could not start or ended early (game cannot play
+    /// online, refused by the host, host left); the reason came as a netplay event.
+    Netplay,
     /// Any other code, a Windows exception (e.g. `0xC0000005`) or a Unix signal.
     Crashed,
 }
@@ -32,6 +36,9 @@ pub fn classify_exit(code: Option<i32>) -> Option<SessionErrorKind> {
         Some(EXIT_ROM_LOAD) => Some(SessionErrorKind::Rom),
         Some(EXIT_RUNTIME) => Some(SessionErrorKind::Runtime),
         Some(EXIT_GRAPHICS) => Some(SessionErrorKind::Graphics),
+        Some(EXIT_NETPLAY_INELIGIBLE | EXIT_NETPLAY_INCOMPATIBLE | EXIT_NETPLAY_HOST_LEFT) => {
+            Some(SessionErrorKind::Netplay)
+        }
         _ => Some(SessionErrorKind::Crashed),
     }
 }
@@ -49,6 +56,7 @@ impl SessionErrorKind {
             }
             Self::Runtime => "The game stopped because of an error while running.",
             Self::Graphics => "This system needs OpenGL 3.3 graphics — update the graphics driver.",
+            Self::Netplay => "The online session ended.",
             Self::Crashed => "The game crashed.",
         }
     }
@@ -67,6 +75,9 @@ mod tests {
             (Some(4), Some(SessionErrorKind::Rom)),
             (Some(5), Some(SessionErrorKind::Runtime)),
             (Some(6), Some(SessionErrorKind::Graphics)),
+            (Some(7), Some(SessionErrorKind::Netplay)),
+            (Some(8), Some(SessionErrorKind::Netplay)),
+            (Some(9), Some(SessionErrorKind::Netplay)),
             (Some(1), Some(SessionErrorKind::Crashed)),
             (Some(101), Some(SessionErrorKind::Crashed)), // Rust panic exit code
             (

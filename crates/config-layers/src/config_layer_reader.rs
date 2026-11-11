@@ -11,6 +11,7 @@ use crate::cloud_config::strip_cloud_section;
 use crate::input_binding_schema::defaults_table;
 use crate::input_conflicts::resolve_input_conflicts;
 use crate::known_key_checks::drop_invalid_keys;
+use crate::netplay_config::strip_netplay_section;
 use crate::resolved_config_schema::{to_resolved, ResolvedConfig};
 use crate::toml_table_deep_merge::deep_merge;
 use crate::ConfigError;
@@ -24,7 +25,7 @@ pub fn parse_layer_text(text: &str, source: &Path) -> Result<Table, ConfigError>
 }
 
 /// Merges parsed layers (lowest first, the global layer first; `None` = missing
-/// layer) over the built-in defaults: global-only sections (`[achievements]`, `[cloud]`) come
+/// layer) over the built-in defaults: global-only sections (`[achievements]`, `[cloud]`, `[netplay]`) come
 /// from the first layer alone, invalid values are dropped (logged via `tracing`),
 /// binding conflicts are resolved and returned as warnings. `system_actions` = the
 /// game system's pad actions (`None` for no-game views).
@@ -38,6 +39,7 @@ pub fn resolve_layer_tables_with_warnings(
         if index > 0 {
             strip_global_only(&mut layer, source);
             strip_cloud_section(&mut layer, source);
+            strip_netplay_section(&mut layer, source);
         }
         drop_invalid_keys(&mut layer, source);
         deep_merge(&mut merged, layer);

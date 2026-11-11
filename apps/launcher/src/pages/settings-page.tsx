@@ -15,10 +15,11 @@ import { GameplayDefaultsSection } from "../components/settings/gameplay-default
 import { SettingsAchievementsSection } from "../components/settings/settings-achievements-section";
 import { SettingsUpdatesSection } from "../components/settings/settings-updates-section";
 import { SettingsCloudSavesSection } from "../components/settings/settings-cloud-saves-section";
+import { SettingsNetplaySection } from "../components/settings/settings-netplay-section";
 import { useLibraryFolders, useRemoveLibraryFolder, useScanProgress, useStartScan } from "../hooks/use-library-queries";
 import { PageHeader } from "./page-header";
 
-/** Settings: folders, core, BIOS, gameplay defaults, RetroAchievements, cloud saves, controls, artwork
+/** Settings: folders, core, BIOS, gameplay defaults, RetroAchievements, cloud saves, netplay, controls, artwork
  *  cache, data folder, updates, attribution, logs / bug report. */
 export function SettingsPage() {
   const { data: folders = [] } = useLibraryFolders();
@@ -85,6 +86,12 @@ export function SettingsPage() {
       {capabilities.cloudSaves && (
         <SettingsSection title="Cloud saves">
           <SettingsCloudSavesSection />
+        </SettingsSection>
+      )}
+
+      {capabilities.netplay && (
+        <SettingsSection title="Netplay">
+          <SettingsNetplaySection />
         </SettingsSection>
       )}
 

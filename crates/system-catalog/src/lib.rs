@@ -41,6 +41,9 @@ mod n64_byte_order;
 mod nds_core_spec;
 mod nds_header_probe;
 mod nds_system_spec;
+mod netplay_core_multitap;
+mod netplay_core_rules;
+mod netplay_spec_types;
 mod nintendo_64_system_spec;
 mod per_extension_probe;
 pub mod ps2_bios_pick;
@@ -97,6 +100,14 @@ pub use n64_byte_order::{normalise_in_place, N64ByteOrder};
 pub use nds_core_spec::MELONDS_DS;
 pub use nds_header_probe::{crc16_modbus, NDS_DSI_ONLY};
 pub use nds_system_spec::NDS;
+pub use netplay_core_rules::{
+    multitap_for, multitap_options_for, netplay_eligibility, netplay_max_players, port_devices_for,
+    NetplayQuirks, NetplayRefusal,
+};
+pub use netplay_spec_types::{
+    MultitapSpec, NetplaySupport, DEFAULT_NETPLAY_PLAYERS, DEVICE_GPGX_MASTER_TAP,
+    DEVICE_GPGX_TEAM_PLAYER_3B, DEVICE_JOYPAD, DEVICE_JOYPAD_MULTITAP, SINGLE_PLAYER,
+};
 pub use nintendo_64_system_spec::NINTENDO_64;
 pub use per_extension_probe::{dat_identified_candidates, ExtCheck, ExtensionCheck};
 pub use ps2_bios_romdir::{parse_ps2_bios, Ps2BiosVersion, PS2_BIOS_MAX_BYTES, PS2_BIOS_MIN_BYTES};

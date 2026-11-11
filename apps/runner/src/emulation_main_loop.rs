@@ -1,8 +1,9 @@
 //! Runner loop (winit `ApplicationHandler`): emulation runs on the main thread.
-//! One redraw = pump SDL events → pause menu input (no frames while it is open) →
-//! emulate due frames (paced by `LoopTiming`, or uncapped while fast-forward is held,
-//! or stepped back while rewind is held) → periodic resume point → present. Keyboard comes from winit,
-//! gamepads from SDL.
+//! One redraw (`redraw_tick`) = pump SDL events → pause menu input (no frames while
+//! it is open, except in netplay) → emulate due frames (paced by `LoopTiming`, or
+//! uncapped while fast-forward is held, or stepped back while rewind is held, or
+//! driven by the netplay session) → periodic resume point → present. Keyboard
+//! comes from winit, gamepads from SDL.
 
 use std::cell::Cell;
 use std::path::PathBuf;
@@ -16,7 +17,6 @@ use libretro_host::CoreSession;
 use sdl3::GamepadSubsystem;
 use system_catalog::SaveStateQuality;
 use video_renderer::{GpuFramePresenter, RgbaFrameBuffer};
-use winit::event_loop::ActiveEventLoop;
 use winit::window::Window;
 
 use self::core_message_notices::CoreNotices;
@@ -45,10 +45,12 @@ mod display_sync;
 mod emulate_time_stats;
 mod fast_forward;
 mod hotkey_actions;
+mod netplay_glue;
 mod pause_glue;
 mod periodic_resume_glue;
 pub(crate) mod pointer_events;
 mod present_step;
+mod redraw_tick;
 pub(crate) mod rewind_playback;
 pub(crate) mod run_ahead;
 pub(crate) mod save_state_policy;
@@ -105,6 +107,8 @@ pub struct EmulationApp<'a> {
     startup_load: Option<StartupStateLoad>,
     /// When the `auto` slot is next saved during play (every 1 / 3 minutes).
     periodic_resume: PeriodicResumeSave,
+    /// `--netplay`: the session driving the frames (M20; `None` = local play).
+    netplay: Option<netplay_glue::NetplayLoop>,
 }
 
 impl<'a> EmulationApp<'a> {
@@ -172,35 +176,7 @@ impl<'a> EmulationApp<'a> {
                 .load_state
                 .map(|slot| StartupStateLoad::new(slot, savestates)),
             periodic_resume: PeriodicResumeSave::for_system(paths.system.id, Instant::now()),
+            netplay: None,
         }
-    }
-
-    fn report_started(&self) {
-        self.reporter
-            .started(&self.session.core_info().name, &self.pending_sessions_dir);
-    }
-
-    /// One redraw: input → emulate due frames (none while paused) → present.
-    fn tick(&mut self, event_loop: &ActiveEventLoop) -> anyhow::Result<()> {
-        if self.sdl.pump(&mut self.input) {
-            event_loop.exit();
-            return Ok(());
-        }
-        if self.update_pause_menu(event_loop) {
-            return self.present(); // last frame under the menu
-        }
-        self.update_pointer();
-        self.apply_startup_load();
-        self.emulate_due_frames()?;
-        self.save_periodic_resume_point();
-        self.show_core_messages();
-        if let Some(av) = self.session.take_av_change() {
-            let prefs = self
-                .timing
-                .on_av_change(av, self.sdl.audio(), self.display_hz);
-            self.apply_present_mode(prefs);
-            self.apply_geometry(av.geometry); // picture aspect; window on a layout change
-        }
-        self.present()
     }
 }

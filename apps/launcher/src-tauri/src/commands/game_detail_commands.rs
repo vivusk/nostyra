@@ -11,6 +11,7 @@ use crate::app_state::{unix_now, AppState};
 use crate::asset_scope_dirs::with_absolute_art;
 use crate::command_error::{CommandError, CommandResult};
 use crate::commands::blocking::run_blocking;
+use crate::commands::netplay_eligibility_view::{netplay_support_of, NetplayGameView};
 
 /// `GameDetail` (game with absolute art paths, metadata, stats) plus display extras.
 #[derive(Debug, Serialize)]
@@ -22,6 +23,8 @@ pub struct GameDetailView {
     /// Core that plays the game's system (`None` for a platform outside the registry).
     pub core_name: Option<String>,
     pub core_version: Option<String>,
+    /// Play online (M20, registry only): support, room cap, offline switch.
+    pub netplay: NetplayGameView,
     /// Lookup results per kind (Detail shows "No artwork found" when both are not-found).
     pub artwork: Vec<ArtworkRecord>,
 }
@@ -46,7 +49,9 @@ fn detail_view(state: &AppState, game_id: i64) -> CommandResult<Option<GameDetai
         Some(core) => storage_db::get_installed_core(&conn, core.id)?.and_then(|c| c.version),
         None => None,
     };
+    let netplay = netplay_support_of(&detail.game.platform_id);
     Ok(Some(GameDetailView {
+        netplay,
         artwork: storage_db::get_artwork(&conn, game_id)?,
         detail,
         rom_file_name,

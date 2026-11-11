@@ -2,6 +2,8 @@ import { useLayoutEffect } from "react";
 import { BiosRequiredDialog } from "./components/bios-required-dialog";
 import { WebPlayerControls } from "./components/gameplay/web-player-controls";
 import { LaunchingOverlay } from "./components/launching-overlay";
+import { NetplayLobbyHost } from "./components/netplay/netplay-lobby-dialog";
+import { capabilities } from "./backend";
 import { PendingSavesBanner } from "./components/pending-saves-banner";
 import { ReconnectFoldersBanner } from "./components/reconnect-folders-banner";
 import { ScanProblemsHost } from "./components/scan-problems-dialog";
@@ -81,6 +83,7 @@ function ShellLayout() {
         <RoutedPage route={route} />
       </main>
       <LaunchingOverlay />
+      {capabilities.netplay && <NetplayLobbyHost />}
       <WebPlayerControls />
       <ScanProblemsHost />
     </div>

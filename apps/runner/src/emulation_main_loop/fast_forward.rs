@@ -32,6 +32,9 @@ impl EmulationApp<'_> {
     /// fast-forward is held, else the frames `LoopTiming` says are due (with run-ahead
     /// when enabled).
     pub(super) fn emulate_due_frames(&mut self) -> anyhow::Result<()> {
+        if self.netplay_active() {
+            return self.netplay_frames(); // own pacer; no rewind / FF / run-ahead
+        }
         if self.rewind_if_held()? {
             return Ok(());
         }

@@ -12,6 +12,9 @@ pub enum SavestateContext {
     Normal,
     /// Run-ahead/rewind on this instance: RAM only, same binary, same session.
     RunaheadSameInstance,
+    /// Rollback netplay (`RETRO_SAVESTATE_CONTEXT_ROLLBACK_NETPLAY`). Reserved: the
+    /// M20 driver rolls back with `RunaheadSameInstance` (states never leave the PC).
+    RollbackNetplay,
 }
 
 impl SavestateContext {
@@ -20,6 +23,7 @@ impl SavestateContext {
         match self {
             Self::Normal => 0,
             Self::RunaheadSameInstance => 1,
+            Self::RollbackNetplay => 3,
         }
     }
 }

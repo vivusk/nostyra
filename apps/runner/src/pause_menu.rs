@@ -12,6 +12,7 @@ mod achievement_list_page_state;
 #[cfg(test)]
 pub(crate) mod achievement_list_page_tests;
 mod achievement_list_view;
+mod menu_body_view;
 mod menu_labels;
 mod menu_option_values;
 mod menu_panel_painter;
@@ -26,6 +27,7 @@ mod pause_menu_input;
 mod pause_menu_input_tests;
 #[cfg(test)]
 mod pause_menu_root_tests;
+mod pause_menu_routing;
 mod pause_menu_state;
 #[cfg(test)]
 mod pause_menu_state_tests;
@@ -35,11 +37,7 @@ mod pause_menu_view_tests;
 mod slot_grid_view;
 mod slot_thumbnail_cache;
 
-use std::time::Instant;
-
-use input_mapping::GamepadInput;
 use video_renderer::{OverlayCanvas, TtfText};
-use winit::keyboard::KeyCode;
 
 pub use achievement_list_page::AchievementListPage;
 pub use menu_option_values::OptionValues;
@@ -102,51 +100,6 @@ impl PauseMenu {
         self.input.on_close();
     }
 
-    /// Routes a key event; `menu_binding` = bound to the `pause_menu` hotkey.
-    pub fn on_key(
-        &mut self,
-        key: KeyCode,
-        pressed: bool,
-        repeat: bool,
-        menu_binding: bool,
-        now: Instant,
-    ) -> KeyRoute {
-        let open = self.is_open();
-        self.input
-            .on_key(key, pressed, repeat, menu_binding, open, now)
-    }
-
-    /// Routes a pad input event; `menu_binding` = bound to the pad `pause_menu` hotkey.
-    pub fn on_pad_input(
-        &mut self,
-        input: GamepadInput,
-        pressed: bool,
-        menu_binding: bool,
-        now: Instant,
-    ) -> PadRoute {
-        let open = self.is_open();
-        self.input
-            .on_pad_input(input, pressed, menu_binding, open, now)
-    }
-
-    /// Whether the Select+Start chord (`held` on some pad) should open the menu now.
-    pub fn poll_chord(&mut self, held: bool, now: Instant) -> bool {
-        let open = self.is_open();
-        self.input.poll_chord(held, open, now)
-    }
-
-    /// A repeated direction while one is held (menu open only).
-    pub fn poll_repeat(&mut self, now: Instant) -> Option<NavEvent> {
-        self.is_open()
-            .then(|| self.input.poll_repeat(now))
-            .flatten()
-    }
-
-    /// Window lost focus: forget held keys (no key-up will arrive).
-    pub fn release_keys(&mut self) {
-        self.input.release_keys();
-    }
-
     pub fn handle(&mut self, nav: NavEvent) -> Option<MenuAction> {
         let open = self.open.as_mut()?;
         self.painted_for = None;
@@ -165,6 +118,14 @@ impl PauseMenu {
     pub fn set_options(&mut self, options: OptionValues) {
         if let Some(open) = self.open.as_mut() {
             open.state.set_options(options);
+            self.painted_for = None;
+        }
+    }
+
+    /// Netplay menu rows (`Some((session line, host))`) or the normal menu.
+    pub fn set_netplay(&mut self, info: Option<(String, bool)>) {
+        if let Some(open) = self.open.as_mut() {
+            open.state.set_netplay(info);
             self.painted_for = None;
         }
     }

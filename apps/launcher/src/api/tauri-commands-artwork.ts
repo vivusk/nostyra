@@ -40,6 +40,18 @@ export interface GameDetail extends Game {
   coreName: string | null;
   coreVersion: string | null;
   artwork: ArtworkRecord[];
+  /** Play online facts (desktop; absent on the web). */
+  netplay?: GameNetplayInfo;
+}
+
+/** Registry-only Play online support of a game's system. */
+export interface GameNetplayInfo {
+  /** `experimental`: badge + warning (e.g. PlayStation). */
+  support: "yes" | "experimental" | "no";
+  /** Largest room the host may open (2–4). */
+  maxPlayers: number;
+  /** Offline mode (`NOSTYRA_OFFLINE=1`): the menu shows disabled. */
+  offline: boolean;
 }
 
 /** Edit metadata dialog values; blank strings are saved as "no value". */

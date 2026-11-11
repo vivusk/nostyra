@@ -6,6 +6,7 @@ import type { CoreDownloadProgressEvent } from "../api/tauri-events";
 import { queryKeys, type GameSessionState } from "../api/query-keys";
 import type { BiosRequiredPrompt } from "../components/bios-required-dialog";
 import type { CoreInstallPrompt } from "../components/core-install-dialog";
+import type { NetplayHostOptions } from "./use-netplay-play";
 import { useErrorToast } from "../components/error-toast";
 
 /** Running game (null = none); seeded from the backend, then event-driven. */
@@ -42,22 +43,34 @@ export function useLaunchGame() {
     },
     onError: (error, request) => {
       queryClient.setQueryData(queryKeys.session, null);
-      const { kind, coreId } = (error ?? {}) as Partial<CommandError>;
-      if (kind === "core_missing" && coreId) {
-        // Offer the core instead of a dead-end error (CoreInstallDialog).
-        const prompt: CoreInstallPrompt = { coreId, gameId: playTarget(request).gameId, message: errorMessage(error) };
-        queryClient.setQueryData(queryKeys.coreInstallPrompt, prompt);
-        return;
-      }
-      if (kind === "bios_missing" && coreId) {
-        // Offer the BIOS file picker instead of a dead-end error (BiosRequiredDialog).
-        const prompt: BiosRequiredPrompt = { coreId, gameId: playTarget(request).gameId, message: errorMessage(error) };
-        queryClient.setQueryData(queryKeys.biosRequiredPrompt, prompt);
-        return;
-      }
+      if (promptForMissingPiece(queryClient, error, playTarget(request).gameId)) return;
       showError("Cannot start the game", errorMessage(error));
     },
   });
+}
+
+/** A Play refused for a missing core / BIOS opens the install / picker prompt instead
+ *  of a dead-end error; `true` when it did (Play online uses it too). */
+/** `online`: the Play online host options, so Play after installing the core opens the
+ *  room again instead of a local game. */
+export function promptForMissingPiece(
+  queryClient: ReturnType<typeof useQueryClient>,
+  error: unknown,
+  gameId: number,
+  online?: NetplayHostOptions,
+): boolean {
+  const { kind, coreId } = (error ?? {}) as Partial<CommandError>;
+  if (kind === "core_missing" && coreId) {
+    const prompt: CoreInstallPrompt = { coreId, gameId, message: errorMessage(error), online };
+    queryClient.setQueryData(queryKeys.coreInstallPrompt, prompt);
+    return true;
+  }
+  if (kind === "bios_missing" && coreId) {
+    const prompt: BiosRequiredPrompt = { coreId, gameId, message: errorMessage(error) };
+    queryClient.setQueryData(queryKeys.biosRequiredPrompt, prompt);
+    return true;
+  }
+  return false;
 }
 
 export function useCoreStatus(coreId: string) {

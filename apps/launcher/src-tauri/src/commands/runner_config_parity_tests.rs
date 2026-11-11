@@ -133,12 +133,12 @@ fn check_parity(system: &str, rom: &Path, prepare_data: impl FnOnce(&Path)) {
         missing: false,
     };
     let layers = target.config_layers(data);
-    // Global: F1 (save_state hotkey) also on game button `b` (every system has it)
-    // → conflict, hotkey wins.
+    // Global: F1 (save_state hotkey) also on `b` → conflict, hotkey wins; [netplay].
     write(
         &layers.global,
         "[video]\nshader = \"none\"\nscaling = \"integer\"\n[rewind]\nbuffer_mb = 128\n\
-         [resume]\nmode = \"never\"\n[input_keyboard]\nb = [\"KeyZ\", \"F1\"]",
+         [resume]\nmode = \"never\"\n[input_keyboard]\nb = [\"KeyZ\", \"F1\"]\n\
+         [netplay]\ninput_delay = \"3\"\nhud = false",
     );
     write(
         &layers.system,
@@ -147,8 +147,7 @@ fn check_parity(system: &str, rom: &Path, prepare_data: impl FnOnce(&Path)) {
     write(&layers.core, "[latency]\nrun_ahead_frames = 1");
     // Per-game gamepad override on `a`, or on `y` for a pad without `a` (N64); the pad
     // save_state hotkey on `misc1`, free on every pad (the stick clicks are L3 / R3).
-    let actions = target.system_actions().unwrap();
-    // A game action the system has (the 2600 has neither A nor Y).
+    let actions = target.system_actions().unwrap(); // the 2600 has neither A nor Y
     let overridden = ["a", "y", "select"]
         .into_iter()
         .find(|action| actions.contains(action))
@@ -184,6 +183,7 @@ fn check_parity(system: &str, rom: &Path, prepare_data: impl FnOnce(&Path)) {
     assert_eq!(runner["rewind.enabled"], true);
     assert_eq!(runner["rewind.buffer_mb"], 128);
     assert_eq!(runner["resume.mode"], "never");
+    assert_eq!(runner["netplay.input_delay"], "3", "global-only [netplay]");
     assert_eq!(runner["resume.auto_save"], false);
     assert_eq!(runner["input_keyboard.b"], serde_json::json!(["KeyZ"]));
     let key = format!("input_gamepad.{overridden}");

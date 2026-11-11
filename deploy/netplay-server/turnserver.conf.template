@@ -1,0 +1,54 @@
+# coturn for Nostyra netplay (M20). @NAME@ placeholders are filled from .env by
+# coturn-entrypoint.sh. Plain STUN/TURN on 3478 (udp + tcp); no TURNS in v1, so no
+# certificate is needed (WebRTC data is DTLS-encrypted end to end anyway).
+
+listening-port=3478
+# REST-API auth: the signaling server mints `<exp>:<peer>` users with
+# base64(HMAC-SHA1(secret, user)) passwords; same secret as TURN_SECRET in .env.
+use-auth-secret
+static-auth-secret=@TURN_SECRET@
+realm=@PUBLIC_HOST@
+fingerprint
+
+no-tls
+no-dtls
+no-cli
+no-multicast-peers
+no-tcp-relay
+
+# Relay range (open these UDP ports in the firewall). 241 ports ≈ 20 fully relayed
+# four-player rooms; raise max-port if rooms hit total-quota.
+min-port=49160
+max-port=49400
+
+# Abuse limits: sessions per user / in total; bps-capacity=0 = no global cap.
+user-quota=12
+total-quota=1200
+bps-capacity=0
+
+# Never relay into private / loopback / link-local space (SSRF onto the VPS network).
+denied-peer-ip=0.0.0.0-0.255.255.255
+denied-peer-ip=10.0.0.0-10.255.255.255
+denied-peer-ip=100.64.0.0-100.127.255.255
+denied-peer-ip=127.0.0.0-127.255.255.255
+denied-peer-ip=169.254.0.0-169.254.255.255
+denied-peer-ip=172.16.0.0-172.31.255.255
+denied-peer-ip=192.0.0.0-192.0.0.255
+denied-peer-ip=192.168.0.0-192.168.255.255
+denied-peer-ip=198.18.0.0-198.19.255.255
+denied-peer-ip=::1
+denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+
+# listening-ip / relay-ip lines for every TURN_RELAY_IP entry are appended by
+# coturn-entrypoint.sh. Without them coturn (host network) also binds the docker
+# bridge addresses (172.17.0.1, ...) and may hand remote players a relay address
+# they cannot reach.
+
+# Only when the VPS is behind 1:1 NAT (its public IP is not on an interface;
+# check `ip addr` during M0): set TURN_EXTERNAL_IP in .env.
+@EXTERNAL_IP_LINE@
+
+# Logs to stdout (docker logs); coturn logs peer addresses, so keep them short-lived.
+log-file=stdout
+simple-log

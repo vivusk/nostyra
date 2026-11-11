@@ -16,12 +16,14 @@ impl EmulationApp<'_> {
     /// Leaves the session in `self`: the caller drops it after arming the teardown
     /// watchdog (`loaded_session_run`).
     pub fn finish(&mut self) -> anyhow::Result<()> {
+        self.netplay_quit();
         let facts = ExitFacts {
             enabled: self.config.resume.auto_save,
             states_available: self.session.states_available(),
             started: self.presenter.is_some(),
             loop_failed: self.error.is_some(),
             real_frames: self.saves.real_frames(),
+            netplay_guest: !self.saves.persists(),
         };
         // A periodic resume point still being written must not land after this one.
         self.saves.wait_background_writes();

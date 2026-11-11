@@ -40,6 +40,9 @@ serde_json.workspace = true
 storage-db.workspace = true
 system-catalog.workspace = true
 md-5.workspace = true
+# Play online (M20): room REST client + session env only. `rest` without `native`:
+# the Tauri binary never links ggrs / matchbox / webrtc (F13 / F30).
+netplay-session = { workspace = true, features = ["rest"] }
 chrono.workspace = true
 # protocol-asset: cached artwork is served from <data>/artwork via asset://.
 tauri = { workspace = true, features = ["protocol-asset"] }

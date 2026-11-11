@@ -36,6 +36,23 @@ pub struct ActiveSession {
     /// Cloud sync units the runner may write (`cloud_unit_guard::session_unit_keys`):
     /// no sync touches them until the session ends.
     pub unit_keys: BTreeSet<String>,
+    /// Ends the runner early (online lobby Cancel); `None` in tests.
+    pub control: Option<SessionControl>,
+}
+
+/// Cancel of a running session: the kill handle plus "the user cancelled" (the
+/// killed runner's exit is then no error).
+#[derive(Debug, Clone)]
+pub struct SessionControl {
+    pub killer: runner_session::RunnerKiller,
+    pub cancelled: Arc<AtomicBool>,
+}
+
+impl SessionControl {
+    /// Whether the user cancelled the session (checked once it ended).
+    pub fn was_cancelled(&self) -> bool {
+        self.cancelled.load(std::sync::atomic::Ordering::SeqCst)
+    }
 }
 
 pub struct AppState {

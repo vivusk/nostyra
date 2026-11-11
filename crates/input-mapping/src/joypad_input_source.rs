@@ -3,16 +3,19 @@
 //! polls (inside `retro_run`, right before it reads input → ≤ 1 frame latency). Bindings come
 //! from the config through [`crate::InputBindings`], owned by the pad manager.
 
-use libretro_host::{InputSource, RETRO_DEVICE_ANALOG, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_POINTER};
+use libretro_host::InputSource;
 use winit::keyboard::KeyCode;
 
 use crate::input_bindings::InputBindings;
-use crate::joypad_state_snapshot::JoypadStateSnapshot;
+use crate::joypad_state_snapshot::{JoypadStateSnapshot, PortState};
 use crate::keyboard_state::KeyboardState;
 use crate::pointer_state::PointerState;
 use crate::runner_hotkeys::RunnerHotkey;
 use crate::sdl_gamepad_manager::SdlGamepadManager;
+use crate::snapshot_reply::reply;
 use crate::turbo_button::TurboButton;
+
+mod local_merge;
 
 pub struct JoypadInputSource {
     keyboard: KeyboardState,
@@ -82,6 +85,13 @@ impl JoypadInputSource {
         self.pointer = Some(pointer);
     }
 
+    /// Netplay: keyboard, every local pad and turbo of the last [`InputSource::poll`]
+    /// as **one** port (the player's own), whatever ports the pads sit on. Plain
+    /// play keeps one port per pad.
+    pub fn local_port_state(&self) -> PortState {
+        local_merge::collapse_ports(&self.snapshot)
+    }
+
     fn hotkey_held(&self, hotkey: RunnerHotkey) -> bool {
         self.keyboard.hotkey_held(self.bindings(), hotkey) || self.gamepads.hotkey_held(hotkey)
     }
@@ -110,81 +120,5 @@ impl InputSource for JoypadInputSource {
             index,
             id,
         )
-    }
-}
-
-fn reply(
-    snapshot: &JoypadStateSnapshot,
-    pointer: Option<&PointerState>,
-    port: u32,
-    device: u32,
-    index: u32,
-    id: u32,
-) -> i16 {
-    match (device, pointer) {
-        (RETRO_DEVICE_JOYPAD, _) => snapshot.state(port as usize, id),
-        (RETRO_DEVICE_ANALOG, _) => snapshot.analog_state(port as usize, index, id),
-        (RETRO_DEVICE_POINTER, Some(pointer)) if port == 0 => pointer.reply(index, id),
-        _ => 0,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::analog_stick_input::{StickDirection, ANALOG_MAX};
-    use crate::joypad_state_snapshot::JoypadButton;
-
-    #[test]
-    fn analog_device_reads_sticks_and_joypad_reads_buttons() {
-        let mut snap = JoypadStateSnapshot::default();
-        snap.press(0, JoypadButton::B);
-        snap.set_axes(0, [9_000, 0, 0, 0]);
-        snap.hold_sticks(0, StickDirection::RightDown.mask());
-        assert_eq!(reply(&snap, None, 0, RETRO_DEVICE_JOYPAD, 0, 0), 1);
-        assert_eq!(reply(&snap, None, 0, RETRO_DEVICE_ANALOG, 0, 0), 9_000);
-        assert_eq!(reply(&snap, None, 0, RETRO_DEVICE_ANALOG, 1, 1), ANALOG_MAX);
-        assert_eq!(reply(&snap, None, 0, 3, 0, 0), 0, "mouse");
-        assert_eq!(
-            reply(&snap, None, 0, RETRO_DEVICE_POINTER, 0, 15),
-            0,
-            "no touch screen"
-        );
-    }
-
-    #[test]
-    fn pointer_answers_port_zero_of_touch_screen_systems() {
-        let snap = JoypadStateSnapshot::default();
-        let pointer = PointerState {
-            x: 1_000,
-            y: -2_000,
-            pressed: true,
-            offscreen: false,
-        };
-        let touch = Some(&pointer);
-        assert_eq!(reply(&snap, touch, 0, RETRO_DEVICE_POINTER, 0, 0), 1_000);
-        assert_eq!(reply(&snap, touch, 0, RETRO_DEVICE_POINTER, 0, 1), -2_000);
-        assert_eq!(reply(&snap, touch, 0, RETRO_DEVICE_POINTER, 0, 2), 1);
-        assert_eq!(
-            reply(&snap, touch, 1, RETRO_DEVICE_POINTER, 0, 2),
-            0,
-            "port 1"
-        );
-        assert_eq!(
-            reply(&snap, touch, 0, RETRO_DEVICE_JOYPAD, 0, 0),
-            0,
-            "pad unaffected"
-        );
-    }
-
-    #[test]
-    fn systems_without_analog_sticks_reply_centred() {
-        // The pad manager never writes axes for them and their configs drop the
-        // stick actions, so the snapshot stays centred.
-        let mut snap = JoypadStateSnapshot::default();
-        snap.press_mask(0, JoypadButton::Right.mask());
-        for (index, id) in [(0, 0), (0, 1), (1, 0), (1, 1)] {
-            assert_eq!(reply(&snap, None, 0, RETRO_DEVICE_ANALOG, index, id), 0);
-        }
     }
 }
