@@ -94,7 +94,8 @@ uploaded: the site is static files, your ROMs and saves stay on your computer.
   records, so update it first.
 - **Desktop app only** (shown disabled): core downloads, shaders, scaling modes, run-ahead, rewind,
   RetroAchievements, logs and bug reports, show in folder, memory-card import, PlayStation memory card 2, the
-  F2 slot picker.
+  F2 slot picker. **Play online** shows on the same games as in the desktop app, but it only opens a notice
+  ("Online co-op is available in the Nostyra desktop app only") with a link to https://nostyra.com/download/.
 - **Do not play the same game in the browser and the desktop app at the same time:** the last one to save
   wins. In-game saves are written every 30 s while playing and on Exit game, so closing the tab mid-game can
   lose up to the last 30 s of in-game progress. One Nostyra Online tab at a time: a second tab says it is

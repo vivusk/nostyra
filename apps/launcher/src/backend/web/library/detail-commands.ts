@@ -22,7 +22,8 @@ async function detailView(gameId: number): Promise<GameDetail | null> {
   const game = await getGame(gameId);
   if (!game) return null;
   const relative = splitRomPath(game.romPath)?.relative ?? game.romPath;
-  const webCore = (await systemById(game.platformId))?.webCore;
+  const system = await systemById(game.platformId);
+  const webCore = system?.webCore;
   return {
     ...game,
     metadata: await getGameMetadata(gameId),
@@ -31,6 +32,10 @@ async function detailView(gameId: number): Promise<GameDetail | null> {
     coreName: webCore ? `${webCore.ejsCore} (EmulatorJS)` : null,
     coreVersion: webCore ? EMULATORJS_VERSION : null,
     artwork: await getArtwork(gameId),
+    // Desktop facts: the web shows Play online with a "desktop app only" notice.
+    netplay: system
+      ? { support: system.desktopNetplay, maxPlayers: system.desktopNetplayPlayers, offline: false }
+      : undefined,
   };
 }
 

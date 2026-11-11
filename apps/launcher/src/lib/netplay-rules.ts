@@ -105,18 +105,25 @@ export function roomErrorText(error: unknown): string {
   return text ? `Could not open the room: ${text}` : "Could not open the room.";
 }
 
-/** Whether Detail shows Play online, and why it is disabled (`null` = enabled). */
+/** Where the web edition's "desktop app only" notice sends the user. */
+export const DESKTOP_DOWNLOAD_URL = "https://nostyra.com/download/";
+
+/** Whether Detail shows Play online, and why it is disabled (`null` = enabled).
+ *  `desktopOnly` (web edition, capability off): the button stays enabled and opens a
+ *  "desktop app only" notice instead of the Host / Join / Watch menu. */
 export function playOnlineState(
   netplayCapability: boolean,
   game: { netplay?: { support: string; offline: boolean } | null; missing: boolean },
   sessionRunning: boolean,
-): { visible: boolean; disabledReason: string | null } {
+): { visible: boolean; disabledReason: string | null; desktopOnly: boolean } {
   const support = game.netplay?.support ?? "no";
-  if (!netplayCapability || support === "no") return { visible: false, disabledReason: null };
-  if (game.netplay?.offline) return { visible: true, disabledReason: "Online play is off (offline mode)" };
-  if (game.missing) return { visible: true, disabledReason: "The ROM file is missing" };
-  if (sessionRunning) return { visible: true, disabledReason: "A game is already running" };
-  return { visible: true, disabledReason: null };
+  if (support === "no") return { visible: false, disabledReason: null, desktopOnly: false };
+  if (!netplayCapability) return { visible: true, disabledReason: null, desktopOnly: true };
+  const enabled = (disabledReason: string | null) => ({ visible: true, disabledReason, desktopOnly: false });
+  if (game.netplay?.offline) return enabled("Online play is off (offline mode)");
+  if (game.missing) return enabled("The ROM file is missing");
+  if (sessionRunning) return enabled("A game is already running");
+  return enabled(null);
 }
 
 /** Host players picker: 2 ..= the system's room cap. */

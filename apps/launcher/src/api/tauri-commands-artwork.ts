@@ -40,7 +40,8 @@ export interface GameDetail extends Game {
   coreName: string | null;
   coreVersion: string | null;
   artwork: ArtworkRecord[];
-  /** Play online facts (desktop; absent on the web). */
+  /** Play online facts. On the web these are the desktop app's (the browser cannot
+   *  play online: Play online opens a "desktop app only" notice). */
   netplay?: GameNetplayInfo;
 }
 

@@ -66,11 +66,15 @@ test("join refusals keep the backend text (409 → started / full)", () => {
   assert.equal(roomErrorText(undefined), "Could not open the room.");
 });
 
-test("web edition (capability off) never shows Play online", () => {
+test("web edition (capability off) shows Play online as a desktop-only notice", () => {
   const game = { netplay: { support: "yes", offline: false }, missing: false };
-  assert.deepEqual(playOnlineState(false, game, false), { visible: false, disabledReason: null });
-  assert.deepEqual(playOnlineState(true, { missing: false }, false), { visible: false, disabledReason: null });
-  assert.deepEqual(playOnlineState(true, game, false), { visible: true, disabledReason: null });
+  const hidden = { visible: false, disabledReason: null, desktopOnly: false };
+  assert.deepEqual(playOnlineState(false, game, false), { visible: true, disabledReason: null, desktopOnly: true });
+  assert.deepEqual(playOnlineState(false, { ...game, missing: true }, true), { visible: true, disabledReason: null, desktopOnly: true }, "the notice is never disabled");
+  assert.deepEqual(playOnlineState(false, { ...game, netplay: { support: "no", offline: false } }, false), hidden);
+  assert.deepEqual(playOnlineState(false, { missing: false }, false), hidden);
+  assert.deepEqual(playOnlineState(true, { missing: false }, false), hidden);
+  assert.deepEqual(playOnlineState(true, game, false), { visible: true, disabledReason: null, desktopOnly: false });
   assert.equal(playOnlineState(true, { ...game, netplay: { support: "experimental", offline: true } }, false).disabledReason, "Online play is off (offline mode)");
   assert.equal(playOnlineState(true, { ...game, netplay: { support: "no", offline: false } }, false).visible, false);
   assert.equal(playOnlineState(true, game, true).disabledReason, "A game is already running");

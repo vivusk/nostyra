@@ -24,6 +24,10 @@ export interface WebSystem {
   thumbnailsRepo: string;
   /** Position in the Library system filter. */
   displayRank: number;
+  /** Play online support of the desktop app for this system (the browser has none). */
+  desktopNetplay: "yes" | "experimental" | "no";
+  /** Largest desktop netplay room (players). */
+  desktopNetplayPlayers: number;
 }
 
 export interface FirmwareFile {

@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+## 2026-11-11 — v0.6.1
+- Release v0.6.1 (`docs/release-notes-v0.6.1.md`): web edition only (tag + web package, no desktop zip / GitHub release page).
+- feat(web): Play online button on the web edition's Detail page (systems the desktop offers netplay for) opens a "desktop app only" notice linking to https://nostyra.com/download/; wasm catalog gains `desktopNetplay` / `desktopNetplayPlayers`. Web netplay peers (M20b) not planned for now: research in `plans/reports/*-261111-1440-web-netplay-*`.
+
 ## 2026-11-11 — v0.6.0
 - Release v0.6.0 (`docs/release-notes-v0.6.0.md`): online co-op netplay (M20) — rollback (ggrs) over WebRTC (matchbox), own signaling server + coturn at `netplay.nostyra.com`, up to 4 players + 8 spectators; up to 4 local gamepads. Live test: SNES, two PCs on different networks, ~40 min, no desync. Fixes from live testing: coturn relay/listen IP pinned (`TURN_RELAY_IP`, `35e8b65`), Play online menu clipped (`1ec7892`), Host after core install launched offline (`1f78b5b`).
 
@@ -27,7 +31,7 @@
 - Pending: OneDrive (05), Dropbox (06), integration + production app publishing (09).
 
 ### Update checker
-- feat(update-check): desktop launcher tells you when a newer release exists — GitHub `/releases/latest` (ETag, ≤ 1/day, cached in settings), banner (Open release page / Skip this version / Later), Settings → Updates (version, startup toggle, Check now); only releases with the Windows portable zip count; no download, no telemetry; `NOSTYRA_UPDATE_CURRENT_VERSION` override for manual checks; web edition shows nothing (`add2284`, `3413ccd`). Manual checks pending (`plans/261109-1210-update-checker/reports/update-checker-manual-test-report.md`).
+- feat(update-check): desktop launcher tells you when a newer release exists — GitHub `/releases/latest` (ETag, ≤ 1/day, cached in settings), banner (Open release page / Skip this version / Later), Settings → Updates (version, startup toggle, Check now); only releases with the Windows portable zip count; no download, no telemetry; `NOSTYRA_UPDATE_CURRENT_VERSION` override for manual checks; web edition shows nothing (`add2284`, `3413ccd`). Manual checks pending (`plans/archive/261109-1210-update-checker/reports/update-checker-manual-test-report.md`).
 
 ## 2026-11-09 — v0.4.0
 - Release v0.4.0 (`docs/release-notes-v0.4.0.md`): four new systems — Sony PlayStation 2 on PCEE2 (M18, desktop only, user BIOS required, asked for on Play) and Atari 2600 / 7800 / Lynx on Stella / ProSystem / Handy (M17, also in Nostyra Online); RetroAchievements on 18 systems; `scripts/run-debug.ps1` for a rebuilt debug launcher. Details in the M17 / M18 sections below.

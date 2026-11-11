@@ -4,7 +4,8 @@
 
 use serde::Serialize;
 use system_catalog::{
-    core_for_system, web_shared_core, Media, SystemSpec, ALL_SYSTEMS, DISPLAY_ORDER,
+    core_for_system, netplay_eligibility, netplay_max_players, web_shared_core, Media,
+    NetplaySupport, SystemSpec, ALL_SYSTEMS, DISPLAY_ORDER,
 };
 
 #[derive(Debug, Serialize)]
@@ -35,6 +36,12 @@ pub struct WebSystemView {
     pub thumbnails_repo: &'static str,
     /// Position in the Library system filter (`DISPLAY_ORDER`).
     pub display_rank: usize,
+    /// Play online support of the DESKTOP core (`"yes"` / `"experimental"` / `"no"`,
+    /// the launcher's registry pre-check). The browser has no netplay: it shows
+    /// Play online with a "desktop app only" notice for these systems.
+    pub desktop_netplay: &'static str,
+    /// Largest desktop netplay room of the system (players).
+    pub desktop_netplay_players: u8,
 }
 
 #[derive(Debug, Serialize)]
@@ -96,6 +103,9 @@ fn view(spec: &'static SystemSpec) -> WebSystemView {
             .iter()
             .position(|shown| shown.id == spec.id)
             .unwrap_or(usize::MAX),
+        desktop_netplay: desktop_netplay(spec.id),
+        desktop_netplay_players: core_for_system(spec.id)
+            .map_or(0, |core| netplay_max_players(core, spec.id)),
         firmware: core_for_system(spec.id)
             .map(|core| core.firmware)
             .unwrap_or_default()
@@ -109,6 +119,17 @@ fn view(spec: &'static SystemSpec) -> WebSystemView {
                 subdir: f.subdir,
             })
             .collect(),
+    }
+}
+
+/// The desktop launcher's registry-only netplay pre-check, as a JSON tag.
+fn desktop_netplay(system_id: &str) -> &'static str {
+    let support = core_for_system(system_id)
+        .and_then(|core| netplay_eligibility(core, core.savestates, None).ok());
+    match support {
+        Some(NetplaySupport::Yes) => "yes",
+        Some(NetplaySupport::Experimental) => "experimental",
+        Some(NetplaySupport::No) | None => "no",
     }
 }
 
@@ -140,6 +161,22 @@ mod tests {
         assert!(nes["coreLayerId"].is_null());
         assert!(nes.get("displayName").is_some() && nes.get("padActions").is_some());
         assert_eq!(nes["displayRank"], 0, "NES leads the Library filter");
+        assert_eq!(nes["desktopNetplay"], "yes");
+        assert_eq!(psx["desktopNetplay"], "experimental");
+        let by_id = |id: &str| {
+            json.as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["id"] == id)
+                .unwrap()
+        };
+        assert_eq!(by_id("lynx")["desktopNetplay"], "no");
+        assert_eq!(
+            by_id("n64")["desktopNetplay"],
+            "no",
+            "GL cores never offer netplay"
+        );
+        assert!(by_id("snes")["desktopNetplayPlayers"].as_u64().unwrap() >= 2);
         assert_eq!(psx["datFile"], "Sony - PlayStation.dat");
         assert_eq!(psx["thumbnailsRepo"], "Sony_-_PlayStation");
     }
